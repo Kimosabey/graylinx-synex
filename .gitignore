@@ -1,0 +1,15 @@
+# Original download archives, kept locally for traceability. Never committed —
+# everything inside them is already tracked, or filed under docs/90-archive/.
+_inbox/
+
+# build_docs.py output
+build/
+
+# Python
+__pycache__/
+*.pyc
+
+# Windows / Office noise
+~$*
+Thumbs.db
+desktop.ini

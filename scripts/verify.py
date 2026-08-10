@@ -1,0 +1,307 @@
+#!/usr/bin/env python3
+"""Synex documentation compliance gate.
+
+Run from the repository root:
+
+    python scripts/verify.py
+    python scripts/verify.py --strict     # also fail on TBD markers
+    python scripts/verify.py --fix-names  # rewrite legacy product names in place
+
+Exit code 0 means the repository is clean. Anything else means do not ship.
+"""
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SCAN_DIRS = ["docs/10-product", "docs/20-architecture", "mvp", "decisions", "brand"]
+SCAN_ROOT_FILES = ["CLAUDE.md", "CONTEXT.md", "HANDOFF.md", "README.md"]
+
+# Files that are allowed to mention legacy names, because they define the rule.
+NAME_RULE_FILES = {"CLAUDE.md", "NAMING.md", "HANDOFF.md", "CONTEXT.md", "README.md", "verify.py"}
+
+# Files that legitimately discuss TBD markers rather than containing unresolved ones.
+STRICT_EXEMPT = {"CLAUDE.md", "README.md", "NAMING.md", "OPEN-QUESTIONS.md", "HANDOFF.md"}
+
+# --------------------------------------------------------------------------
+# Rule tables
+# --------------------------------------------------------------------------
+
+# Phrases produced by an old find-and-replace that damaged the document.
+BANNED_PHRASES = {
+    "checking that the work really worked": "verification",
+    "checking that the answer is based on real information": "grounding",
+    "where the data came from and how it was calculated": "lineage",
+    "proof / supporting data": "evidence",
+    "how important the equipment is": "criticality",
+    "sending the issue to the right person/team": "escalation",
+    "finding the likely problem": "diagnosis",
+    "difference between expected and actual readings": "residuals",
+    "based on real available information": "grounded",
+    "access aread": "scoped",
+    "limited mode": "degraded mode",
+    "built around AI from the start": "AI-native",
+    "testing and proof": "validation",
+}
+
+# Legacy product names. Key = regex, value = replacement.
+LEGACY_NAMES = [
+    (r"Graylinx Enterprise AI Platform", "Graylinx Synex"),
+    (r"\bGEAP\b", "Synex"),
+    (r"\bGraylinx AI Copilot\b", "Synex Copilot"),
+    (r"\bAI Copilot\b", "Synex Copilot"),
+    (r"\bthe chatbot\b", "the Copilot"),
+    (r"\bChatbot / AI Copilot\b", "Synex Copilot"),
+]
+
+# Naming-law violations that have no safe automatic fix.
+NAMING_VIOLATIONS = [
+    (r"\bSynex AI\b", "Write 'Synex' — the AI is implied"),
+    (r"\bSYNEX\b", "Synex is title case, never all caps"),
+    (r"\bsynex\b(?![-_/.])", "Synex is title case in prose"),
+    (r"Synex,? the HVAC", "Do not narrow Synex to HVAC — it is the first vertical, not the definition"),
+]
+
+# Statements that break the separation law.
+SEPARATION_VIOLATIONS = [
+    (r"(?i)\b(the )?(LLM|language model|copilot|ai)\b[^.\n]{0,60}\bdiagnos(e|es|ing)\b",
+     "The language model never diagnoses — the FDD rules name the fault"),
+    (r"(?i)\b(the )?(LLM|language model|copilot)\b[^.\n]{0,60}\b(grants?|decides?) (the )?permission",
+     "The Control Plane grants permission, never the model"),
+    (r"(?i)\bAI (decides|determines) (the )?priority",
+     "Priority comes from a deterministic formula"),
+]
+
+ID_PREFIX = r"(?:PL|[CRWAFKILVUSG])"
+# A sentence that *denies* the thing is correct, not a violation.
+NEGATION_RE = re.compile(r"(?i)\b(never|not|cannot|can.t|no longer|does ?n.t|do ?n.t)\b")
+
+FEATURE_ID_RE = re.compile(rf"\b{ID_PREFIX}\d{{1,2}}\b")
+QUESTION_ID_RE = re.compile(r"\b([QNSD])(\d{1,3})\b")
+
+
+class Report:
+    def __init__(self) -> None:
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
+
+    def error(self, path: Path, line: int, msg: str) -> None:
+        self.errors.append(f"{rel(path)}:{line}: {msg}")
+
+    def warn(self, path: Path, line: int, msg: str) -> None:
+        self.warnings.append(f"{rel(path)}:{line}: {msg}")
+
+
+def rel(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def targets() -> list[Path]:
+    files: list[Path] = []
+    for name in SCAN_ROOT_FILES:
+        p = ROOT / name
+        if p.exists():
+            files.append(p)
+    for d in SCAN_DIRS:
+        base = ROOT / d
+        if base.exists():
+            files.extend(sorted(base.rglob("*.md")))
+    return files
+
+
+# --------------------------------------------------------------------------
+# Checks
+# --------------------------------------------------------------------------
+
+def check_file(path: Path, text: str, rep: Report, strict: bool) -> None:
+    exempt = path.name in NAME_RULE_FILES
+    in_code = False
+
+    for n, line in enumerate(text.splitlines(), 1):
+        if line.lstrip().startswith("```"):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+
+        low = line.lower()
+
+        for phrase, correct in BANNED_PHRASES.items():
+            if phrase in low and not exempt:
+                rep.error(path, n, f"banned phrase {phrase!r} — use {correct!r}")
+
+        if not exempt:
+            for pattern, replacement in LEGACY_NAMES:
+                if re.search(pattern, line):
+                    rep.error(path, n, f"legacy name matching /{pattern}/ — use {replacement!r}")
+
+        for pattern, why in NAMING_VIOLATIONS:
+            if re.search(pattern, line) and not exempt:
+                rep.error(path, n, f"naming law: {why}")
+
+        for pattern, why in SEPARATION_VIOLATIONS:
+            m = re.search(pattern, line)
+            if m and not exempt and not NEGATION_RE.search(m.group(0)):
+                rep.error(path, n, f"separation law: {why}")
+
+        if strict and "TBD" in line and path.name not in STRICT_EXEMPT:
+            if not re.search(r"TBD\s*\((?:[QNSD]\d+)\)", line):
+                rep.error(path, n, "TBD without a question reference, e.g. TBD (Q1)")
+            else:
+                rep.warn(path, n, "unresolved TBD")
+
+
+def check_register(rep: Report) -> tuple[set[str], int]:
+    """The feature register is the single source of truth for feature IDs."""
+    reg = ROOT / "mvp" / "FEATURE-REGISTER.md"
+    if not reg.exists():
+        rep.errors.append("mvp/FEATURE-REGISTER.md is missing — it is the source of truth")
+        return set(), 0
+
+    ids: set[str] = set()
+    dupes: set[str] = set()
+    count = 0
+    for n, line in enumerate(reg.read_text(encoding="utf-8").splitlines(), 1):
+        m = re.match(rf"\|\s*({ID_PREFIX}\d{{1,2}})\s*\|", line)
+        if not m:
+            continue
+        fid = m.group(1)
+        count += 1
+        if fid in ids:
+            dupes.add(fid)
+            rep.error(reg, n, f"duplicate feature ID {fid}")
+        ids.add(fid)
+
+    body = reg.read_text(encoding="utf-8")
+    m = re.search(r"\*\*Totals:\*\*\s*(\d+)\s*features", body)
+    if m and int(m.group(1)) != count:
+        rep.errors.append(
+            f"mvp/FEATURE-REGISTER.md: stated total {m.group(1)} does not match "
+            f"{count} rows found"
+        )
+    return ids, count
+
+
+def check_id_references(files: list[Path], known: set[str], rep: Report) -> None:
+    """Every feature ID used elsewhere must exist in the register."""
+    if not known:
+        return
+    for path in files:
+        if path.name == "FEATURE-REGISTER.md":
+            continue
+        in_code = False
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if line.lstrip().startswith("```"):
+                in_code = not in_code
+                continue
+            if in_code:
+                continue
+            # Only check inside explicit ID contexts to avoid false positives.
+            for m in re.finditer(rf"(?:^|\s|\()({ID_PREFIX}\d{{1,2}})(?=[\s,.)\u2013-]|$)", line):
+                fid = m.group(1)
+                if fid not in known:
+                    rep.warn(path, n, f"feature ID {fid} is not in the register")
+
+
+def check_questions(rep: Report) -> None:
+    q = ROOT / "decisions" / "OPEN-QUESTIONS.md"
+    if not q.exists():
+        rep.errors.append("decisions/OPEN-QUESTIONS.md is missing")
+        return
+    text = q.read_text(encoding="utf-8")
+    if "## Closed" not in text:
+        rep.error(q, 1, "missing a '## Closed' section — closed questions are archived, not deleted")
+
+
+def check_structure(rep: Report) -> None:
+    required = [
+        "CLAUDE.md", "CONTEXT.md", "HANDOFF.md", "README.md",
+        "brand/NAMING.md", "decisions/DECISIONS.md", "decisions/OPEN-QUESTIONS.md",
+        "mvp/FEATURE-REGISTER.md", "mvp/MVP-SCOPE.md",
+    ]
+    for r in required:
+        if not (ROOT / r).exists():
+            rep.errors.append(f"required file missing: {r}")
+    for d in ["docs/00-source", "docs/10-product", "docs/20-architecture", "docs/90-archive"]:
+        if not (ROOT / d).is_dir():
+            rep.errors.append(f"required directory missing: {d}")
+
+
+def check_handoff_freshness(rep: Report) -> None:
+    h = ROOT / "HANDOFF.md"
+    if h.exists() and "## 7. Recent changes" not in h.read_text(encoding="utf-8"):
+        rep.error(h, 1, "HANDOFF.md must keep a 'Recent changes' table")
+
+
+def fix_names(files: list[Path]) -> int:
+    changed = 0
+    for path in files:
+        if path.name in NAME_RULE_FILES:
+            continue
+        original = path.read_text(encoding="utf-8")
+        text = original
+        for pattern, replacement in LEGACY_NAMES:
+            text = re.sub(pattern, replacement, text)
+        if text != original:
+            path.write_text(text, encoding="utf-8")
+            print(f"  rewrote {rel(path)}")
+            changed += 1
+    return changed
+
+
+# --------------------------------------------------------------------------
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="Synex documentation compliance gate")
+    ap.add_argument("--strict", action="store_true", help="fail on unreferenced TBD markers")
+    ap.add_argument("--fix-names", action="store_true", help="rewrite legacy product names in place")
+    args = ap.parse_args()
+
+    files = targets()
+    if not files:
+        print("No markdown found. Are you running this from the repository root?")
+        return 2
+
+    if args.fix_names:
+        print("Rewriting legacy product names...")
+        n = fix_names(files)
+        print(f"{n} file(s) changed. Re-run without --fix-names to verify.\n")
+
+    rep = Report()
+    check_structure(rep)
+    check_handoff_freshness(rep)
+    check_questions(rep)
+    known, count = check_register(rep)
+
+    for path in files:
+        check_file(path, path.read_text(encoding="utf-8"), rep, args.strict)
+    check_id_references(files, known, rep)
+
+    print(f"Scanned {len(files)} file(s). Register holds {count} feature(s).\n")
+
+    if rep.warnings:
+        print(f"Warnings ({len(rep.warnings)}):")
+        for w in rep.warnings[:40]:
+            print(f"  {w}")
+        if len(rep.warnings) > 40:
+            print(f"  ... and {len(rep.warnings) - 40} more")
+        print()
+
+    if rep.errors:
+        print(f"FAILED — {len(rep.errors)} error(s):")
+        for e in rep.errors:
+            print(f"  {e}")
+        return 1
+
+    print("PASSED — repository is clean.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
