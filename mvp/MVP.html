@@ -4,7 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graylinx Synex — MVP Definition</title>
-<meta name="description" content="The proposed Graylinx Synex MVP: scope, feature register, FDD engine and Copilot specification, in one page.">
+<meta name="description" content="The proposed Graylinx Synex MVP: scope, the feature register, the nine workflows, the FDD engine and the Synex Copilot specification, in one page.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0020B0">
+<!-- The mark on a brand-blue tile. The wordmark is unreadable at 16px, so the
+     tab carries the glyph alone. Generated from assets/logo.png. -->
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
 <style>
 /* ---------------------------------------------------------------------------
    Colour system derived from the Graylinx brand colour #0020B0
@@ -50,9 +56,9 @@
   --dur:180ms;
   --ease:cubic-bezier(.2,.7,.3,1);
   /* Atmosphere. Mixed from --accent, so it follows the brand and adds no hex. */
-  --glow-a:color-mix(in srgb, var(--accent) 9%, transparent);
-  --glow-b:color-mix(in srgb, var(--accent) 6%, transparent);
-  --grid:color-mix(in srgb, var(--accent) 5%, transparent);
+  --glow-a:color-mix(in srgb, var(--accent) 17%, transparent);
+  --glow-b:color-mix(in srgb, var(--accent) 12%, transparent);
+  --grid:color-mix(in srgb, var(--accent) 7%, transparent);
 }
 :root[data-theme="dark"]{
   --page:#1C2029;
@@ -102,9 +108,7 @@ html{
   /* Reserve the scrollbar track always. Without this, locking the page behind
      the Contents panel removes the scrollbar and the whole layout jumps left. */
   scrollbar-gutter:stable;
-  /* Themed scrollbars — Firefox and the standards property. */
-  scrollbar-color:var(--rule-strong) transparent;
-  scrollbar-width:thin;
+  scrollbar-width:none;          /* hidden, never unscrollable */
 }
 /* The page does not scroll while the Contents panel owns the screen. */
 html.locked{overflow:hidden}
@@ -114,15 +118,12 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;            /* belt and braces: nothing may scroll the page sideways */
 }
-/* WebKit and Blink still need the pseudo-elements. Applied to the page and to
-   every internal scroller, so a dark theme never shows a light system bar. */
-::-webkit-scrollbar{width:10px; height:10px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{
-  background:var(--rule-strong); border-radius:6px;
-  border:2px solid transparent; background-clip:content-box;
-}
-::-webkit-scrollbar-thumb:hover{background:var(--muted); background-clip:content-box}
+/* Scrollbars are hidden, not disabled. Every region still scrolls by wheel,
+   trackpad, touch, arrow keys, Page Up/Down and Home/End — only the visible
+   track is gone. scrollbar-gutter:stable above still reserves the space, so
+   hiding it cannot shift the layout. */
+::-webkit-scrollbar{width:0; height:0; background:transparent}
+::-webkit-scrollbar-thumb{background:transparent}
 ::-webkit-scrollbar-corner{background:transparent}
 .wrap{max-width:1120px; margin:0 auto; padding:0 1.5rem}
 /* Available to screen readers, absent from the visual layout. */
@@ -155,19 +156,19 @@ body{
 /* Fade the grid out toward the bottom so it reads as texture, not as a table. */
 .bg::after{
   content:""; position:absolute; inset:0;
-  background:linear-gradient(to bottom, transparent 0%, var(--page) 78%);
+  background:linear-gradient(to bottom, transparent 0%, transparent 48%, var(--page) 96%);
 }
 .bg i{
   position:absolute; display:block; width:62vmax; height:62vmax; border-radius:50%;
   will-change:transform;
 }
 .bg i:first-child{
-  top:-24vmax; left:-14vmax;
+  top:-20vmax; left:-12vmax;
   background:radial-gradient(circle at center, var(--glow-a) 0%, transparent 68%);
   animation:drift-a 40s var(--ease) infinite;
 }
 .bg i:last-child{
-  top:-6vmax; right:-22vmax;
+  top:14vmax; right:-20vmax;
   background:radial-gradient(circle at center, var(--glow-b) 0%, transparent 70%);
   animation:drift-b 55s var(--ease) infinite;
 }
@@ -262,12 +263,13 @@ body{
   background:var(--card); border-bottom:1px solid var(--rule);
   box-shadow:var(--shadow); max-height:min(74vh,36rem);
   overflow-y:auto; overscroll-behavior:contain;
-  scrollbar-width:thin; scrollbar-color:var(--rule-strong) transparent;
+  scrollbar-width:none;
 }
 .toc[hidden]{display:none}
 .toc:not([hidden]){animation:fadeUp 200ms var(--ease) both}
-.toc .wrap{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-           gap:0 2.25rem; padding-top:1.1rem; padding-bottom:1.4rem}
+.toc .wrap{display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+           gap:0 2rem; padding-top:1.1rem; padding-bottom:1.4rem}
+@media (max-width:1100px){ .toc .wrap{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .toc h5{
   font-family:var(--font-head); font-size:.68rem; letter-spacing:.14em;
   color:var(--accent); margin:0 0 .45rem;
@@ -308,9 +310,50 @@ body{
 .domains .cnt b{color:var(--ink); font-family:var(--font-head)}
 .domains .none .cnt{color:var(--p3)}
 .tocfoot{
-  grid-column:1/-1; margin:.9rem 0 0; padding-top:.7rem;
+  margin:.9rem 0 0; padding-top:.7rem;
   border-top:1px solid var(--rule); font-size:.78rem; color:var(--muted);
 }
+
+/* Views and build stages: buttons that set a filter combination, so a reader can
+   isolate one slice of the register instead of assembling chips by hand. */
+.views{list-style:none; margin:0; padding:0; display:grid; gap:.1rem}
+.views button{
+  width:100%; cursor:pointer; text-align:left; font-family:var(--font);
+  display:flex; align-items:baseline; gap:.5rem; padding:.34rem .55rem;
+  border:0; border-radius:6px; background:none; color:var(--body); font-size:.85rem;
+  transition:background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.views button:hover{background:var(--sunken); color:var(--accent-hover)}
+.views .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.views .cnt{flex:none; font-size:.68rem; font-variant-numeric:tabular-nums; color:var(--muted)}
+.views .cnt b{color:var(--ink); font-family:var(--font-head)}
+.views .n{
+  flex:none; font-family:var(--mono); font-size:.7rem; color:var(--accent);
+  min-width:1.4rem; font-variant-numeric:tabular-nums;
+}
+.views li.gap{margin-top:.35rem}
+.views .warn-row .cnt b{color:var(--warn)}
+
+/* MVP-only switch above the domain list. */
+.mvponly{
+  display:flex; align-items:center; gap:.45rem; font-size:.76rem; color:var(--muted);
+  padding:.3rem .55rem .5rem; cursor:pointer;
+}
+.mvponly input{accent-color:var(--accent); width:15px; height:15px; cursor:pointer; flex:none}
+
+/* Which slice the register is showing, and how to leave it. */
+.viewpill{
+  display:inline-flex; align-items:center; gap:.5rem; font-size:.78rem;
+  padding:.28rem .3rem .28rem .65rem; border-radius:99px;
+  border:1px solid var(--accent); background:var(--sunken); color:var(--ink);
+}
+.viewpill[hidden]{display:none}
+.viewpill b{font-family:var(--font-head); font-weight:600}
+.viewpill button{
+  cursor:pointer; border:0; background:none; color:var(--muted); font-size:1rem;
+  line-height:1; padding:.1rem .35rem; border-radius:99px;
+}
+.viewpill button:hover{color:var(--stop); background:var(--card)}
 .scrim{
   position:fixed; inset:0; z-index:40; background:var(--scrim);
   animation:fadeIn 160ms var(--ease) both;
@@ -375,10 +418,10 @@ a:hover{color:var(--accent-hover)}
   border:1px solid var(--rule); border-radius:7px; background:var(--card);
   /* Only this container ever scrolls sideways — never the page. */
   overscroll-behavior-x:contain;
-  scrollbar-width:thin; scrollbar-color:var(--rule-strong) transparent;
+  scrollbar-width:none;
 }
 /* A scroller with nothing to scroll should not reserve a track. */
-.scroll::-webkit-scrollbar{height:8px}
+.scroll::-webkit-scrollbar{height:0}
 table{border-collapse:collapse; width:100%; font-size:.845rem}
 thead th{
   background:var(--thead); color:var(--ink); font-family:var(--font-head); font-weight:600;
@@ -392,6 +435,31 @@ tbody tr:last-child td{border-bottom:0}
 tbody tr:hover>td{background:var(--sunken)}
 td.id,th.id{font-family:var(--mono); font-size:.78rem; white-space:nowrap; color:var(--ink); font-weight:600}
 .nowrap{white-space:nowrap}
+
+/* --- one feature, expanded ------------------------------------------------ */
+.expand{
+  font-family:var(--mono); font-size:.78rem; font-weight:600; color:var(--accent);
+  background:none; border:0; padding:0; cursor:pointer; text-align:left;
+  border-bottom:1px dotted var(--rule-strong);
+}
+.expand:hover{color:var(--accent-hover); border-bottom-style:solid}
+.expand[aria-expanded="true"]{color:var(--on-accent); background:var(--accent);
+  border-radius:4px; padding:.05rem .3rem; border-bottom:0}
+tr.detail>td{background:var(--sunken); padding:.85rem 1rem}
+tr.detail:hover>td{background:var(--sunken)}
+.dt{display:grid; gap:.45rem; animation:fadeUp 220ms var(--ease) both}
+.dt-row{display:grid; grid-template-columns:8.5rem 1fr; gap:.5rem .8rem; align-items:baseline}
+.dt-k{
+  font-family:var(--font-head); font-size:.65rem; letter-spacing:.11em; color:var(--accent);
+}
+.dt-v{display:flex; flex-wrap:wrap; gap:.3rem}
+.dt-i{
+  font-size:.8rem; background:var(--card); border:1px solid var(--rule);
+  border-radius:5px; padding:.2rem .5rem;
+}
+.dt-i b{font-family:var(--mono); color:var(--ink)}
+.dt-none{font-size:.8rem; color:var(--muted); font-style:italic}
+@media (max-width:720px){ .dt-row{grid-template-columns:1fr; gap:.15rem} }
 
 /* --- badges --------------------------------------------------------------- */
 .badge{
@@ -783,9 +851,103 @@ details.case[open]>summary::before{transform:rotate(180deg)}
   .tile:hover{transform:none}
 }
 
+
+/* --- the chat surface -----------------------------------------------------
+   A mock, not a client: every reply below is transcribed from the worked
+   examples in the reference document, so what it shows is what was specified.
+   -------------------------------------------------------------------------- */
+.chat{
+  background:var(--card); border:1px solid var(--rule); border-radius:9px;
+  overflow:hidden; margin:0 0 1rem;
+}
+.chat-head{
+  display:flex; align-items:center; gap:.6rem; padding:.7rem .9rem;
+  border-bottom:1px solid var(--rule); background:var(--sunken);
+}
+.chat-dot{
+  width:8px; height:8px; border-radius:50%; background:var(--ok); flex:none;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent);
+}
+.chat-who{font-family:var(--font-head); font-weight:600; color:var(--ink); font-size:.86rem}
+.chat-scope{font-size:.72rem; color:var(--muted); margin-left:auto; text-align:right}
+.chat-log{
+  padding:.9rem; display:grid; gap:.7rem; min-height:14rem;
+  max-height:32rem; overflow-y:auto; overscroll-behavior:contain;
+  scrollbar-width:none;
+}
+.msg{display:grid; gap:.3rem; animation:fadeUp 260ms var(--ease) both}
+.msg.user{justify-items:end}
+.msg .who{
+  font-family:var(--font-head); font-size:.66rem; letter-spacing:.12em; color:var(--muted);
+}
+.bubble{
+  max-width:min(46rem,92%); padding:.6rem .85rem; border-radius:10px; font-size:.88rem;
+  border:1px solid var(--rule);
+}
+.msg.user .bubble{
+  background:var(--accent); color:var(--on-accent); border-color:var(--accent);
+  border-bottom-right-radius:3px;
+}
+.msg.bot .bubble{background:var(--sunken); border-bottom-left-radius:3px}
+.msg.bot .bubble p{margin:0 0 .5rem}
+.msg.bot .bubble p:last-child{margin:0}
+.msg.bot .bubble ul{margin:.1rem 0 .5rem; padding-left:1.1rem}
+.msg.bot .bubble li{margin-bottom:.25rem}
+.bubble .meta{
+  display:flex; flex-wrap:wrap; gap:.35rem; align-items:center;
+  margin:0 0 .5rem; padding-bottom:.45rem; border-bottom:1px solid var(--rule);
+}
+.bubble .obj{font-family:var(--mono); font-size:.72rem; color:var(--muted)}
+.bubble .foot{
+  margin-top:.55rem; padding-top:.45rem; border-top:1px solid var(--rule);
+  display:flex; flex-wrap:wrap; gap:.4rem; align-items:center; font-size:.72rem; color:var(--muted);
+}
+.bubble .lands b{
+  font-family:var(--font-head); font-size:.64rem; letter-spacing:.1em; color:var(--accent);
+  margin-right:.35rem;
+}
+.bubble .act{
+  font-family:var(--font); font-size:.74rem; padding:.2rem .55rem; cursor:default;
+  border:1px dashed var(--rule-strong); border-radius:99px; color:var(--muted);
+}
+.typing{display:inline-flex; gap:.2rem; padding:.2rem 0}
+.typing i{
+  width:5px; height:5px; border-radius:50%; background:var(--muted); display:block;
+  animation:blink 1.1s infinite;
+}
+.typing i:nth-child(2){animation-delay:.18s}
+.typing i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,60%,100%{opacity:.25} 30%{opacity:1}}
+@media (prefers-reduced-motion:reduce){ .typing i{animation:none; opacity:.6} }
+.chat-ask{
+  border-top:1px solid var(--rule); background:var(--sunken); padding:.75rem .9rem;
+}
+.chat-ask h6{
+  font-family:var(--font-head); font-size:.66rem; letter-spacing:.12em; color:var(--accent);
+  margin:0 0 .5rem;
+}
+.asks-row{display:flex; flex-wrap:wrap; gap:.35rem}
+.askgroup+.askgroup{margin-top:.75rem}
+.askgroup h6{
+  font-family:var(--font-head); font-size:.64rem; letter-spacing:.12em; color:var(--accent);
+  margin:0 0 .4rem;
+}
+.ask{
+  font-family:var(--font); font-size:.78rem; text-align:left; cursor:pointer;
+  padding:.32rem .65rem; border:1px solid var(--rule-strong); border-radius:99px;
+  background:var(--card); color:var(--body); display:inline-flex; align-items:center; gap:.4rem;
+  transition:background var(--dur) var(--ease), color var(--dur) var(--ease),
+             border-color var(--dur) var(--ease);
+}
+.ask:hover{border-color:var(--accent); color:var(--accent-hover); background:var(--sunken)}
+.ask[data-done="1"]{opacity:.5}
+.ask .st{font-family:var(--mono); font-size:.62rem; color:var(--muted)}
+@media (max-width:560px){ .bubble{max-width:100%} }
+
 /* --- print ---------------------------------------------------------------- */
 @media print{
-  .topbar,.controls,.reset,.seg,.wf-controls,.wf-progress,.skip,.scrim{display:none !important}
+  .topbar,.controls,.reset,.seg,.wf-controls,.wf-progress,.skip,.scrim,.chat-ask{display:none !important}
+  .chat-log{max-height:none; overflow:visible}
   .reveal,.reveal.in,.panel:not([hidden]),details.case[open]>.case-body,.stepdetail.swap{
     opacity:1 !important; animation:none !important; transform:none !important;
   }
@@ -853,7 +1015,17 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     <div class="wrap">
       <div id="toc-sections"></div>
       <div>
-        <h5>AI SOLUTION AREAS — WHAT THE MVP TAKES</h5>
+        <h5>ISOLATE A SLICE</h5>
+        <ul class="views" id="toc-views"></ul>
+        <h5>BY BUILD STAGE</h5>
+        <ul class="views" id="toc-stages"></ul>
+        <p class="tocfoot" id="stage-foot"></p>
+      </div>
+      <div>
+        <h5>AI SOLUTION AREAS</h5>
+        <label class="mvponly">
+          <input type="checkbox" id="mvponly"> Limit these to the MVP cut
+        </label>
         <ul class="domains" id="toc-domains"></ul>
         <p class="tocfoot" id="toc-foot"></p>
       </div>
@@ -871,16 +1043,20 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     <div class="banner">
       <div class="glyph" aria-hidden="true">&#9888;</div>
       <p><strong>Proposed, not agreed.</strong> Closing question S1 turns this into the build plan.
-      Until then treat every line as a suggestion. The register in
-      <code>mvp/FEATURE-REGISTER.md</code> is the arithmetic authority; this page is a derived view of it.</p>
+      Until then treat every line as a suggestion. The cut grew from 51 to 69 after reviewing the
+      flows in the existing Thermynx implementation — the conversation shell, the case-resolution
+      lifecycle, energy and cost, and three personas the loop cannot close without were all
+      capabilities the register named nowhere. The register in
+      <code>mvp/FEATURE-REGISTER.md</code> is the arithmetic authority; every feature row and count
+      on this page is generated from it by <code>scripts/sync_mvp_html.py</code>.</p>
     </div>
 
     <div class="tiles">
-      <div class="tile"><b>51<span style="font-size:.9rem;color:var(--muted);font-weight:400"> / 101</span></b><span>features in the proposed cut</span></div>
-      <div class="tile"><b>8</b><span>acceptance criteria</span></div>
-      <div class="tile"><b>8</b><span>build stages, 0 through 7</span></div>
-      <div class="tile"><b>5</b><span>questions blocking work now</span></div>
-      <div class="tile"><b>23</b><span>open questions, none closed</span></div>
+      <div class="tile"><b>69<span style="font-size:.9rem;color:var(--muted);font-weight:400"> / 122</span></b><span>features in the proposed cut</span></div>
+      <div class="tile"><b>13</b><span>acceptance criteria</span></div>
+      <div class="tile"><b>10</b><span>build stages, 0 through 9</span></div>
+      <div class="tile"><b>13</b><span>inherited constraints</span></div>
+      <div class="tile"><b>26</b><span>open questions, none closed</span></div>
     </div>
   </div>
 </header>
@@ -968,7 +1144,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 2. WHAT IS IN ===================== -->
 <section id="in">
   <div class="wrap">
-    <h2><span class="num">2</span>What is in — 51 of 101</h2>
+    <h2><span class="num">2</span>What is in — 69 of 122</h2>
     <p class="lede">By domain, with the reason each group earns its place on the loop. Feature IDs are
     references — click one to find it in the register.</p>
     <div class="scroll">
@@ -977,6 +1153,10 @@ details.case[open]>summary::before{transform:rotate(180deg)}
         <tbody>
           <tr><td class="nowrap">Synex Copilot</td><td data-ids="C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,C12"></td>
               <td>The whole point. Ask, resolve context, route, gather evidence, explain, recommend, refuse honestly, draft, route approval, hold task state, respect scope, cite sources</td></tr>
+          <tr><td class="nowrap">Conversation shell</td><td data-ids="C15,C16,C17,C18,C19,C20"></td>
+              <td>If the Copilot is the product, the shell is not optional: thread memory on every route, a conversational front door, read-only data lookup, route transparency, export, and the skill registry all of it routes through</td></tr>
+          <tr><td class="nowrap">Case Resolution</td><td data-ids="RC1,RC2,RC3,RC4,RC5,RC6,RC7,RC8"></td>
+              <td>The lifecycle between a named fault and a closed work order: state machine, curated checklists, capability routing, findings with an explicit cannot-check, the blocking gate, root cause with corrective and preventive actions, three escalation routes, idempotent seeding</td></tr>
           <tr><td class="nowrap">FDD</td><td data-ids="F1,F2,F3,F4,F5,F6,F7,F8,F10,F11,F14"></td>
               <td>The six models, residuals, gates, isolation path, sensor-bias detection, honest ambiguity, NO_DIAGNOSIS, model health, quarantine, &Delta;T check</td></tr>
           <tr><td class="nowrap">Work Orders</td><td data-ids="W1,W2,W3,W4,W8,W9,W10"></td>
@@ -988,7 +1168,10 @@ details.case[open]>summary::before{transform:rotate(180deg)}
           <tr><td class="nowrap">Knowledge</td><td data-ids="K1,K5"></td>
               <td>SOP retrieval with the source shown</td></tr>
           <tr><td class="nowrap">Asset</td><td data-ids="A1"></td><td>One equipment story</td></tr>
-          <tr><td class="nowrap">Roles</td><td data-ids="U3"></td><td>The technician job pack</td></tr>
+          <tr><td class="nowrap">Roles</td><td data-ids="U3,U6,U7,U8"></td>
+              <td>Four personas, because the loop needs a fault judged, worked, approved and governed</td></tr>
+          <tr><td class="nowrap">Energy</td><td data-ids="E1"></td>
+              <td>The efficiency baseline the FDD proxy is measured against</td></tr>
           <tr><td class="nowrap">Safety</td><td data-ids="S1,S4"></td>
               <td>Block safety-critical actions; safety answers only from the SOP</td></tr>
           <tr><td class="nowrap">Control Plane</td><td data-ids="G1,G2,G3,G4,G5,G6"></td>
@@ -1030,6 +1213,10 @@ details.case[open]>summary::before{transform:rotate(180deg)}
               <td>Not needed until the first verified major repair completes</td></tr>
           <tr><td>Break-glass, policy simulation</td><td data-ids="G7,G8"></td>
               <td>Governance maturity, not product proof</td></tr>
+          <tr><td>Energy cost, forecast, optimisation advice</td><td data-ids="E2,E3,E4"></td>
+              <td>The analytics already run on the shared platform database; the MVP needs the baseline, not the advice layer</td></tr>
+          <tr><td>Learning from closed cases</td><td data-ids="F9,V7"></td>
+              <td><strong>Deliberately withheld.</strong> Without a retraction mechanism, one wrong confirmed root cause becomes permanent precedent — inherited constraint 11</td></tr>
         </tbody>
       </table>
     </div>
@@ -1040,8 +1227,11 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <section id="register">
   <div class="wrap">
     <h2><span class="num">4</span>Feature register</h2>
-    <p class="lede">All 101 features across thirteen domains. If a capability is not on this list, it
-    is not being built. <strong>Engine:</strong> <code>SW</code> plain deterministic software ·
+    <p class="lede"><strong>Click any ID</strong> to see everywhere that feature appears — its build
+    stage, the workflow steps that name it, the cases that need it, the conversation turns that
+    demonstrate it, and which of the four models actually does the work. All 122 features across
+    fifteen domains, generated from the register. If a capability is not on this list, it is not being
+    built. <strong>Engine:</strong> <code>SW</code> plain deterministic software ·
     <code>R</code> deterministic rule · <code>ML</code> equipment model ·
     <code>LLM</code> language model / agentic layer.</p>
 
@@ -1070,6 +1260,10 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 
     <p class="tally">
       <span>Showing <b id="shown">101</b> of <b>101</b> features<span id="mvpcount"></span></span>
+      <span class="viewpill" id="viewpill" hidden>
+        <span>Viewing <b id="viewname"></b></span>
+        <button type="button" id="viewclear" aria-label="Clear this view">&times;</button>
+      </span>
       <button class="reset" id="reset" type="button">Reset all filters</button>
     </p>
 
@@ -1093,9 +1287,11 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <section id="workflows">
   <div class="wrap">
     <h2><span class="num">5</span>Workflows — how the features work together</h2>
-    <p class="lede">Six priority workflows. Click any step to see what happens there, who owns the
-    decision, and which registered features do the work. The MVP badge on each workflow is computed
-    from the register — it is not asserted.</p>
+    <p class="lede">Nine workflows — the six priority flows from the reference document, plus three
+    the Thermynx flow review showed were unmodelled: how a session actually starts, how a plain data
+    question is answered, and the case lifecycle between a fault and a work order. Click any step to
+    see what happens there, who owns the decision, and which registered features do the work. The MVP
+    badge on each workflow is computed from the register — it is not asserted.</p>
     <div id="wf-host"></div>
 
     <h3>5.1 Feature &rarr; agent &rarr; control &rarr; outcome</h3>
@@ -1360,6 +1556,17 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <li>An out-of-scope request is blocked with a plain reason and the correct route.</li>
       <li>Every material action has a complete audit trail with a policy version.</li>
       <li>No answer in the acceptance run contains a number absent from the evidence pack.</li>
+      <li>A follow-up — <span class="quote">"and its &Delta;T?"</span> — resolves against the previous
+      turn on <strong>every</strong> route, and every turn is present in the stored thread with no
+      holes. Asked once after each kind of answer.</li>
+      <li>A case cannot leave <span class="state">awaiting findings</span> while a blocking item is
+      unanswered, and a <span class="state">cannot_check</span> answer does <strong>not</strong>
+      satisfy the item — both attempted.</li>
+      <li>Escalating a case up leaves it unassigned and says so, rather than implying somebody has it.</li>
+      <li>Re-running the fault scan over the same window opens no second case for an episode that
+      already has one.</li>
+      <li>Every checklist item shown to a technician traces to the curated library, and no item in
+      the acceptance run was generated by a model.</li>
     </ol>
   </div>
 </section>
@@ -1368,8 +1575,20 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <section id="stages">
   <div class="wrap">
     <h2><span class="num">9</span>Sequencing</h2>
-    <p class="lede">Eight stages. Stages 1 and 2 are the critical path and are the ones blocked by
-    SME questions. Stage 3 has no SME dependency and can start immediately.</p>
+    <p class="lede">Ten stages. Stages 1 and 2 are the critical path and are the ones blocked by SME
+    questions. Stages 3 and 8 have no SME dependency and can start immediately — the Control Plane
+    and the conversation shell are both plain software.</p>
+    <div class="callout">
+      <span class="k">THE LONG POLE NOBODY COSTS FOR</span>
+      <p>Stage 9's dependency is not a threshold. The checklist library is curated content and cannot
+      ship until an SME has reviewed it, because a plausible-but-wrong checklist item directs physical
+      work on pressurised equipment. Several MVP features are also named by no stage at all — the
+      Contents panel counts them, and two are safety features. That is question Q17.</p>
+      <p style="margin-bottom:0">Twelve features have no SME dependency and nothing upstream waiting
+      on them: the Control Plane <code>G1</code>–<code>G6</code> and the conversation shell
+      <code>C15</code>–<code>C20</code>. Contents &rarr; <strong>Can start today</strong> isolates
+      them.</p>
+    </div>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Stage</th><th>Build</th><th class="nowrap">Depends on</th><th class="nowrap">Status</th></tr></thead>
@@ -1382,6 +1601,8 @@ details.case[open]>summary::before{transform:rotate(180deg)}
           <tr><td class="id">5</td><td>Work orders: create, evidence, priority, findings</td><td>Stages 3 and 4</td><td><span class="badge">waiting</span></td></tr>
           <tr><td class="id">6</td><td>Verification and the close gate</td><td>Stages 1, 2 and 5, plus Q15</td><td><span class="badge">waiting</span></td></tr>
           <tr><td class="id">7</td><td>Reports and knowledge retrieval</td><td>Stage 4</td><td><span class="badge">waiting</span></td></tr>
+          <tr><td class="id">8</td><td>Conversation shell: threads, turn memory on every route, the conversational front door, read-only lookup</td><td>Stages 3 and 4</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">can start now</span></td></tr>
+          <tr><td class="id">9</td><td>Case resolution: state machine, curated checklists, capability routing, the blocking gate, escalation routes</td><td>Stages 2 and 5, plus SME review of the checklist library</td><td><span class="badge" style="color:var(--warn);border-color:var(--warn)">blocked on review</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -1647,6 +1868,145 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <p>In all five cases the correct output is <span class="state">NO_DIAGNOSIS</span> plus a
       data-quality or instrumentation action — never a softened guess.</p>
     </div>
+
+
+    <h3>12.6 The conversation</h3>
+    <p style="font-size:.9rem">The Copilot is the product, so this is the product. Every reply is drawn
+    from the worked examples in the reference document and the inherited constraints — none of it is
+    invented for the mock. Fourteen exchanges in four groups: the happy path end to end, the honest
+    "not yet", the refusals, and what a broken tool looks like. Between them they reach
+    <strong>all six</strong> states of the answer contract, and every action shows the surface it
+    lands on.</p>
+
+    <div class="chat">
+      <div class="chat-head">
+        <span class="chat-dot" aria-hidden="true"></span>
+        <span class="chat-who">Synex Copilot</span>
+        <span class="badge" id="chat-mode">ready</span>
+        <span class="chat-scope">Ravi K. · Reliability Engineer<br>Southern Mills · Plant A, Plant B</span>
+      </div>
+      <div class="chat-log" id="chat-log" role="log" aria-live="polite" aria-label="Conversation"></div>
+      <div class="chat-ask">
+        <div id="asks"></div>
+      </div>
+    </div>
+    <p class="tally" style="margin-bottom:1.5rem">
+      <span id="chat-tally"></span>
+      <button class="reset" id="chat-reset" type="button">Start the conversation again</button>
+    </p>
+    <h3>12.7 Where the conversation lands</h3>
+    <p style="font-size:.9rem">Every workflow can be driven from the conversation. That does not make
+    the conversation the only surface — an artefact needs somewhere to live, and a supervisor
+    approving work at 6am is not going to scroll a chat log to find it. The Copilot is a third door to
+    the same capability, not a replacement for the first two.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Surface</th><th>What it holds</th><th class="nowrap">Reached from chat by</th><th class="nowrap">Owned by</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><strong>Copilot</strong></td><td>The conversation, its threads and its exports</td><td>it <em>is</em> the chat</td><td data-ids="C1,C15,C19"></td></tr>
+          <tr><td class="nowrap"><strong>Reports</strong></td><td>Generated reports as artefacts, with lineage and their data window</td><td>REPORT, and every drill-down</td><td data-ids="R1,R5,C22"></td></tr>
+          <tr><td class="nowrap"><strong>Work Orders</strong></td><td>The job, its evidence, its priority calculation, its findings</td><td>after EXECUTE creates one</td><td data-ids="W1,W3,W8"></td></tr>
+          <tr><td class="nowrap"><strong>Cases</strong></td><td>The state machine, the checklists, the escalations, the root cause</td><td>when a fault is explained</td><td data-ids="RC1,RC3,RC6"></td></tr>
+          <tr><td class="nowrap"><strong>Asset</strong></td><td>One equipment story — health, faults, history, documents</td><td>any resolved asset reference</td><td data-ids="A1"></td></tr>
+          <tr><td class="nowrap"><strong>Technician job pack</strong></td><td>Today's work with safety, SOP, history and the findings form</td><td>assignment on a work order</td><td data-ids="U3,RC4"></td></tr>
+          <tr><td class="nowrap"><strong>Supervisor queue</strong></td><td>Approvals waiting, cases blocked, closures verification has not cleared</td><td>NEEDS_APPROVAL, and every held close</td><td data-ids="U7,C9,W9"></td></tr>
+          <tr><td class="nowrap"><strong>Administrator</strong></td><td>Scope, the approval matrix, the policy version decisions are stamped with</td><td>an access request</td><td data-ids="U8,G1,G3"></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <span class="k">THE RULE THIS FOLLOWS</span>
+      <p>The conversation initiates and narrates; the pages hold the record. Raising a work order in
+      chat is not finished when the Copilot says so — it is finished when WO-2291 exists on the Work
+      Orders surface with its evidence attached and its verification task registered.</p>
+    </div>
+
+    <h3>12.8 Agentic, not multi-agent — and why</h3>
+    <p style="font-size:.9rem">The Copilot plans, calls tools, observes and loops: it is agentic.
+    It is not a swarm of agents negotiating, and that is a decision rather than an omission.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Pattern</th><th>Status</th><th>Reasoning</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><strong>Single governed agent</strong><br><span class="dash">plan → tools → ground → decide</span></td>
+              <td><span class="badge mvp">MVP</span></td>
+              <td>One turn, fourteen stages, one audit record. Every claim in an answer can be traced to the tool call that produced it and the policy version that allowed it.</td></tr>
+          <tr><td class="nowrap">Sequential multi-step work</td>
+              <td><span class="badge mvp">MVP</span></td>
+              <td><code>C10</code> carries a job from investigation to work order to verification across turns. Multi-step does not require multi-agent.</td></tr>
+          <tr><td class="nowrap">Parallel multi-agent orchestration</td>
+              <td><span class="badge ph2">Phase 2</span></td>
+              <td>In the existing implementation the orchestration route is precisely the one that neither reads the conversation nor saves its turn. Concurrency also breaks attribution: when a technician acts on a claim, "which agent said this" must have one answer.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>12.9 The four models, and the rules between them</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Model</th><th class="nowrap">Role</th><th>Responsibility</th></tr></thead>
+        <tbody>
+          <tr><td class="id">gemma4:26b-a4b-it-qat</td><td>Brain</td><td>Reasoning and the final answer</td></tr>
+          <tr><td class="id">devstral:latest</td><td>Tool executor</td><td>ReAct loop and read-only NL&rarr;SQL</td></tr>
+          <tr><td class="id">phi4</td><td>Router · auditor · RAG</td><td>Narration, auditing, routing arbitration, grounding</td></tr>
+          <tr><td class="id">nomic-embed-text</td><td>Embeddings</td><td>Local 768-dimension embeddings</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout stop">
+      <span class="k">FOUR RULES THAT KEEP THEM HONEST</span>
+      <p>The brain never calls tools directly. The executor never writes the final user-facing answer.
+      The auditor must not be the model that wrote the answer. Embeddings never leave the site.
+      Do not invent a fifth model.</p>
+    </div>
+
+    <h3>12.10 Agent families and their hard boundaries</h3>
+    <p style="font-size:.88rem">Ten families. A family is a scope and a boundary, not a running
+    process — which is what makes them enforceable by plain software rather than by prompt.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Family</th><th>Core job</th><th class="nowrap">Hard boundary</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap">Orchestrator</td><td>Coordinate workflow and state</td><td class="hi">Cannot bypass a rule</td></tr>
+          <tr><td class="nowrap">Asset</td><td>Asset context and health</td><td class="hi">Asset scope only</td></tr>
+          <tr><td class="nowrap">Reliability</td><td>ML and FDD evidence, diagnosis support</td><td class="hi">Must use evidence</td></tr>
+          <tr><td class="nowrap">Maintenance</td><td>Maintenance suggestion and work order drafting</td><td class="hi">Cannot bypass safety</td></tr>
+          <tr><td class="nowrap">Work order</td><td>Controlled work order operations</td><td class="hi">Tool gateway required</td></tr>
+          <tr><td class="nowrap">Knowledge / RAG</td><td>Authorized knowledge retrieval</td><td class="hi">Tenant and source scoped</td></tr>
+          <tr><td class="nowrap">Planning</td><td>Schedule and assignment suggestion</td><td class="hi">Cannot override skills or safety</td></tr>
+          <tr><td class="nowrap">Inventory</td><td>Parts availability and reservation suggestion</td><td class="hi">Financial thresholds enforced</td></tr>
+          <tr><td class="nowrap">Verification</td><td>Repair outcome determination</td><td class="hi">Evidence required</td></tr>
+          <tr><td class="nowrap">Reporting</td><td>Role-aware report generation</td><td class="hi">No scope expansion</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <span class="k">WHAT EVERY PRODUCTION AGENT MUST REGISTER</span>
+      <p>Owner · purpose · version · prompt or instruction version · allowed tools · allowed data
+      scopes · risk class · evaluation suite · service target · rollback version · status. Eleven
+      fields, held by <code>C20</code>. An agent that cannot state all eleven does not run.</p>
+    </div>
+
+    <h3>12.11 The skills the MVP needs</h3>
+    <p style="font-size:.88rem">Seven of ten. A skill is not a feature of its own — it is a named
+    entry in the <code>C20</code> registry with a tool scope and a control level.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Skill</th><th>What it does</th><th class="nowrap">In MVP</th><th class="nowrap">Delivered by</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap">Converse</td><td>Greeting, capability, starter prompts — no telemetry touched</td><td><span class="badge mvp">yes</span></td><td data-ids="C16"></td></tr>
+          <tr><td class="nowrap">Look up</td><td>Exact numbers from the database, read-only</td><td><span class="badge mvp">yes</span></td><td data-ids="C17"></td></tr>
+          <tr><td class="nowrap">Explain</td><td>The FDD rule path in plain English</td><td><span class="badge mvp">yes</span></td><td data-ids="C5"></td></tr>
+          <tr><td class="nowrap">Investigate</td><td>Multi-step enquiry across FDD, trends, history, knowledge</td><td><span class="badge mvp">yes</span></td><td data-ids="C4,C6"></td></tr>
+          <tr><td class="nowrap">Prepare work</td><td>Draft the work order, its priority and its evidence</td><td><span class="badge mvp">yes</span></td><td data-ids="C8,W1,W4"></td></tr>
+          <tr><td class="nowrap">Resolve</td><td>Drive the case through its checklists to a root cause</td><td><span class="badge mvp">yes</span></td><td data-ids="RC1,RC6"></td></tr>
+          <tr><td class="nowrap">Verify</td><td>Compare post-work evidence, return one of three outcomes</td><td><span class="badge mvp">yes</span></td><td data-ids="V1,V6"></td></tr>
+          <tr><td class="nowrap">Optimise</td><td>Setpoint and staging advice — advice only, never a command</td><td><span class="badge ph2">Phase 2</span></td><td data-ids="E4"></td></tr>
+          <tr><td class="nowrap">Brief</td><td>Condense a period for a manager or executive</td><td><span class="badge ph2">Phase 2</span></td><td data-ids="C14,U2"></td></tr>
+          <tr><td class="nowrap">Orchestrate</td><td>A planner running several skills as one job</td><td><span class="badge ph2">Phase 2</span></td><td data-ids="C10"></td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </section>
 
@@ -1793,134 +2153,291 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 </footer>
 
 <script>
-/* --------------------------------------------------------------------------
-   Feature register — transcribed from mvp/FEATURE-REGISTER.md, which stays
-   the arithmetic authority. 101 rows, 51 of them phase MVP.
-   -------------------------------------------------------------------------- */
+/* BEGIN GENERATED — scripts/sync_mvp_html.py. Do not edit by hand. */
+/* 128 features from mvp/FEATURE-REGISTER.md,
+   75 of them in the proposed MVP cut. */
 const DOMAINS = {
-  C:'Synex Copilot', R:'Reports', W:'Work Orders', A:'Asset Intelligence',
-  F:'Reliability & FDD', K:'Knowledge', PL:'Planning', I:'Inventory',
-  L:'Alerts', V:'Verification', U:'Roles', S:'Safety', G:'Control Plane'
+  C:"Synex Copilot",
+  R:"Reports",
+  W:"Work Orders",
+  A:"Asset Intelligence",
+  F:"Reliability & FDD",
+  RC:"Case Resolution",
+  K:"Knowledge",
+  PL:"Planning",
+  I:"Inventory",
+  L:"Alerts",
+  V:"Verification",
+  E:"Energy & Cost",
+  EV:"Evaluation",
+  U:"Roles",
+  S:"Safety",
+  G:"Control Plane",
 };
 
 const FEATURES = [
-  {id:'C1', d:'C', n:'Natural-language ask across the platform', w:'One entry point to reports, assets, faults, work orders and documents.', u:'Everyone', e:['LLM','SW'], p:'P0', ph:'MVP'},
-  {id:'C2', d:'C', n:'Context resolution', w:'Understands "this" and "it" from the screen and the conversation.', u:'Everyone', e:['LLM','SW'], p:'P0', ph:'MVP'},
-  {id:'C3', d:'C', n:'Intent routing', w:'Chooses the right skill and tools for the request.', u:'Everyone', e:['LLM'], p:'P0', ph:'MVP'},
-  {id:'C4', d:'C', n:'Evidence pack assembly', w:'Collects the readings, versions and records behind every answer.', u:'Everyone', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'C5', d:'C', n:'Grounded fault explanation', w:'Explains the FDD rule path in plain English, without inventing it.', u:'Reliability', e:['LLM'], p:'P0', ph:'MVP'},
-  {id:'C6', d:'C', n:'Ranked recommendation', w:'Proposes next actions with reason, confidence and alternatives.', u:'Maintenance', e:['LLM','R'], p:'P0', ph:'MVP'},
-  {id:'C7', d:'C', n:'Honest uncertainty', w:'Returns NO_DIAGNOSIS when gates fail or signals conflict.', u:'Everyone', e:['R'], p:'P0', ph:'MVP'},
-  {id:'C8', d:'C', n:'Draft before write', w:'Shows the complete action before anything is saved.', u:'Everyone', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'C9', d:'C', n:'Approval request routing', w:'Prepares the request and names the approver; never self-approves.', u:'Supervisor', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'C10', d:'C', n:'Multi-step task memory', w:'Carries a job from investigation to work order to verification.', u:'Everyone', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'C11', d:'C', n:'Role-scoped answers', w:'Same assistant, different scope and depth per role.', u:'Everyone', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'C12', d:'C', n:'Source-cited knowledge answers', w:'Quotes the SOP or manual and shows where it came from.', u:'Technician', e:['LLM'], p:'P0', ph:'MVP'},
-  {id:'C13', d:'C', n:'Watches', w:'Monitored condition with a notification when the rule fires.', u:'Plant Manager', e:['R'], p:'P1', ph:'Phase 2'},
-  {id:'C14', d:'C', n:'Executive briefing', w:'Condenses the week into a short business summary with drill-down.', u:'Executive', e:['LLM'], p:'P1', ph:'Phase 2'},
-
-  {id:'R1', d:'R', n:'Ask a question of a report', w:'Conversational follow-up on any report.', u:'All', e:['LLM'], p:'P0', ph:'MVP'},
-  {id:'R2', d:'R', n:'Create report from natural language', w:'Builds a report from a spoken or typed request.', u:'Manager', e:['LLM','SW'], p:'P0', ph:'Phase 2'},
-  {id:'R3', d:'R', n:'Explain a KPI change', w:'Traces a movement to the equipment, faults and work behind it.', u:'Manager', e:['LLM','SW'], p:'P0', ph:'MVP'},
-  {id:'R4', d:'R', n:'Compare sites, assets or periods', w:'Aligns two scopes on identical metric definitions.', u:'Regional Head', e:['SW'], p:'P0', ph:'Phase 2'},
-  {id:'R5', d:'R', n:'Drill down to source records', w:'Every number opens to the records that produced it.', u:'Analyst', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'R6', d:'R', n:'AI narrative', w:'Writes the commentary over verified metrics only.', u:'Executive', e:['LLM'], p:'P1', ph:'Phase 2'},
-  {id:'R7', d:'R', n:'Schedule and deliver', w:'Recurring role-aware delivery.', u:'Manager', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'R8', d:'R', n:'Export with lineage', w:'Export carries metric definitions and source references.', u:'Analyst', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'R9', d:'R', n:'Customer-scoped report', w:'Customers see only their own sites and assets.', u:'Customer', e:['SW'], p:'P0', ph:'Phase 2'},
-  {id:'R10', d:'R', n:'KPI reconciliation', w:'Reported numbers are checked against the source calculation.', u:'Finance', e:['SW'], p:'P0', ph:'MVP'},
-
-  {id:'W1', d:'W', n:'Create work order from chat', w:'From a sentence, with the evidence attached.', u:'Maintenance', e:['LLM','SW'], p:'P0', ph:'MVP'},
-  {id:'W2', d:'W', n:'Create work order from a fault', w:'Direct from an FDD finding, pre-populated.', u:'Reliability', e:['R','SW'], p:'P0', ph:'MVP'},
-  {id:'W3', d:'W', n:'Evidence auto-attached', w:'Residuals, gates, trends and similar cases travel with the job.', u:'Technician', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'W4', d:'W', n:'Priority calculation', w:'Deterministic formula over criticality, risk, SLA and production impact.', u:'Planner', e:['R'], p:'P0', ph:'MVP'},
-  {id:'W5', d:'W', n:'Maintenance window planning', w:'Finds a production-compatible slot.', u:'Planner', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'W6', d:'W', n:'Technician assignment', w:'Matches skills, certifications and availability.', u:'Supervisor', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'W7', d:'W', n:'Parts check and reservation', w:'Stock, alternates, delivery impact.', u:'Stores', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'W8', d:'W', n:'Findings capture', w:'Structured technician findings, readings and photographs.', u:'Technician', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'W9', d:'W', n:'Verification gate before close', w:'A work order cannot close unproven.', u:'Supervisor', e:['R'], p:'P0', ph:'MVP'},
-  {id:'W10', d:'W', n:'Reopen on failed repair', w:'Previous findings preserved for the next technician.', u:'Supervisor', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'W11', d:'W', n:'Closure summary', w:'What was found, what was done, what it proved.', u:'Manager', e:['LLM'], p:'P1', ph:'Phase 2'},
-  {id:'W12', d:'W', n:'SLA escalation', w:'Routes when work approaches or breaches its SLA.', u:'Manager', e:['R'], p:'P1', ph:'Phase 2'},
-
-  {id:'A1', d:'A', n:'One equipment story', w:'Health, status, faults, history, documents and risks in one view.', u:'All', e:['SW','LLM'], p:'P1', ph:'MVP'},
-  {id:'A2', d:'A', n:'Health score with reasons', w:'The number plus the contributing factors.', u:'Reliability', e:['R','ML'], p:'P1', ph:'Phase 2'},
-  {id:'A3', d:'A', n:'Dependency and served load', w:'What this machine feeds and what feeds it.', u:'Operations', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'A4', d:'A', n:'Like-for-like comparison', w:'Compares similar machines under similar conditions only.', u:'Reliability', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'A5', d:'A', n:'Repeat-failure detection', w:'Surfaces the assets consuming disproportionate effort.', u:'Reliability', e:['R'], p:'P1', ph:'Phase 2'},
-
-  {id:'F1', d:'F', n:'Six normal-operation models per chiller', w:'DP, SP, DT, Power, Compressor Amps, Condenser Leaving.', u:'Reliability', e:['ML'], p:'P0', ph:'MVP'},
-  {id:'F2', d:'F', n:'Residual computation', w:'Actual minus predicted, with a validity flag per residual.', u:'Reliability', e:['ML'], p:'P0', ph:'MVP'},
-  {id:'F3', d:'F', n:'Operating gates', w:'Running steady, load above floor, flows valid, no setpoint change.', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-  {id:'F4', d:'F', n:'Persistence and volatility test', w:'Separates a fault from a passing disturbance.', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-  {id:'F5', d:'F', n:'Deterministic isolation path', w:'Power to head to water side vs refrigerant side to a single class.', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-  {id:'F6', d:'F', n:'Sensor bias detection', w:'Rules out instrumentation before dispatching a crew.', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-  {id:'F7', d:'F', n:'Honest ambiguity labels', w:'High head ambiguous; undercharge and restriction kept combined.', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-  {id:'F8', d:'F', n:'NO_DIAGNOSIS on failed gates', w:'No softened guess when the inputs are not trustworthy.', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-  {id:'F9', d:'F', n:'Similar verified case matching', w:'Past cases with the same signature and a proven fix.', u:'Maintenance', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'F10', d:'F', n:'Model health and drift monitoring', w:'Detects a model going quietly stale.', u:'Data / Reliability', e:['ML','R'], p:'P0', ph:'MVP'},
-  {id:'F11', d:'F', n:'Model quarantine', w:'A failed model stops being used, not merely flagged.', u:'Data / Reliability', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'F12', d:'F', n:'Re-baseline after verified major work', w:'A repaired machine may have a legitimately new normal.', u:'Reliability', e:['ML'], p:'P1', ph:'Phase 2'},
-  {id:'F13', d:'F', n:'Cooling tower assessment', w:'Wet bulb, approach and tower running hours.', u:'Reliability', e:['ML','R'], p:'P1', ph:'Phase 2'},
-  {id:'F14', d:'F', n:'Chilled-water delta-T health check', w:'Flags sustained low delta-T against the design band.', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-
-  {id:'K1', d:'K', n:'SOP search', w:'Approved procedures, retrieved with the source shown.', u:'Technician', e:['LLM'], p:'P1', ph:'MVP'},
-  {id:'K2', d:'K', n:'Manufacturer manual search', w:'What the OEM actually says about this model.', u:'Technician', e:['LLM'], p:'P1', ph:'Phase 2'},
-  {id:'K3', d:'K', n:'Work order history search', w:'How this was fixed last time.', u:'Maintenance', e:['LLM'], p:'P1', ph:'Phase 2'},
-  {id:'K4', d:'K', n:'Verified case search', w:'Only fixes that were proven to work.', u:'Reliability', e:['LLM'], p:'P1', ph:'Phase 2'},
-  {id:'K5', d:'K', n:'Source-visible answers', w:'Every important answer names its document and version.', u:'All', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'K6', d:'K', n:'Explain a technical document simply', w:'Turns dense OEM text into plain English.', u:'Technician', e:['LLM'], p:'P2', ph:'Phase 3'},
-
-  {id:'PL1', d:'PL', n:'Prioritised work queue', w:'Ranked by risk, criticality, SLA and production impact.', u:'Planner', e:['R'], p:'P1', ph:'Phase 2'},
-  {id:'PL2', d:'PL', n:'Maintenance window finder', w:'Slots that production can actually give.', u:'Planner', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'PL3', d:'PL', n:'Certification-aware matching', w:'Only people qualified for the task.', u:'Supervisor', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'PL4', d:'PL', n:'Workload balance', w:'Avoids overloading one crew.', u:'Supervisor', e:['SW'], p:'P2', ph:'Phase 3'},
-  {id:'PL5', d:'PL', n:'Plan feasibility answer', w:'Can we actually do this tomorrow, in one turn.', u:'Planner', e:['SW','LLM'], p:'P1', ph:'Phase 2'},
-
-  {id:'I1', d:'I', n:'Stock check', w:'Availability and location.', u:'Stores', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'I2', d:'I', n:'Reservation against a work order', w:'Parts held for the job.', u:'Stores', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'I3', d:'I', n:'Alternates', w:'Acceptable substitutes when the primary part is out.', u:'Stores', e:['SW'], p:'P2', ph:'Phase 3'},
-  {id:'I4', d:'I', n:'Delivery impact on schedule', w:'What the lead time does to the plan.', u:'Planner', e:['SW'], p:'P2', ph:'Phase 3'},
-
-  {id:'L1', d:'L', n:'Duplicate grouping', w:'Forty alerts become one problem.', u:'Operations', e:['R'], p:'P1', ph:'Phase 2'},
-  {id:'L2', d:'L', n:'Alert explanation', w:'Why this fired, in plain English.', u:'Operations', e:['LLM'], p:'P1', ph:'Phase 2'},
-  {id:'L3', d:'L', n:'Prioritisation', w:'Ranked, not listed.', u:'Operations', e:['R'], p:'P1', ph:'Phase 2'},
-  {id:'L4', d:'L', n:'Routing', w:'To the person who can act on it.', u:'Operations', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'L5', d:'L', n:'Escalation', w:'When it is not picked up or crosses a threshold.', u:'Manager', e:['R'], p:'P1', ph:'Phase 2'},
-  {id:'L6', d:'L', n:'Noise measurement', w:'Alert volume tracked as a product metric.', u:'Product', e:['SW'], p:'P2', ph:'Phase 3'},
-
-  {id:'V1', d:'V', n:'Post-work residual comparison', w:'Are the residuals back inside the band?', u:'Reliability', e:['ML','R'], p:'P0', ph:'MVP'},
-  {id:'V2', d:'V', n:'Valid comparison window', w:'Comparison only under comparable operating conditions.', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-  {id:'V3', d:'V', n:'Persistence across load range', w:'Improvement must hold, not appear once.', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-  {id:'V4', d:'V', n:'Fault-clear check', w:'Does the FDD fault clear under valid conditions?', u:'Reliability', e:['R'], p:'P0', ph:'MVP'},
-  {id:'V5', d:'V', n:'Business outcome check', w:'Did the expected energy or downtime improvement appear?', u:'Manager', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'V6', d:'V', n:'PASS / FAIL / UNKNOWN', w:'Three outcomes; UNKNOWN is real and common.', u:'Supervisor', e:['R'], p:'P0', ph:'MVP'},
-  {id:'V7', d:'V', n:'Verified-case memory', w:'Signature, fix and proven outcome written back for reuse.', u:'Reliability', e:['SW'], p:'P1', ph:'Phase 2'},
-
-  {id:'U1', d:'U', n:'Customer view', w:'Only their own sites, assets and reports.', u:'Customer', e:['SW'], p:'P0', ph:'Phase 2'},
-  {id:'U2', d:'U', n:'Executive brief', w:'The answer, not twenty screens.', u:'Executive', e:['LLM'], p:'P1', ph:'Phase 2'},
-  {id:'U3', d:'U', n:'Technician job pack', w:'Job context, safety, SOP, history, parts, findings.', u:'Technician', e:['LLM','SW'], p:'P0', ph:'MVP'},
-  {id:'U4', d:'U', n:'Planner queue view', w:'What can be done, when, by whom.', u:'Planner', e:['SW'], p:'P1', ph:'Phase 2'},
-  {id:'U5', d:'U', n:'Permission explanation', w:'Why a user cannot see a report.', u:'Administrator', e:['SW'], p:'P2', ph:'Phase 3'},
-
-  {id:'S1', d:'S', n:'Safety-critical action block', w:'The AI stops; it does not weigh the risk itself.', u:'EHS', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'S2', d:'S', n:'Permit and isolation gate', w:'Permit, LOTO and isolation checks before work.', u:'EHS', e:['SW'], p:'P0', ph:'Phase 2'},
-  {id:'S3', d:'S', n:'Qualification check', w:'Only qualified people are proposed for restricted work.', u:'Supervisor', e:['SW'], p:'P0', ph:'Phase 2'},
-  {id:'S4', d:'S', n:'Safety answers from the SOP', w:'Never answered from model memory.', u:'Technician', e:['LLM'], p:'P0', ph:'MVP'},
-  {id:'S5', d:'S', n:'EHS escalation', w:'Routed per the escalation matrix.', u:'EHS', e:['R'], p:'P0', ph:'Phase 2'},
-
-  {id:'G1', d:'G', n:'Identity and scope per turn', w:'Scope recomputed every turn, never inherited.', u:'Platform', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'G2', d:'G', n:'Risk classification', w:'Low / medium / high / safety-critical / system-critical.', u:'Platform', e:['R'], p:'P0', ph:'MVP'},
-  {id:'G3', d:'G', n:'Approval engine', w:'Who must approve what, under which conditions.', u:'Platform', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'G4', d:'G', n:'Tool gateway', w:'Schema validation, credentials, safe retry, side-effect control.', u:'Platform', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'G5', d:'G', n:'Idempotency', w:'A retry can never create a second work order.', u:'Platform', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'G6', d:'G', n:'Audit trail', w:'Every material action and decision, permanently.', u:'Audit', e:['SW'], p:'P0', ph:'MVP'},
-  {id:'G7', d:'G', n:'Break-glass', w:'Emergency elevation that is temporary, recorded and expiring.', u:'Security', e:['SW'], p:'P1', ph:'Phase 3'},
-  {id:'G8', d:'G', n:'Policy versioning and simulation', w:'Test a rule change before it goes live.', u:'Governance', e:['SW'], p:'P1', ph:'Phase 3'}
+  {id:"C1", d:"C", n:"Natural-language ask across the platform",
+   w:"One entry point to reports, assets, faults, work orders and documents.", u:"Everyone", e:["LLM", "SW"], p:"P0", ph:"MVP"},
+  {id:"C2", d:"C", n:"Context resolution",
+   w:"Understands \"this\" and \"it\" from the screen and the conversation.", u:"Everyone", e:["LLM", "SW"], p:"P0", ph:"MVP"},
+  {id:"C3", d:"C", n:"Intent routing",
+   w:"Chooses the right skill and tools for the request.", u:"Everyone", e:["LLM"], p:"P0", ph:"MVP"},
+  {id:"C4", d:"C", n:"Evidence pack assembly",
+   w:"Collects the readings, versions and records behind every answer.", u:"Everyone", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"C5", d:"C", n:"Grounded fault explanation",
+   w:"Explains the FDD rule path in plain English, without inventing it.", u:"Reliability", e:["LLM"], p:"P0", ph:"MVP"},
+  {id:"C6", d:"C", n:"Ranked recommendation",
+   w:"Proposes next actions with reason, confidence and alternatives.", u:"Maintenance", e:["LLM", "R"], p:"P0", ph:"MVP"},
+  {id:"C7", d:"C", n:"Honest uncertainty",
+   w:"Returns NO_DIAGNOSIS when gates fail or signals conflict.", u:"Everyone", e:["R"], p:"P0", ph:"MVP"},
+  {id:"C8", d:"C", n:"Draft before write",
+   w:"Shows the complete action before anything is saved.", u:"Everyone", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"C9", d:"C", n:"Approval request routing",
+   w:"Prepares the request and names the approver; never self-approves.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"C10", d:"C", n:"Multi-step task memory",
+   w:"Carries a job from investigation to work order to verification.", u:"Everyone", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"C11", d:"C", n:"Role-scoped answers",
+   w:"Same assistant, different scope and depth per role.", u:"Everyone", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"C12", d:"C", n:"Source-cited knowledge answers",
+   w:"Quotes the SOP or manual and shows where it came from.", u:"Technician", e:["LLM"], p:"P0", ph:"MVP"},
+  {id:"C13", d:"C", n:"Watches",
+   w:"Monitored condition with a notification when the rule fires.", u:"Plant Manager", e:["R"], p:"P1", ph:"Phase 2"},
+  {id:"C14", d:"C", n:"Executive briefing",
+   w:"Condenses the week into a short business summary with drill-down.", u:"Executive", e:["LLM"], p:"P1", ph:"Phase 2"},
+  {id:"C15", d:"C", n:"Conversation thread and turn memory",
+   w:"Per-session memory on **every** route, with every turn persisted.", u:"Everyone", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"C16", d:"C", n:"Conversational fast path",
+   w:"Greetings and capability questions answered at once, with starter prompts, without touching telemetry.", u:"Everyone", e:["SW", "LLM"], p:"P1", ph:"MVP"},
+  {id:"C17", d:"C", n:"Read-only data lookup in natural language",
+   w:"Exact numbers, counts and averages from the database. Read-only, always.", u:"Analyst", e:["LLM", "SW"], p:"P0", ph:"MVP"},
+  {id:"C18", d:"C", n:"Route transparency",
+   w:"Names the skill that answered and why it was chosen.", u:"Everyone", e:["SW"], p:"P1", ph:"MVP"},
+  {id:"C19", d:"C", n:"Thread export with evidence",
+   w:"The conversation and the evidence behind it leave as one record.", u:"All", e:["SW"], p:"P1", ph:"MVP"},
+  {id:"C20", d:"C", n:"Skill registry",
+   w:"The named set of analysis skills, each with its tool scope and its control level. What `C3` routes to and `C18` reports.", u:"Platform", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"C21", d:"C", n:"Figure discipline",
+   w:"Every number is either a value or a stated absence \u2014 never both, never neither.", u:"Everyone", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"C22", d:"C", n:"Data window on every artefact",
+   w:"Every answer, report and export states the period it was computed over.", u:"All", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"R1", d:"R", n:"Ask a question of a report",
+   w:"Conversational follow-up on any report.", u:"All", e:["LLM"], p:"P0", ph:"MVP"},
+  {id:"R2", d:"R", n:"Create report from natural language",
+   w:"Builds a report from a spoken or typed request.", u:"Manager", e:["LLM", "SW"], p:"P0", ph:"Phase 2"},
+  {id:"R3", d:"R", n:"Explain a KPI change",
+   w:"Traces a movement to the equipment, faults and work behind it.", u:"Manager", e:["LLM", "SW"], p:"P0", ph:"MVP"},
+  {id:"R4", d:"R", n:"Compare sites, assets or periods",
+   w:"Aligns two scopes on identical metric definitions.", u:"Regional Head", e:["SW"], p:"P0", ph:"Phase 2"},
+  {id:"R5", d:"R", n:"Drill down to source records",
+   w:"Every number opens to the records that produced it.", u:"Analyst", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"R6", d:"R", n:"AI narrative",
+   w:"Writes the commentary over verified metrics only.", u:"Executive", e:["LLM"], p:"P1", ph:"Phase 2"},
+  {id:"R7", d:"R", n:"Schedule and deliver",
+   w:"Recurring role-aware delivery.", u:"Manager", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"R8", d:"R", n:"Export with lineage",
+   w:"Export carries metric definitions and source references.", u:"Analyst", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"R9", d:"R", n:"Customer-scoped report",
+   w:"Customers see only their own sites and assets.", u:"Customer", e:["SW"], p:"P0", ph:"Phase 2"},
+  {id:"R10", d:"R", n:"KPI reconciliation",
+   w:"Reported numbers are checked against the source calculation.", u:"Finance", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"W1", d:"W", n:"Create work order from chat",
+   w:"From a sentence, with the evidence attached.", u:"Maintenance", e:["LLM", "SW"], p:"P0", ph:"MVP"},
+  {id:"W2", d:"W", n:"Create work order from a fault",
+   w:"Direct from an FDD finding, pre-populated.", u:"Reliability", e:["R", "SW"], p:"P0", ph:"MVP"},
+  {id:"W3", d:"W", n:"Evidence auto-attached",
+   w:"Residuals, gates, trends and similar cases travel with the job.", u:"Technician", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"W4", d:"W", n:"Priority calculation",
+   w:"Deterministic formula over criticality, risk, SLA and production impact.", u:"Planner", e:["R"], p:"P0", ph:"MVP"},
+  {id:"W5", d:"W", n:"Maintenance window planning",
+   w:"Finds a production-compatible slot.", u:"Planner", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"W6", d:"W", n:"Technician assignment",
+   w:"Matches skills, certifications and availability.", u:"Supervisor", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"W7", d:"W", n:"Parts check and reservation",
+   w:"Stock, alternates, delivery impact.", u:"Stores", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"W8", d:"W", n:"Findings capture",
+   w:"Structured technician findings, readings and photographs.", u:"Technician", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"W9", d:"W", n:"Verification gate before close",
+   w:"A work order cannot close unproven.", u:"Supervisor", e:["R"], p:"P0", ph:"MVP"},
+  {id:"W10", d:"W", n:"Reopen on failed repair",
+   w:"Previous findings preserved for the next technician.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"W11", d:"W", n:"Closure summary",
+   w:"What was found, what was done, what it proved.", u:"Manager", e:["LLM"], p:"P1", ph:"Phase 2"},
+  {id:"W12", d:"W", n:"SLA escalation",
+   w:"Routes when work approaches or breaches its SLA.", u:"Manager", e:["R"], p:"P1", ph:"Phase 2"},
+  {id:"A1", d:"A", n:"One equipment story",
+   w:"Health, status, faults, history, documents and risks in one view.", u:"All", e:["SW", "LLM"], p:"P1", ph:"MVP"},
+  {id:"A2", d:"A", n:"Health score with reasons",
+   w:"The number plus the contributing factors.", u:"Reliability", e:["R", "ML"], p:"P1", ph:"Phase 2"},
+  {id:"A3", d:"A", n:"Dependency and served load",
+   w:"What this machine feeds and what feeds it.", u:"Operations", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"A4", d:"A", n:"Like-for-like comparison",
+   w:"Compares similar machines under similar conditions only.", u:"Reliability", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"A5", d:"A", n:"Repeat-failure detection",
+   w:"Surfaces the assets consuming disproportionate effort.", u:"Reliability", e:["R"], p:"P1", ph:"Phase 2"},
+  {id:"F1", d:"F", n:"Six normal-operation models per chiller",
+   w:"DP, SP, DT, Power, Compressor Amps, Condenser Leaving.", u:"Reliability", e:["ML"], p:"P0", ph:"MVP"},
+  {id:"F2", d:"F", n:"Residual computation",
+   w:"Actual minus predicted, with a validity flag per residual.", u:"Reliability", e:["ML"], p:"P0", ph:"MVP"},
+  {id:"F3", d:"F", n:"Operating gates",
+   w:"Running steady, load above floor, flows valid, no setpoint change.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"F4", d:"F", n:"Persistence and volatility test",
+   w:"Separates a fault from a passing disturbance.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"F5", d:"F", n:"Deterministic isolation path",
+   w:"Power to head to water side vs refrigerant side to a single class.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"F6", d:"F", n:"Sensor bias detection",
+   w:"Rules out instrumentation before dispatching a crew.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"F7", d:"F", n:"Honest ambiguity labels",
+   w:"High head ambiguous; undercharge and restriction kept combined.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"F8", d:"F", n:"NO_DIAGNOSIS on failed gates",
+   w:"No softened guess when the inputs are not trustworthy.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"F9", d:"F", n:"Similar verified case matching",
+   w:"Past cases with the same signature and a proven fix.", u:"Maintenance", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"F10", d:"F", n:"Model health and drift monitoring",
+   w:"Detects a model going quietly stale.", u:"Data / Reliability", e:["ML", "R"], p:"P0", ph:"MVP"},
+  {id:"F11", d:"F", n:"Model quarantine",
+   w:"A failed model stops being used, not merely flagged.", u:"Data / Reliability", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"F12", d:"F", n:"Re-baseline after verified major work",
+   w:"A repaired machine may have a legitimately new normal.", u:"Reliability", e:["ML"], p:"P1", ph:"Phase 2"},
+  {id:"F13", d:"F", n:"Cooling tower assessment",
+   w:"Wet bulb, approach and tower running hours.", u:"Reliability", e:["ML", "R"], p:"P1", ph:"Phase 2"},
+  {id:"F14", d:"F", n:"Chilled-water delta-T health check",
+   w:"Flags sustained low delta-T against the design band.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"RC1", d:"RC", n:"Fault-case state machine",
+   w:"detected \u2192 awaiting findings \u2192 escalated \u2192 deferred \u2192 root-caused \u2192 actioned \u2192 closed.", u:"Reliability", e:["SW", "R"], p:"P0", ph:"MVP"},
+  {id:"RC2", d:"RC", n:"Curated checklist library",
+   w:"Human-written and reviewable per fault class. Never model output.", u:"Reliability", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"RC3", d:"RC", n:"Capability-routed checklist items",
+   w:"Each item names who can answer it \u2014 operator, maintenance, technician, supervisor, vendor \u2014 by capability, never by rank.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"RC4", d:"RC", n:"Findings capture with an explicit cannot-check",
+   w:"\"Could not check\" is recorded separately from \"not applicable\", so an unanswered check can never open a gate.", u:"Technician", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"RC5", d:"RC", n:"Blocking-items gate",
+   w:"A case cannot advance while a blocking item is unanswered.", u:"Supervisor", e:["R"], p:"P0", ph:"MVP"},
+  {id:"RC6", d:"RC", n:"Root cause with corrective and preventive actions",
+   w:"Recording the cause attaches both follow-up checklists.", u:"Reliability", e:["SW", "R"], p:"P0", ph:"MVP"},
+  {id:"RC7", d:"RC", n:"Three escalation routes",
+   w:"Sideways for the wrong skill, up for authority, defer for the wrong moment. Escalating up lands unassigned and says so.", u:"Supervisor", e:["R"], p:"P0", ph:"MVP"},
+  {id:"RC8", d:"RC", n:"Idempotent case seeding",
+   w:"A rescan can never open a second case for the same episode.", u:"Data / Reliability", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"K1", d:"K", n:"SOP search",
+   w:"Approved procedures, retrieved with the source shown.", u:"Technician", e:["LLM"], p:"P1", ph:"MVP"},
+  {id:"K2", d:"K", n:"Manufacturer manual search",
+   w:"What the OEM actually says about this model.", u:"Technician", e:["LLM"], p:"P1", ph:"Phase 2"},
+  {id:"K3", d:"K", n:"Work order history search",
+   w:"How this was fixed last time.", u:"Maintenance", e:["LLM"], p:"P1", ph:"Phase 2"},
+  {id:"K4", d:"K", n:"Verified case search",
+   w:"Only fixes that were proven to work.", u:"Reliability", e:["LLM"], p:"P1", ph:"Phase 2"},
+  {id:"K5", d:"K", n:"Source-visible answers",
+   w:"Every important answer names its document and version.", u:"All", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"K6", d:"K", n:"Explain a technical document simply",
+   w:"Turns dense OEM text into plain English.", u:"Technician", e:["LLM"], p:"P2", ph:"Phase 3"},
+  {id:"PL1", d:"PL", n:"Prioritised work queue",
+   w:"Ranked by risk, criticality, SLA and production impact.", u:"Planner", e:["R"], p:"P1", ph:"Phase 2"},
+  {id:"PL2", d:"PL", n:"Maintenance window finder",
+   w:"Slots that production can actually give.", u:"Planner", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"PL3", d:"PL", n:"Certification-aware matching",
+   w:"Only people qualified for the task.", u:"Supervisor", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"PL4", d:"PL", n:"Workload balance",
+   w:"Avoids overloading one crew.", u:"Supervisor", e:["SW"], p:"P2", ph:"Phase 3"},
+  {id:"PL5", d:"PL", n:"Plan feasibility answer",
+   w:"Can we actually do this tomorrow, in one turn.", u:"Planner", e:["SW", "LLM"], p:"P1", ph:"Phase 2"},
+  {id:"I1", d:"I", n:"Stock check",
+   w:"Availability and location.", u:"Stores", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"I2", d:"I", n:"Reservation against a work order",
+   w:"Parts held for the job.", u:"Stores", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"I3", d:"I", n:"Alternates",
+   w:"Acceptable substitutes when the primary part is out.", u:"Stores", e:["SW"], p:"P2", ph:"Phase 3"},
+  {id:"I4", d:"I", n:"Delivery impact on schedule",
+   w:"What the lead time does to the plan.", u:"Planner", e:["SW"], p:"P2", ph:"Phase 3"},
+  {id:"E1", d:"E", n:"Efficiency baseline and kW/TR tracking",
+   w:"The per-asset baseline the FDD efficiency proxy is measured against.", u:"Reliability", e:["ML", "SW"], p:"P0", ph:"MVP"},
+  {id:"E2", d:"E", n:"Energy cost attribution",
+   w:"Consumption and cost split by asset, site and period.", u:"Manager", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"E3", d:"E", n:"Load forecast",
+   w:"Expected load and consumption ahead of a window.", u:"Planner", e:["ML"], p:"P1", ph:"Phase 2"},
+  {id:"E4", d:"E", n:"Setpoint and staging optimisation advice",
+   w:"Advice only. No tool issues a control command, in any phase.", u:"Operations", e:["LLM", "R"], p:"P1", ph:"Phase 2"},
+  {id:"EV1", d:"EV", n:"Golden regression suite",
+   w:"A fixed case set that must stay green before any change to model behaviour ships.", u:"Platform", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"EV2", d:"EV", n:"Answer-honesty gate",
+   w:"Scores answers on stated dimensions and fails the build below the bar.", u:"Product", e:["SW", "LLM"], p:"P0", ph:"MVP"},
+  {id:"EV3", d:"EV", n:"Hard dimensions exempt from tolerance",
+   w:"Some dimensions cannot be traded against an overall score \u2014 a report whose figures disagree with each other fails outright.", u:"Product", e:["R"], p:"P0", ph:"MVP"},
+  {id:"EV4", d:"EV", n:"The evaluation's own tests",
+   w:"Deliberately dishonest inputs fed to the gate, so it cannot quietly start passing everything.", u:"Platform", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"L1", d:"L", n:"Duplicate grouping",
+   w:"Forty alerts become one problem.", u:"Operations", e:["R"], p:"P1", ph:"Phase 2"},
+  {id:"L2", d:"L", n:"Alert explanation",
+   w:"Why this fired, in plain English.", u:"Operations", e:["LLM"], p:"P1", ph:"Phase 2"},
+  {id:"L3", d:"L", n:"Prioritisation",
+   w:"Ranked, not listed.", u:"Operations", e:["R"], p:"P1", ph:"Phase 2"},
+  {id:"L4", d:"L", n:"Routing",
+   w:"To the person who can act on it.", u:"Operations", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"L5", d:"L", n:"Escalation",
+   w:"When it is not picked up or crosses a threshold.", u:"Manager", e:["R"], p:"P1", ph:"Phase 2"},
+  {id:"L6", d:"L", n:"Noise measurement",
+   w:"Alert volume tracked as a product metric.", u:"Product", e:["SW"], p:"P2", ph:"Phase 3"},
+  {id:"V1", d:"V", n:"Post-work residual comparison",
+   w:"Are the residuals back inside the band?", u:"Reliability", e:["ML", "R"], p:"P0", ph:"MVP"},
+  {id:"V2", d:"V", n:"Valid comparison window",
+   w:"Comparison only under comparable operating conditions.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"V3", d:"V", n:"Persistence across load range",
+   w:"Improvement must hold, not appear once.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"V4", d:"V", n:"Fault-clear check",
+   w:"Does the FDD fault clear under valid conditions?", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"V5", d:"V", n:"Business outcome check",
+   w:"Did the expected energy or downtime improvement appear?", u:"Manager", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"V6", d:"V", n:"PASS / FAIL / UNKNOWN",
+   w:"Three outcomes; UNKNOWN is real and common.", u:"Supervisor", e:["R"], p:"P0", ph:"MVP"},
+  {id:"V7", d:"V", n:"Verified-case memory",
+   w:"Signature, fix and proven outcome written back for reuse.", u:"Reliability", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"U1", d:"U", n:"Customer view",
+   w:"Only their own sites, assets and reports.", u:"Customer", e:["SW"], p:"P0", ph:"Phase 2"},
+  {id:"U2", d:"U", n:"Executive brief",
+   w:"The answer, not twenty screens.", u:"Executive", e:["LLM"], p:"P1", ph:"Phase 2"},
+  {id:"U3", d:"U", n:"Technician job pack",
+   w:"Job context, safety, SOP, history, parts, findings.", u:"Technician", e:["LLM", "SW"], p:"P0", ph:"MVP"},
+  {id:"U4", d:"U", n:"Planner queue view",
+   w:"What can be done, when, by whom.", u:"Planner", e:["SW"], p:"P1", ph:"Phase 2"},
+  {id:"U5", d:"U", n:"Permission explanation",
+   w:"Why a user cannot see a report.", u:"Administrator", e:["SW"], p:"P2", ph:"Phase 3"},
+  {id:"U6", d:"U", n:"Reliability engineer workspace",
+   w:"The fault queue, the residuals behind each one, and the case it opens.", u:"Reliability", e:["SW", "LLM"], p:"P0", ph:"MVP"},
+  {id:"U7", d:"U", n:"Supervisor approval and closure queue",
+   w:"What is waiting on a named human: approvals, blocked cases, closures that verification has not cleared.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"U8", d:"U", n:"Administrator scope and policy",
+   w:"Who may see and do what, the approval matrix, and the policy version every decision is stamped with.", u:"Administrator", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"S1", d:"S", n:"Safety-critical action block",
+   w:"The AI stops; it does not weigh the risk itself.", u:"EHS", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"S2", d:"S", n:"Permit and isolation gate",
+   w:"Permit, LOTO and isolation checks before work.", u:"EHS", e:["SW"], p:"P0", ph:"Phase 2"},
+  {id:"S3", d:"S", n:"Qualification check",
+   w:"Only qualified people are proposed for restricted work.", u:"Supervisor", e:["SW"], p:"P0", ph:"Phase 2"},
+  {id:"S4", d:"S", n:"Safety answers from the SOP",
+   w:"Never answered from model memory.", u:"Technician", e:["LLM"], p:"P0", ph:"MVP"},
+  {id:"S5", d:"S", n:"EHS escalation",
+   w:"Routed per the escalation matrix.", u:"EHS", e:["R"], p:"P0", ph:"Phase 2"},
+  {id:"G1", d:"G", n:"Identity and scope per turn",
+   w:"Scope recomputed every turn, never inherited.", u:"Platform", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"G2", d:"G", n:"Risk classification",
+   w:"Low / medium / high / safety-critical / system-critical.", u:"Platform", e:["R"], p:"P0", ph:"MVP"},
+  {id:"G3", d:"G", n:"Approval engine",
+   w:"Who must approve what, under which conditions.", u:"Platform", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"G4", d:"G", n:"Tool gateway",
+   w:"Schema validation, credentials, safe retry, side-effect control.", u:"Platform", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"G5", d:"G", n:"Idempotency",
+   w:"A retry can never create a second work order.", u:"Platform", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"G6", d:"G", n:"Audit trail",
+   w:"Every material action and decision, permanently.", u:"Audit", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"G7", d:"G", n:"Break-glass",
+   w:"Emergency elevation that is temporary, recorded and expiring.", u:"Security", e:["SW"], p:"P1", ph:"Phase 3"},
+  {id:"G8", d:"G", n:"Policy versioning and simulation",
+   w:"Test a rule change before it goes live.", u:"Governance", e:["SW"], p:"P1", ph:"Phase 3"},
 ];
+/* END GENERATED */
 
 /* --- state --------------------------------------------------------------- */
-const state = {phase:new Set(), domain:new Set(), engine:new Set(), pri:new Set(), q:''};
+const state = {phase:new Set(), domain:new Set(), engine:new Set(), pri:new Set(),
+               q:'', ids:null};
 const PHASE_CLASS = {'MVP':'mvp', 'Phase 2':'ph2', 'Phase 3':'ph3'};
 
 function esc(s){
@@ -1933,7 +2450,8 @@ body.innerHTML = FEATURES.map(f => `
   <tr id="feat-${f.id}" data-id="${f.id}" data-phase="${esc(f.ph)}" data-domain="${f.d}"
       data-engine="${f.e.join(' ')}" data-pri="${f.p}"
       class="${f.ph === 'MVP' ? 'is-mvp' : ''}">
-    <td class="id">${f.id}</td>
+    <td class="id"><button class="expand" type="button" aria-expanded="false"
+        aria-label="What ${f.id} touches">${f.id}</button></td>
     <td>${esc(f.n)}</td>
     <td>${esc(f.w)}</td>
     <td class="nowrap">${esc(f.u)}</td>
@@ -1961,6 +2479,7 @@ const mvpcount = document.getElementById('mvpcount');
 const noresults = document.getElementById('noresults');
 
 function matches(row){
+  if (state.ids && !state.ids.has(row.dataset.id)) return false;
   if (state.phase.size && !state.phase.has(row.dataset.phase)) return false;
   if (state.domain.size && !state.domain.has(row.dataset.domain)) return false;
   if (state.pri.size && !state.pri.has(row.dataset.pri)) return false;
@@ -2001,17 +2520,20 @@ q.addEventListener('input', () => { state.q = q.value.trim().toLowerCase(); appl
 
 document.getElementById('reset').addEventListener('click', () => {
   ['phase','domain','engine','pri'].forEach(k => state[k].clear());
-  state.q = ''; q.value = '';
+  state.q = ''; q.value = ''; state.ids = null;
   document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed','false'));
+  document.getElementById('viewpill').hidden = true;
   apply();
 });
+document.getElementById('viewclear').addEventListener('click',
+  () => document.getElementById('reset').click());
 
 /* --------------------------------------------------------------------------
    Workflows — the six priority workflows. Each step names the features that
    do the work, so the coverage badge can be computed rather than claimed.
    -------------------------------------------------------------------------- */
 const WORKFLOWS = [
- {t:'Report → Insight → Action', src:'35.1', ends:'ANSWERED', note:'', steps:[
+ {t:'Report → Insight → Action', src:'v4 \u00a735.1', ends:'ANSWERED', note:'', steps:[
   {l:'REPORT', who:'Reports · SW', d:'A report is on screen with its lineage intact — every number can be opened to the records that produced it.', ids:['R5','R10']},
   {l:'USER QUESTION', who:'Copilot · LLM', d:'The user asks a follow-up in their own words instead of building a second report.', ids:['C1','R1']},
   {l:'COPILOT', who:'Router · phi4', d:'Resolves who is asking and what "this" refers to, then routes to the right skill.', ids:['C2','C3']},
@@ -2021,7 +2543,7 @@ const WORKFLOWS = [
   {l:'RECOMMENDATION', who:'Copilot · LLM + R', d:'Ranked next actions, each with its reason, its confidence and its alternatives.', ids:['C6']},
   {l:'WORK ORDER or ESCALATION', who:'Copilot + Control Plane', d:'Either a drafted work order carrying the evidence, or a routed approval request naming the approver. Never a silent write.', ids:['C8','C9','W1']}
  ]},
- {t:'Fault → Fix → Proof', src:'35.2', ends:'ANSWERED → PASS / FAIL / UNKNOWN',
+ {t:'Fault → Fix → Proof', src:'v4 \u00a735.2', ends:'ANSWERED → PASS / FAIL / UNKNOWN',
   note:'This is the loop the MVP exists to close. Every step is inside the proposed cut.', steps:[
   {l:'ML / FDD', who:'Equipment ML · ML', d:'Six normal-operation models per asset produce residuals, each carrying a validity flag.', ids:['F1','F2']},
   {l:'EVIDENCE', who:'Platform · SW', d:'Residuals, gates, trends and similar cases are assembled once, and travel with whatever comes next.', ids:['C4','W3']},
@@ -2034,7 +2556,7 @@ const WORKFLOWS = [
   {l:'VERIFICATION', who:'Verification · R', d:'Persistence across the load range, the fault-clear check, and one of three outcomes.', ids:['V3','V4','V6']},
   {l:'PASS / CLOSE or FAIL / REOPEN', who:'Work orders · R + SW', d:'PASS permits closure. FAIL reopens with the previous findings preserved. UNKNOWN is not PASS.', ids:['W9','W10']}
  ]},
- {t:'Technician workflow', src:'35.3', ends:'ANSWERED', note:'', steps:[
+ {t:'Technician workflow', src:'v4 \u00a735.3', ends:'ANSWERED', note:'', steps:[
   {l:'MY WORK', who:'Roles · SW', d:"Today's assigned work, scoped to this technician and no one else.", ids:['U3']},
   {l:'OPEN WORK ORDER', who:'Work orders · SW', d:'The job opens with its evidence already attached — residuals, gates, trends, similar cases.', ids:['W3']},
   {l:'THE COPILOT EXPLAINS', who:'Copilot · LLM', d:'What the fault is and why, grounded in the FDD rule path rather than in model memory.', ids:['C5']},
@@ -2047,7 +2569,7 @@ const WORKFLOWS = [
   {l:'COMPLETE', who:'Work orders · R', d:'Closure is requested, and the verification gate decides whether it is allowed.', ids:['W9']},
   {l:'VERIFY', who:'Verification · ML + R', d:'Post-work residuals decide the outcome — not the closure note.', ids:['V1','V6']}
  ]},
- {t:'Executive workflow', src:'35.4', ends:'ANSWERED',
+ {t:'Executive workflow', src:'v4 \u00a735.4', ends:'ANSWERED',
   note:'Almost entirely deferred, and deliberately so: the executive story needs a history of verified outcomes to summarise, and the MVP will not have produced one yet.', steps:[
   {l:'ASK', who:'Copilot · LLM', d:'A business question in business language.', ids:['C1']},
   {l:'ENTERPRISE SCOPE', who:'Control Plane · SW', d:'Scope is resolved across the whole estate the person is entitled to see, and the answer depth follows the role.', ids:['C11','G1']},
@@ -2057,7 +2579,7 @@ const WORKFLOWS = [
   {l:'ACTIONS', who:'Copilot · LLM + R', d:'Ranked actions, with the reason attached to each.', ids:['C6']},
   {l:'OUTCOME / ROI', who:'Verification · SW', d:'Did the expected energy or downtime improvement actually appear?', ids:['V5']}
  ]},
- {t:'Unallowed workflow', src:'35.5', ends:'BLOCKED',
+ {t:'Unallowed workflow', src:'v4 \u00a735.5', ends:'BLOCKED',
   note:'Acceptance criterion 6 tests this path: an out-of-scope request must be blocked with a plain reason and the correct route.', steps:[
   {l:'REQUEST', who:'Copilot · LLM', d:'The user asks for something outside their scope — often without knowing it.', ids:['C1']},
   {l:'IDENTITY / SCOPE', who:'Control Plane · SW', d:'Scope is recomputed for this turn, before any retrieval happens.', ids:['G1']},
@@ -2066,7 +2588,36 @@ const WORKFLOWS = [
   {l:'AUDIT', who:'Audit · SW', d:'The refusal itself is a material decision, so it is recorded with its policy version.', ids:['G6']},
   {l:'OPTIONAL ESCALATION', who:'Copilot / EHS · SW + R', d:'Where a legitimate need exists, the request is routed to someone who can grant it.', ids:['C9','S5']}
  ]},
- {t:'Bad-data workflow', src:'35.6', ends:'NO_DIAGNOSIS',
+ {t:'Conversational front door', src:'Thermynx flow review', ends:'ANSWERED',
+  note:'Not in the original six. It is how every session actually starts, and in the existing implementation it is one of the routes that forgets the conversation.', steps:[
+  {l:'GREETING', who:'Router \u00b7 SW', d:'Recognised without a model call and answered at once, so a hello never reaches the telemetry pipeline.', ids:['C16']},
+  {l:'CAPABILITY', who:'Router \u00b7 SW', d:'"What can you do?" answered from the skill registry rather than from model memory, so the answer cannot drift from what is actually built.', ids:['C16','C20']},
+  {l:'STARTER PROMPTS', who:'Copilot \u00b7 SW', d:'Three or four real questions offered as chips. The fastest way to teach an operator what the Copilot is for.', ids:['C16']},
+  {l:'FIRST REAL QUESTION', who:'Router \u00b7 phi4', d:'Classified into a skill, and from here the ordinary fourteen stages run.', ids:['C1','C3']},
+  {l:'THE TURN IS SAVED', who:'Platform \u00b7 SW', d:'Including this one. A greeting that is not persisted puts a hole in the transcript, and the follow-up after it loses its referent.', ids:['C15']}
+ ]},
+ {t:'Data lookup route', src:'Thermynx flow review', ends:'ANSWERED',
+  note:'"How many hours did chiller 2 run last week?" does not need a diagnosis. It needs a number, and it must never be able to write.', steps:[
+  {l:'ASK', who:'Copilot \u00b7 LLM', d:'A question of fact, in the user\u2019s own words.', ids:['C1']},
+  {l:'SCOPE', who:'Control Plane \u00b7 SW', d:'Recomputed before the query is built, not after \u2014 scope decides what the query may see.', ids:['G1']},
+  {l:'TRANSLATE', who:'Executor \u00b7 devstral', d:'Natural language to SQL, read-only. No statement that writes can be generated at all.', ids:['C17']},
+  {l:'CARRY THE PRIOR TURN', who:'Platform \u00b7 SW', d:'A compact snippet of the previous turn, so "and for chiller 2?" works \u2014 without pasting the whole history into the query.', ids:['C15']},
+  {l:'ANSWER WITH LINEAGE', who:'Copilot \u00b7 SW', d:'The number, the definition behind it, and the records it came from.', ids:['R5','R10','C4']},
+  {l:'NAME THE ROUTE', who:'Copilot \u00b7 SW', d:'The answer says it came from a data lookup, so nobody mistakes a query result for a diagnosis.', ids:['C18']}
+ ]},
+ {t:'Case resolution route', src:'Thermynx flow review', ends:'PASS / FAIL / UNKNOWN',
+  note:'The step the first draft missed. A fault does not become a work order in one hop \u2014 somebody answers questions first, and some answers come back "could not check".', steps:[
+  {l:'CASE OPENS', who:'Case service \u00b7 SW', d:'Seeded from the FDD episode. Idempotent: a rescan of the same window opens no second case.', ids:['RC1','RC8']},
+  {l:'CHECKLIST ATTACHES', who:'Curated library \u00b7 SW', d:'Human-written for this fault class and reviewable. Never model output \u2014 a plausible-but-wrong item directs physical work on pressurised equipment.', ids:['RC2']},
+  {l:'ROUTED BY CAPABILITY', who:'Case service \u00b7 SW', d:'Each item names who can answer it \u2014 operator, maintenance, technician, supervisor, vendor \u2014 by capability, never by rank.', ids:['RC3']},
+  {l:'FINDINGS COME BACK', who:'Technician \u00b7 SW', d:'With "could not check" recorded separately from "not applicable", because six N/A presses once opened a blocking gate with no evidence behind it.', ids:['RC4','W8']},
+  {l:'THE GATE HOLDS', who:'Case service \u00b7 R', d:'The case cannot advance while a blocking item is unanswered, and a cannot-check does not satisfy one.', ids:['RC5']},
+  {l:'OR IT ESCALATES', who:'Case service \u00b7 R', d:'Sideways for the wrong skill, up for authority, defer for the wrong moment. Escalating up lands unassigned and says so.', ids:['RC7']},
+  {l:'ROOT CAUSE', who:'Reliability \u00b7 SW + R', d:'Recorded, which attaches the corrective and the preventive checklists together.', ids:['RC6']},
+  {l:'WORK ORDER', who:'Work orders \u00b7 R + SW', d:'Raised from the resolved case, carrying every finding as evidence.', ids:['W2','W3','W4']},
+  {l:'VERIFY, THEN CLOSE', who:'Verification \u00b7 ML + R', d:'Post-work residuals decide. PASS closes, FAIL reopens, UNKNOWN is neither.', ids:['V1','V6','W9','W10']}
+ ]},
+ {t:'Bad-data workflow', src:'v4 \u00a735.6', ends:'NO_DIAGNOSIS',
   note:'Acceptance criterion 2 tests this path by deliberately invalidating a signal. It is the workflow that makes every other answer believable.', steps:[
   {l:'DATA QUALITY FAIL', who:'Equipment ML · ML + R', d:'A residual loses its validity flag, or an operating gate does not pass.', ids:['F2','F3']},
   {l:'NO_DIAGNOSIS', who:'FDD rules · R', d:'No fault class is named and no softened guess is offered.', ids:['C7','F8']},
@@ -2140,7 +2691,7 @@ document.getElementById('wf-host').innerHTML = WORKFLOWS.map((w, wi) => {
   <div class="wf" data-wf="${wi}">
     <div class="wf-head">
       <h4>${esc(w.t)}</h4>
-      <span class="src">v4 &sect;${w.src}</span>
+      <span class="src">${esc(w.src)}</span>
       ${coverageBadge(allIds)}
       <span class="badge">ends in <span class="state">${esc(w.ends)}</span></span>
       <span class="wf-controls">
@@ -2396,6 +2947,214 @@ document.getElementById('toc-domains').innerHTML = DOMAIN_ROWS.map(d => `
     `proposed cut, ${n[part]} are partly deferred, and ${n[none]} falls entirely outside it.`;
 }
 
+/* --- views over the register ---------------------------------------------
+   A view is a named filter combination. Two axes:
+
+     ISOLATE A SLICE   the cut, what is deferred, priority, and the Copilot on
+                       its own — the questions people actually arrive with
+     BY BUILD STAGE    the eight stages from mvp/MVP-SCOPE.md Sequencing, which
+                       is the axis that matters when deciding what to build next
+
+   Stage membership is read off each stage's description in MVP-SCOPE.md. That
+   mapping is editorial, not register truth — the register assigns phases, not
+   stages. Which is exactly how the gap below surfaced.
+   -------------------------------------------------------------------------- */
+const STAGES = [
+  {n:'0', t:'Data in, tags normalised, asset hierarchy', ids:[],
+   note:'platform groundwork — no registered feature'},
+  {n:'1', t:'Six models, residuals, validity flags, model health',
+   ids:['F1','F2','F10','F11']},
+  {n:'2', t:'Gates, persistence, isolation path, NO_DIAGNOSIS',
+   ids:['F3','F4','F5','F6','F7','F8','F14']},
+  {n:'3', t:'Control Plane: identity, scope, risk, tool gateway, audit',
+   ids:['G1','G2','G3','G4','G5','G6']},
+  {n:'4', t:'Copilot read path: ask, context, route, evidence, explain',
+   ids:['C1','C2','C3','C4','C5','C6','C7','C10','C11','C12']},
+  {n:'5', t:'Work orders: create, evidence, priority, findings',
+   ids:['C8','C9','W1','W2','W3','W4','W8']},
+  {n:'6', t:'Verification and the close gate',
+   ids:['V1','V2','V3','V4','V6','W9','W10']},
+  {n:'7', t:'Reports and knowledge retrieval',
+   ids:['R1','R3','R5','R10','K1','K5']},
+  {n:'8', t:'Conversation shell: threads, memory on every route, front door, lookup',
+   ids:['C15','C16','C17','C18','C19','C20']},
+  {n:'9', t:'Case resolution: state machine, curated checklists, the blocking gate',
+   ids:['RC1','RC2','RC3','RC4','RC5','RC6','RC7','RC8']},
+];
+
+/* What has no SME dependency and no upstream stage waiting on it. This is the
+   answer to "what are we building now". */
+const START_NOW = ['G1','G2','G3','G4','G5','G6',
+                   'C15','C16','C17','C18','C19','C20'];
+
+const MVP_IDS = FEATURES.filter(f => f.ph === 'MVP').map(f => f.id);
+const STAGED = new Set(STAGES.flatMap(s => s.ids));
+const UNPLACED = MVP_IDS.filter(id => !STAGED.has(id));
+
+const VIEWS = [
+  {label:'Everything', n:FEATURES.length},
+  {label:'The MVP cut', phase:'MVP', gap:true},
+  {label:'Deferred to Phase 2 or 3', phaseAny:['Phase 2','Phase 3']},
+  {label:'P0 priority', pri:'P0'},
+  {label:'Synex Copilot — all of it', domain:'C', gap:true},
+  {label:'Synex Copilot in the MVP', domain:'C', phase:'MVP'},
+  {label:'The Control Plane spine', domain:'G'},
+  {label:'The FDD engine in the MVP', domain:'F', phase:'MVP'},
+  {label:'Can start today — nothing blocks it', ids:START_NOW, gap:true},
+];
+
+/* How many rows a view would show — computed, so no label can claim a wrong
+   number. */
+function viewCount(v){
+  return FEATURES.filter(f => {
+    if (v.ids && !v.ids.includes(f.id)) return false;
+    if (v.phase && f.ph !== v.phase) return false;
+    if (v.phaseAny && !v.phaseAny.includes(f.ph)) return false;
+    if (v.domain && f.d !== v.domain) return false;
+    if (v.pri && f.p !== v.pri) return false;
+    return true;
+  }).length;
+}
+
+function press(sel){ const c = document.querySelector(sel); if (c) c.click(); }
+
+function setView(v, name){
+  document.getElementById('reset').click();          // always from a clean slate
+  if (v.phase) press(`#f-phase .chip[data-val="${v.phase}"]`);
+  if (v.phaseAny) v.phaseAny.forEach(p => press(`#f-phase .chip[data-val="${p}"]`));
+  if (v.domain) press(`#f-domain .chip[data-val="${v.domain}"]`);
+  if (v.pri) press(`#f-pri .chip[data-val="${v.pri}"]`);
+  if (v.ids && v.ids.length){ state.ids = new Set(v.ids); apply(); }
+  const pill = document.getElementById('viewpill');
+  if (name){
+    document.getElementById('viewname').textContent = name;
+    pill.hidden = false;
+  }
+  setToc(false);
+  document.getElementById('register').scrollIntoView({
+    behavior: REDUCED.matches ? 'auto' : 'smooth', block: 'start'
+  });
+}
+
+
+/* --- one feature, everywhere it appears ----------------------------------
+   Opening a row answers "what is this, and where does it show up" from the data
+   already on the page: the workflows whose steps name it, the cases that need
+   it, the conversation turns that demonstrate it, and which of the four models
+   actually does the work. Nothing here is a second copy of the register — it is
+   a reverse index over it.
+   -------------------------------------------------------------------------- */
+const ENGINE_WORK = {
+  SW:  ['Plain deterministic software', 'No model runs. Same inputs, same answer, testable line by line.'],
+  R:   ['Deterministic rule', 'No model runs. The rule names the fault, sets the priority or opens the gate.'],
+  ML:  ['Equipment model', 'A normal-operation model fitted per asset, producing a residual with a validity flag.'],
+  LLM: ['Language model', 'gemma4 reasons and writes the final answer · devstral runs the tool loop and read-only NL→SQL · phi4 routes, narrates, grounds and audits. The brain never calls tools; the auditor is never the model that wrote the answer.'],
+};
+
+function whereUsed(id){
+  const wf = [];
+  WORKFLOWS.forEach(w => w.steps.forEach((s, i) => {
+    if (s.ids.includes(id)) wf.push(`${w.t} — step ${i + 1}, ${s.l}`);
+  }));
+  const cs = CASES.filter(c => c.ids.includes(id)).map((c, i) => c.t);
+  const turns = (typeof TURNS !== 'undefined')
+    ? TURNS.filter(x => x.ids.includes(id)).map(x => x.q) : [];
+  const stage = STAGES.filter(s => s.ids.includes(id)).map(s => `${s.n} — ${s.t}`);
+  return {wf, cs, turns, stage};
+}
+
+function detailHTML(f){
+  const u = whereUsed(f.id);
+  const row = (label, items, empty) => `
+    <div class="dt-row"><span class="dt-k">${label}</span>
+      <span class="dt-v">${items.length
+        ? items.map(x => `<span class="dt-i">${esc(x)}</span>`).join('')
+        : `<span class="dt-none">${esc(empty)}</span>`}</span></div>`;
+  const engines = f.e.map(e => {
+    const [name, how] = ENGINE_WORK[e] || [e, ''];
+    return `<span class="dt-i"><b>${e}</b> — ${esc(name)}. ${esc(how)}</span>`;
+  }).join('');
+  return `<tr class="detail" data-for="${f.id}"><td colspan="7">
+    <div class="dt">
+      <div class="dt-row"><span class="dt-k">DOES</span><span class="dt-v">
+        <span class="dt-i">${esc(f.w)}</span></span></div>
+      <div class="dt-row"><span class="dt-k">RUNS ON</span><span class="dt-v">${engines}</span></div>
+      ${row('BUILD STAGE', u.stage, 'no stage names this feature — question Q17')}
+      ${row('WORKFLOWS', u.wf, 'named by no workflow step yet')}
+      ${row('CASES', u.cs, 'no case in section 6 needs it')}
+      ${row('IN THE CONVERSATION', u.turns, 'not demonstrated in the section 12.6 mock')}
+    </div></td></tr>`;
+}
+
+document.getElementById('regbody').addEventListener('click', ev => {
+  const btn = ev.target.closest('.expand');
+  if (!btn) return;
+  const tr = btn.closest('tr');
+  const id = tr.dataset.id;
+  const open = btn.getAttribute('aria-expanded') === 'true';
+  document.querySelectorAll('tr.detail').forEach(d => d.remove());
+  document.querySelectorAll('.expand[aria-expanded="true"]')
+          .forEach(b => b.setAttribute('aria-expanded', 'false'));
+  if (open) return;
+  btn.setAttribute('aria-expanded', 'true');
+  tr.insertAdjacentHTML('afterend', detailHTML(BY_ID.get(id)));
+});
+
+
+document.getElementById('toc-views').innerHTML = VIEWS.map((v, i) => `
+  <li class="${v.gap ? 'gap' : ''}">
+    <button type="button" data-view="${i}">
+      <span class="nm">${esc(v.label)}</span>
+      <span class="cnt"><b>${viewCount(v)}</b></span>
+    </button>
+  </li>`).join('');
+
+document.getElementById('toc-views').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-view]');
+  if (b) setView(VIEWS[+b.dataset.view], VIEWS[+b.dataset.view].label);
+});
+
+document.getElementById('toc-stages').innerHTML = STAGES.map((s, i) => `
+  <li>
+    <button type="button" data-stage="${i}" ${s.ids.length ? '' : 'disabled'}
+            title="${esc(s.t)}">
+      <span class="n">${s.n}</span>
+      <span class="nm">${esc(s.t)}</span>
+      <span class="cnt">${s.ids.length ? `<b>${s.ids.length}</b>` : '—'}</span>
+    </button>
+  </li>`).join('') + (UNPLACED.length ? `
+  <li class="gap warn-row">
+    <button type="button" data-unplaced="1"
+            title="MVP features that no build stage names">
+      <span class="n">?</span>
+      <span class="nm">Not placed in any stage</span>
+      <span class="cnt"><b>${UNPLACED.length}</b></span>
+    </button>
+  </li>` : '');
+
+document.getElementById('toc-stages').addEventListener('click', ev => {
+  const s = ev.target.closest('[data-stage]');
+  if (s){
+    const st = STAGES[+s.dataset.stage];
+    setView({ids: st.ids}, `build stage ${st.n}`);
+    return;
+  }
+  if (ev.target.closest('[data-unplaced]')){
+    setView({ids: UNPLACED}, 'MVP features with no build stage');
+  }
+});
+
+/* Four of the fifty-one are named by no stage in MVP-SCOPE.md Sequencing. Two of
+   them are safety features, which is worth someone's attention — question Q17. */
+document.getElementById('stage-foot').innerHTML = UNPLACED.length
+  ? `<b>${STAGED.size} of ${MVP_IDS.length}</b> MVP features are named by a stage. ` +
+    `${UNPLACED.length} are not — ${UNPLACED.join(', ')}. See question Q17.`
+  : 'Every MVP feature is named by a build stage.';
+
+/* The domain rows can be limited to the cut, so "the Copilot" and "the Copilot
+   we are actually building first" are one click apart. */
+const mvpOnly = document.getElementById('mvponly');
+
 const inMvp = DOMAIN_ROWS.filter(d => d.mvp).length;
 document.getElementById('toc-foot').innerHTML =
   `<b>${inMvp} of ${DOMAIN_ROWS.length}</b> domains are touched by the proposed cut — ` +
@@ -2426,13 +3185,10 @@ document.addEventListener('keydown', ev => {
 document.getElementById('toc-domains').addEventListener('click', ev => {
   const b = ev.target.closest('[data-domain]');
   if (!b) return;
-  setToc(false);
-  document.getElementById('reset').click();
-  const chip = document.querySelector(`#f-domain .chip[data-val="${b.dataset.domain}"]`);
-  if (chip) chip.click();
-  document.getElementById('register').scrollIntoView({
-    behavior: REDUCED.matches ? 'auto' : 'smooth', block: 'start'
-  });
+  const key = b.dataset.domain;
+  const only = mvpOnly.checked;
+  const name = DOMAINS[key] + (only ? ' in the MVP' : '');
+  setView(only ? {domain:key, phase:'MVP'} : {domain:key}, name);
 });
 
 /* Where you are, in the bar and in the panel. */
@@ -2506,6 +3262,250 @@ if (!REDUCED.matches){
   }, {threshold: 0.4});
   document.querySelectorAll('.tile').forEach(el => tiles.observe(el));
 }
+
+
+/* --- the chat surface ----------------------------------------------------
+   Eight exchanges, transcribed from v4 §3.11, §3.12 and §5.3. Between them
+   they reach all six states of the answer contract, which is the point: the
+   refusals are as much the product as the answers.
+   -------------------------------------------------------------------------- */
+const TURNS = [
+ // ---- the happy path -----------------------------------------------------
+ {g:'happy', q:'Hello', mode:'CONVERSE', state:'ANSWERED', obj:'no object resolved',
+  body:`<p>Hi — I'm the <strong>Synex Copilot</strong>. I read this plant's live telemetry and the
+  records behind it, so I can explain equipment health, take a fault apart with its evidence, prepare
+  work and prove a repair worked.</p><p>I answer from evidence or I tell you I cannot. Start with one
+  of the questions below.</p>`,
+  ids:['C16','C20','C15'],
+  note:'Answered without a model call and without touching the telemetry pipeline — and the turn is still saved, because a hole here breaks the next follow-up.'},
+
+ {g:'happy', q:'Why is Chiller-03 unhealthy?', mode:'EXPLAIN', state:'ANSWERED', conf:'Likely',
+  obj:'this → Chiller-03 · Plant A',
+  body:`<p><strong>Chiller-03 — likely condenser fouling.</strong></p>
+  <ul>
+    <li>Using about 9% more power than normal for its current load and water temperatures.</li>
+    <li>Head pressure is high, and condenser water leaving is also high — heat is not moving into the condenser water as it should.</li>
+    <li>The suction side and the compressor look normal, which rules out a starved evaporator and compressor inefficiency.</li>
+    <li>Drifted steadily worse over three weeks with no spikes, which points to fouling rather than low condenser flow.</li>
+    <li>Chiller-01 in February closed on condenser tube cleaning; power returned to baseline in two days (WO-1877, verified).</li>
+  </ul>
+  <p><strong>Next:</strong> inspect and clean the condenser tubes at the next window; check the tower water treatment log for the same period.</p>`,
+  ids:['C2','C4','C5','F5','F7','C22'], acts:['Open the case','Prepare a work order'],
+  lands:'Case CS-4412 on the reliability workspace — the fault now has somewhere to live',
+  note:'All five gates passed and the pattern held 42 minutes. The rule path came from the FDD engine; the model explained it and did not choose it.'},
+
+ {g:'happy', q:'And its ΔT?', mode:'ASK', state:'ANSWERED', conf:'Confirmed',
+  obj:'its → Chiller-03 (carried from the previous turn)',
+  body:`<p>Chilled-water &Delta;T on Chiller-03 is being tracked against its design band, and the
+  sustained-low check is not currently flagged.</p>`,
+  ids:['C15','C2','F14'],
+  note:'The reason this works is C15: memory on every route, not only the one that happens to read history. In the existing implementation this is the follow-up that fails.'},
+
+ {g:'happy', q:'How many hours did Chiller-03 run last week?', mode:'LOOK UP', state:'ANSWERED',
+  conf:'Confirmed', obj:'Chiller-03 · 7-day window',
+  body:`<p>Answered from the platform database by a read-only query. The number carries its metric
+  definition, the window it covers, and the records it was computed from — and it opens to them.</p>`,
+  ids:['C17','C18','C22','R5','R10'], acts:['Open the source records'],
+  lands:'Reports → the source records behind the number',
+  note:'A separate route from a diagnosis, and it says so. No statement that writes can be generated at all.'},
+
+ {g:'happy', q:"Give me this week's reliability summary.", mode:'REPORT', state:'ANSWERED',
+  obj:'Plant A · 7-day window · role: Reliability Engineer',
+  body:`<p>Generated for your role, with every figure carrying its lineage and the window stated on the
+  artefact itself.</p>
+  <p>Where a signal was unavailable for part of the window, the report says so rather than averaging
+  over the gap — a figure is a value or a stated absence, never both and never neither.</p>`,
+  ids:['R1','R3','R5','R10','C21','C22','EV2','EV3'], acts:['Open the report','Export with lineage'],
+  lands:'Reports → this week\'s reliability summary, kept as an artefact',
+  note:'The honesty layer can override the model here: a reassuring headline over a blind window is replaced outright and the record marked corrected.'},
+
+ {g:'happy', q:'Create the work order for the tube cleaning.', mode:'EXECUTE', state:'ANSWERED',
+  obj:'Case CS-4412 → Chiller-03 · priority computed',
+  body:`<p><strong>WO-2291 created.</strong> Assigned to the mechanical crew, scheduled for the Sunday
+  shutdown, with the residuals, the gate results and the similar verified case attached.</p>
+  <p>Priority came from the formula over criticality, risk, SLA and production impact — you can
+  recalculate it by hand from the numbers shown. A verification task is now registered against fault
+  F-8842, due after the work completes.</p>`,
+  ids:['W1','W2','W3','W4','G4','G5','G6','C10'],
+  acts:['Open WO-2291','See the priority calculation'],
+  lands:'Work Orders → WO-2291 · and a verification task on the supervisor queue',
+  note:'Called through the tool gateway with an idempotency key, so a retry cannot create a second work order. The whole decision trail is audited with its policy version.'},
+
+ {g:'happy', q:'Did the repair work?', mode:'VERIFY', state:'ANSWERED', conf:'Confirmed',
+  obj:'WO-2291 · fault F-8842',
+  body:`<p><strong>PASS — verified.</strong></p>
+  <ul>
+    <li>Tubes cleaned; heavy scale reported in the findings.</li>
+    <li>rPwr, rDP and rCWL are all back inside band.</li>
+    <li>The gates passed when the comparison was made, and the improvement held three days across 40–85% load.</li>
+    <li>Fault F-8842 is clear under valid conditions. About 8% power reduction at like load.</li>
+  </ul>
+  <p>WO-2291 may now close, and the case is written into verified-case memory.</p>`,
+  ids:['V1','V2','V3','V4','V6','W9'], acts:['Close WO-2291'],
+  lands:'Work Orders → WO-2291 closes · Case CS-4412 closes with a verified basis',
+  note:'Post-work residuals decided this, not the closure note. Had they not returned to band it would be FAIL and the work order would reopen with the previous findings preserved.'},
+
+ // ---- degraded, but honest ----------------------------------------------
+ {g:'degraded', q:'Why is Chiller-03 unhealthy? (condenser flow signal missing)', mode:'EXPLAIN',
+  state:'NO_DIAGNOSIS', obj:'this → Chiller-03 · Plant A',
+  body:`<p>I cannot diagnose Chiller-03 right now. Three of the six models need a valid condenser flow
+  signal, and that signal is not reporting. Power is elevated, but I cannot tell you why without it.</p>
+  <p><strong>Recommended action:</strong> raise a data-quality work order for the condenser flow
+  measurement.</p>`,
+  ids:['C7','F3','F8'], acts:['Raise a data-quality work order'],
+  lands:'Work Orders → a data-quality job against the flow transmitter',
+  note:'The flows-valid gate failed, so no softened version of the earlier conclusion is offered. Acceptance criterion 2 tests exactly this by deliberately invalidating a signal.'},
+
+ {g:'degraded', q:'Close this work order.', mode:'VERIFY', state:'PARTIAL',
+  obj:'WO-2288 · fault F-8830',
+  body:`<p>I can tell you where it stands, but I cannot close it.</p>
+  <p>The findings are recorded and the work reads as done. What is missing is the comparison: the
+  machine has not yet run under conditions comparable to the pre-work window, so verification returns
+  <span class="state">UNKNOWN</span> rather than <span class="state">PASS</span> — and the close gate
+  only opens on PASS.</p>`,
+  ids:['V2','V6','W9','C7'], acts:['Watch for a valid window'],
+  lands:'Supervisor queue → held, with the reason stated',
+  note:'UNKNOWN is not a softer PASS. Acceptance criterion 5 exists to prove this distinction holds.'},
+
+ {g:'degraded', q:"The technician could not reach the sight glass.", mode:'INVESTIGATE',
+  state:'PARTIAL', obj:'Case CS-4412 · checklist item 3',
+  body:`<p>Recorded as <span class="state">cannot_check</span>, not as not-applicable — and the
+  difference matters: the blocking gate stays shut.</p>
+  <p>The item is now routed sideways to whoever can reach it, rather than up. Escalating up would land
+  it unassigned, which is right when authority is the problem and wrong when access is.</p>`,
+  ids:['RC4','RC5','RC7','RC3'], acts:['Route sideways'],
+  lands:'Case CS-4412 → the item reassigned by capability, the case still blocked',
+  note:'Inherited constraint 8. Six "N/A" presses once opened a blocking gate with zero evidence behind it — which is how a safety gate gets walked past.'},
+
+ // ---- refused, and safety ----------------------------------------------
+ {g:'refused', q:'Isolate Chiller-03 so we can clean the tubes.', mode:'DRAFT',
+  state:'NEEDS_APPROVAL', obj:'Chiller-03 · Plant A · safety-critical',
+  body:`<p>Prepared, not performed. Isolation is safety-critical, so the Control Plane returned
+  <strong>allow-with-approval</strong> and this is a request rather than an action.</p>
+  <p><strong>Approver:</strong> the named shift supervisor. I do not approve my own requests, and I
+  will not weigh the safety risk myself.</p>`,
+  ids:['C8','C9','S1','G2','G3'], acts:['Send to the approver'],
+  lands:'Supervisor queue → an approval request naming the approver',
+  note:'Had this been the cleaning task rather than the isolation, step 12 would have returned allow and you would be looking at a created work order.'},
+
+ {g:'refused', q:"There's a refrigerant smell near Chiller-03.", mode:'ESCALATE',
+  state:'ANSWERED', obj:'Chiller-03 · Plant A · EHS route',
+  body:`<p>Routed to EHS now, per the escalation matrix. I am not weighing this risk and I am not
+  offering you a procedure from memory.</p>
+  <p>The safety answer will come from the approved SOP with its document and version shown. Nothing
+  here changes plant state — no agent issues a control command to equipment, in any phase.</p>`,
+  ids:['S1','S4','S5','RC7','G6'], acts:['Open the EHS escalation'],
+  lands:'Case CS-4412 → escalated to EHS, recorded with its policy version',
+  note:'The one route where the Copilot writes without a draft step, because delay is the risk. The write is still through the gateway and still audited.'},
+
+ {g:'refused', q:'Give me all customer sites.', mode:'ASK', state:'BLOCKED',
+  obj:'scope check ran before retrieval',
+  body:`<p>That is outside your scope, so I have not retrieved it.</p>
+  <p>Your scope is Plant A and Plant B at Southern Mills. Cross-customer visibility is granted by the
+  customer-view policy, which your role does not hold. If you need it, the administrator who owns the
+  approval matrix can grant it.</p>`,
+  ids:['C11','G1','G2','G6'], acts:['Request access'],
+  lands:'Administrator → an access request against the approval matrix',
+  note:'The scope check runs before retrieval, not after, so nothing was read to be refused. The refusal is itself a material decision and is audited.'},
+
+ // ---- the tool broke ---------------------------------------------------
+ {g:'failed', q:'Trend the compressor amps for the last 90 days.', mode:'INVESTIGATE',
+  state:'FAILED', obj:'Chiller-03 · 90-day window',
+  body:`<p>The trend query failed after retries and I have nothing trustworthy to show you.</p>
+  <p><strong>What happened:</strong> the telemetry read timed out twice. <strong>What was done:</strong>
+  nothing — this was a read, so there is no partial state to undo. <strong>Safe next step:</strong>
+  narrow the window to 30 days, or try again once the platform reports healthy.</p>`,
+  ids:['G4','C7','C18'], acts:['Retry over 30 days'],
+  lands:'nowhere — a failed read writes nothing, and says so',
+  note:'FAILED is a state in the contract, not an error page. It says what failed, what was and was not done, and what to do next.'},
+];
+
+const STATE_CLS = {ANSWERED:'mvp', PARTIAL:'', NO_DIAGNOSIS:'p0',
+                   NEEDS_APPROVAL:'', BLOCKED:'p0', FAILED:'p0'};
+
+const chatLog = document.getElementById('chat-log');
+const asks = document.getElementById('asks');
+const chatMode = document.getElementById('chat-mode');
+const chatTally = document.getElementById('chat-tally');
+const seenStates = new Set();
+
+const GROUPS_CHAT = [
+  ['happy',    'THE HAPPY PATH — fault to explained to fixed to proven'],
+  ['degraded', 'DEGRADED, BUT HONEST — the answer is "not yet" or "I cannot"'],
+  ['refused',  'REFUSED, AND SAFETY — permission, approval, escalation'],
+  ['failed',   'WHEN A TOOL BREAKS'],
+];
+asks.innerHTML = GROUPS_CHAT.map(([g, label]) => `
+  <div class="askgroup"><h6>${label}</h6><div class="asks-row">${
+    TURNS.map((x, i) => [x, i]).filter(([x]) => x.g === g).map(([x, i]) =>
+      `<button class="ask" type="button" data-turn="${i}">${esc(x.q)}
+         <span class="st">${esc(x.state)}</span></button>`).join('')
+  }</div></div>`).join('');
+
+function tally(){
+  const all = [...new Set(TURNS.map(x => x.state))];
+  chatTally.innerHTML = `Answer states reached: <b>${seenStates.size} of 6</b>` +
+    (seenStates.size ? ` — ${[...seenStates].map(s => `<span class="state">${s}</span>`).join(' · ')}` : '');
+}
+
+function bubble(x){
+  const meta = `<span class="meta">
+      <span class="badge">${esc(x.mode)}</span>
+      <span class="badge ${STATE_CLS[x.state]}">${esc(x.state)}</span>
+      ${x.conf ? `<span class="badge">${esc(x.conf)}</span>` : ''}
+      <span class="obj">${esc(x.obj)}</span>
+    </span>`;
+  const acts = (x.acts || []).map(a => `<span class="act">${esc(a)}</span>`).join('');
+  return `<div class="msg bot"><span class="who">SYNEX COPILOT</span>
+    <div class="bubble">${meta}${x.body}
+      ${acts ? `<p style="margin:.5rem 0 0">${acts}</p>` : ''}
+      ${x.lands ? `<span class="foot lands"><b>Lands on</b> ${esc(x.lands)}</span>` : ''}
+      <span class="foot">${idChips(x.ids)}</span>
+      <span class="foot" style="border:0; padding:0; margin-top:.35rem">${esc(x.note)}</span>
+    </div></div>`;
+}
+
+function say(i){
+  const x = TURNS[i];
+  chatLog.insertAdjacentHTML('beforeend',
+    `<div class="msg user"><span class="who">RAVI K.</span>
+       <div class="bubble">${esc(x.q)}</div></div>`);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  chatMode.textContent = 'thinking';
+  const wait = REDUCED.matches ? 1 : 620;
+  chatLog.insertAdjacentHTML('beforeend',
+    `<div class="msg bot" id="typing"><span class="who">SYNEX COPILOT</span>
+       <div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div></div>`);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  setTimeout(() => {
+    document.getElementById('typing')?.remove();
+    chatLog.insertAdjacentHTML('beforeend', bubble(x));
+    renderIdChips(chatLog);
+    chatMode.textContent = x.state;
+    chatMode.className = 'badge ' + (STATE_CLS[x.state] || '');
+    chatLog.scrollTop = chatLog.scrollHeight;
+    seenStates.add(x.state);
+    tally();
+  }, wait);
+  asks.querySelector(`[data-turn="${i}"]`)?.setAttribute('data-done', '1');
+}
+
+asks.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-turn]');
+  if (b) say(+b.dataset.turn);
+});
+
+function resetChat(){
+  chatLog.innerHTML = '';
+  seenStates.clear();
+  chatMode.textContent = 'ready';
+  chatMode.className = 'badge';
+  asks.querySelectorAll('[data-done]').forEach(b => b.removeAttribute('data-done'));
+  say(0);
+}
+document.getElementById('chat-reset').addEventListener('click', resetChat);
+say(0);
+tally();
 
 WORKFLOWS.forEach((_, i) => showStep(i, 0));
 apply();
