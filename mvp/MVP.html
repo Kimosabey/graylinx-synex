@@ -957,6 +957,30 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 .bar-foot b{color:var(--ink); font-family:var(--font-head)}
 @media (max-width:560px){ .bar{grid-template-columns:1fr 2.2rem} .bar-k{grid-column:1/-1} }
 
+
+/* --- at a glance ----------------------------------------------------------
+   One screen that answers "what is this, and how does it hang together" before
+   anyone reads a table. Both halves are built from the register.
+   -------------------------------------------------------------------------- */
+.glance{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:.6rem; margin:0 0 1.25rem}
+.gcard{
+  background:var(--card); border:1px solid var(--rule); border-left:3px solid var(--accent);
+  border-radius:7px; padding:.7rem .85rem; cursor:pointer; text-align:left; font-family:var(--font);
+  transition:border-color var(--dur) var(--ease), transform var(--dur) var(--ease),
+             box-shadow var(--dur) var(--ease);
+}
+.gcard:hover{border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow)}
+.gcard.none{border-left-color:var(--p3); opacity:.72}
+.gcard.whole{border-left-color:var(--ok)}
+.gcard .gk{display:flex; align-items:baseline; gap:.4rem; margin-bottom:.3rem}
+.gcard .gid{font-family:var(--mono); font-size:.7rem; color:var(--accent)}
+.gcard .gn{font-family:var(--font-head); font-weight:600; color:var(--ink); font-size:.88rem}
+.gcard .gbar{height:6px; border-radius:3px; background:var(--sunken); border:1px solid var(--rule); overflow:hidden; margin:.35rem 0}
+.gcard .gbar i{display:block; height:100%; background:var(--accent)}
+.gcard.whole .gbar i{background:var(--ok)}
+.gcard .gc{font-size:.74rem; color:var(--muted); font-variant-numeric:tabular-nums}
+.gcard .gc b{color:var(--ink); font-family:var(--font-head)}
+
 /* --- print ---------------------------------------------------------------- */
 @media print{
   .topbar,.controls,.reset,.seg,.wf-controls,.wf-progress,.skip,.scrim,.chat-ask{display:none !important}
@@ -1140,10 +1164,105 @@ details.case[open]>summary::before{transform:rotate(180deg)}
   </div>
 </section>
 
-<!-- ===================== 2. WHAT IS IN ===================== -->
+
+<!-- ===================== 2. AT A GLANCE ===================== -->
+<section id="glance">
+  <div class="wrap">
+    <h2><span class="num">2</span>At a glance</h2>
+    <p class="lede">Every AI capability grouped by domain, and the eight surfaces they land on. Both are
+    built from the register, so neither can claim something that is not being built. Click a domain to
+    filter it; click a surface to jump to what it holds.</p>
+
+    <h3>2.1 The domains — what is being built, and how much of each</h3>
+    <div class="glance" id="glancegrid"></div>
+    <p style="font-size:.82rem;color:var(--muted)">A green edge means the whole domain is in the cut. A
+    faded card means it is deferred whole — valuable, but off the loop the MVP has to prove.</p>
+
+    <h3>2.2 The eight surfaces, and how work moves between them</h3>
+    <div class="figure">
+      <svg viewBox="0 0 1120 420" role="img" aria-label="A map of the eight surfaces. The Copilot sits at the centre. Detection opens a Case; the Case raises a Work Order; the Work Order becomes a Technician job pack; findings return to the Case; verification decides whether the Work Order may close. Reports and Asset are read surfaces. The Supervisor queue holds approvals and held closures. The Administrator surface holds scope and policy, which governs every arrow.">
+        <defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+        <marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+        <g font-family="Inter, Segoe UI, system-ui, sans-serif">
+          <rect x="4" y="4" width="1112" height="30" rx="6" fill="var(--sunken)" stroke="var(--ink)"/>
+          <text x="18" y="24" font-size="11" font-weight="600" fill="var(--ink)">ADMINISTRATOR &mdash; scope, the approval matrix, the policy version every arrow below is stamped with</text>
+
+          <rect x="386" y="176" width="200" height="72" rx="9" fill="var(--accent)" stroke="var(--accent)"/>
+          <text x="486" y="204" text-anchor="middle" font-size="12" font-weight="600" fill="var(--on-accent)">SYNEX COPILOT</text>
+          <text x="486" y="224" text-anchor="middle" font-size="11" fill="var(--on-accent)">every door leads here</text>
+          <text x="486" y="240" text-anchor="middle" font-size="10.5" fill="var(--on-accent)">22 features</text>
+
+          <rect x="44" y="60" width="180" height="62" rx="8" fill="var(--sunken)" stroke="var(--rule-strong)"/>
+          <text x="134" y="84" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">FDD DETECTION</text>
+          <text x="134" y="104" text-anchor="middle" font-size="10.5" fill="var(--muted)">13 features &middot; no screen</text>
+
+          <rect x="44" y="176" width="180" height="72" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="134" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">CASES</text>
+          <text x="134" y="221" text-anchor="middle" font-size="10.5" fill="var(--muted)">state machine, checklists,</text>
+          <text x="134" y="236" text-anchor="middle" font-size="10.5" fill="var(--muted)">escalation, root cause</text>
+
+          <rect x="44" y="300" width="180" height="72" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="134" y="326" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">WORK ORDERS</text>
+          <text x="134" y="345" text-anchor="middle" font-size="10.5" fill="var(--muted)">evidence, priority,</text>
+          <text x="134" y="360" text-anchor="middle" font-size="10.5" fill="var(--muted)">findings, the close gate</text>
+
+          <rect x="386" y="300" width="200" height="72" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="486" y="326" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">TECHNICIAN JOB PACK</text>
+          <text x="486" y="345" text-anchor="middle" font-size="10.5" fill="var(--muted)">safety, SOP, history,</text>
+          <text x="486" y="360" text-anchor="middle" font-size="10.5" fill="var(--muted)">the findings form</text>
+
+          <rect x="386" y="60" width="200" height="62" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="486" y="84" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">SUPERVISOR QUEUE</text>
+          <text x="486" y="104" text-anchor="middle" font-size="10.5" fill="var(--muted)">approvals &middot; blocked &middot; held closures</text>
+
+          <rect x="746" y="60" width="180" height="62" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="836" y="84" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">REPORTS</text>
+          <text x="836" y="104" text-anchor="middle" font-size="10.5" fill="var(--muted)">lineage &middot; data window</text>
+
+          <rect x="746" y="176" width="180" height="72" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="836" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">ASSET</text>
+          <text x="836" y="221" text-anchor="middle" font-size="10.5" fill="var(--muted)">one equipment story</text>
+          <text x="836" y="236" text-anchor="middle" font-size="10.5" fill="var(--muted)">health, faults, documents</text>
+
+          <rect x="746" y="300" width="180" height="72" rx="8" fill="var(--sunken)" stroke="var(--ok)" stroke-width="1.5"/>
+          <text x="836" y="326" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ok)">VERIFICATION</text>
+          <text x="836" y="345" text-anchor="middle" font-size="10.5" fill="var(--muted)">PASS &middot; FAIL &middot; UNKNOWN</text>
+          <text x="836" y="360" text-anchor="middle" font-size="10.5" fill="var(--muted)">no screen &mdash; it is a gate</text>
+
+          <line x1="134" y1="126" x2="134" y2="170" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah4)"/>
+          <text x="142" y="152" font-size="10" fill="var(--muted)">seeds a case</text>
+          <line x1="134" y1="252" x2="134" y2="294" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah4)"/>
+          <text x="142" y="278" font-size="10" fill="var(--muted)">root cause raises work</text>
+          <line x1="230" y1="336" x2="380" y2="336" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah4)"/>
+          <text x="252" y="328" font-size="10" fill="var(--muted)">assigned</text>
+          <path d="M486,294 L486,270 L240,240" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ah5)"/>
+          <text x="300" y="266" font-size="10" fill="var(--muted)">findings return to the case</text>
+          <line x1="592" y1="336" x2="740" y2="336" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah4)"/>
+          <text x="612" y="328" font-size="10" fill="var(--muted)">post-work residuals</text>
+          <path d="M836,294 L836,270 L240,336" fill="none" stroke="var(--ok)" stroke-width="1.4" marker-end="url(#ah4)"/>
+          <text x="470" y="286" font-size="10" fill="var(--ok)">PASS permits the close &middot; FAIL reopens</text>
+          <line x1="486" y1="170" x2="486" y2="128" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah4)"/>
+          <text x="494" y="152" font-size="10" fill="var(--muted)">needs a named human</text>
+          <line x1="592" y1="200" x2="740" y2="200" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah4)"/>
+          <text x="612" y="192" font-size="10" fill="var(--muted)">asks, drills, explains</text>
+          <line x1="740" y1="96" x2="594" y2="120" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#ah5)"/>
+          <line x1="230" y1="212" x2="380" y2="212" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah4)"/>
+          <text x="252" y="204" font-size="10" fill="var(--muted)">explains the case</text>
+
+          <text x="4" y="400" font-size="11" fill="var(--muted)">The conversation initiates and narrates. The surfaces hold the record &mdash; raising work in chat is not finished until it exists on the Work Orders surface with its evidence attached.</text>
+          <text x="4" y="416" font-size="11" fill="var(--muted)">Planning, Inventory and Alerts have no surface here: all three are deferred whole.</text>
+        </g>
+      </svg>
+      <figcaption>The eight surfaces. Verification has no screen because it is a gate, not a page &mdash;
+      and FDD detection has none because nobody reads residuals directly.</figcaption>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 3. WHAT IS IN ===================== -->
 <section id="in">
   <div class="wrap">
-    <h2><span class="num">2</span>What is in — 69 of 122</h2>
+    <h2><span class="num">3</span>What is in — 69 of 122</h2>
     <p class="lede">By domain, with the reason each group earns its place on the loop. Feature IDs are
     references — click one to find it in the register.</p>
     <div class="scroll">
@@ -1190,7 +1309,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 3. WHAT IS OUT ===================== -->
 <section id="out">
   <div class="wrap">
-    <h2><span class="num">3</span>What is out, and why</h2>
+    <h2><span class="num">4</span>What is out, and why</h2>
     <p class="lede">Deferred, with the reason. None of these are rejected — they are off the loop
     the MVP has to prove.</p>
     <div class="scroll">
@@ -1225,7 +1344,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 4. FEATURE REGISTER ===================== -->
 <section id="register">
   <div class="wrap">
-    <h2><span class="num">4</span>Feature register</h2>
+    <h2><span class="num">5</span>Feature register</h2>
     <p class="lede"><strong>This opens on the 80 features in the cut.</strong> Clear the view, or pick
     another from Contents, to see all 133 — what was deferred and why is section 3.
     <strong>Click any ID</strong> to see everywhere that feature appears — its build
@@ -1287,7 +1406,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 5. WORKFLOWS ===================== -->
 <section id="workflows">
   <div class="wrap">
-    <h2><span class="num">5</span>Workflows — how the features work together</h2>
+    <h2><span class="num">6</span>Workflows — how the features work together</h2>
     <p class="lede">Nine workflows — the six priority flows from the reference document, plus three
     the Thermynx flow review showed were unmodelled: how a session actually starts, how a plain data
     question is answered, and the case lifecycle between a fault and a work order. Click any step to
@@ -1319,7 +1438,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 6. CASES ===================== -->
 <section id="cases">
   <div class="wrap">
-    <h2><span class="num">6</span>Cases — the features in use</h2>
+    <h2><span class="num">7</span>Cases — the features in use</h2>
     <p class="lede">Twelve cases, each opening to its flow, its result and the features it needs.
     <span id="case-split"></span> Every badge is computed from the register rather than claimed.</p>
     <div class="cases" id="case-host"></div>
@@ -1370,7 +1489,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 7. WORKED EXAMPLE ===================== -->
 <section id="worked">
   <div class="wrap">
-    <h2><span class="num">7</span>One fault, end to end</h2>
+    <h2><span class="num">8</span>One fault, end to end</h2>
     <p class="lede">The worked example from the reference document, using the real water-cooled
     chiller FDD engine. Every number below comes from that example.</p>
 
@@ -1546,7 +1665,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 8. ACCEPTANCE ===================== -->
 <section id="criteria">
   <div class="wrap">
-    <h2><span class="num">8</span>MVP acceptance criteria</h2>
+    <h2><span class="num">9</span>MVP acceptance criteria</h2>
     <p class="lede">The MVP is done when all of these are demonstrably true on real site data.</p>
     <ol class="criteria">
       <li>A fault raised by the FDD engine can be explained by the Copilot with its residuals, gates and rule path visible.</li>
@@ -1575,7 +1694,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 9. SEQUENCING ===================== -->
 <section id="stages">
   <div class="wrap">
-    <h2><span class="num">9</span>Sequencing</h2>
+    <h2><span class="num">10</span>Sequencing</h2>
     <p class="lede">Ten stages. Stages 1 and 2 are the critical path and are the ones blocked by SME
     questions. Stages 3 and 8 have no SME dependency and can start immediately — the Control Plane
     and the conversation shell are both plain software.</p>
@@ -1613,7 +1732,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 10. SEPARATION LAW ===================== -->
 <section id="separation">
   <div class="wrap">
-    <h2><span class="num">10</span>The separation law</h2>
+    <h2><span class="num">11</span>The separation law</h2>
     <p class="lede">The single most important architectural statement in the product, and the rule
     people break most often.</p>
     <div class="callout stop">
@@ -1670,7 +1789,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 11. FDD ENGINE ===================== -->
 <section id="fdd">
   <div class="wrap">
-    <h2><span class="num">11</span>The FDD engine</h2>
+    <h2><span class="num">12</span>The FDD engine</h2>
     <p class="lede">First vertical: water-cooled chillers. Six normal-operation models per chiller.
     A residual is <code>rX(t) = X_actual(t) &minus; X_predicted(t)</code>. Models are fitted per
     asset, never per fleet.</p>
@@ -1856,7 +1975,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 12. COPILOT ===================== -->
 <section id="copilot">
   <div class="wrap">
-    <h2><span class="num">12</span>Synex Copilot — the specification</h2>
+    <h2><span class="num">13</span>Synex Copilot — the specification</h2>
     <p class="lede">The Copilot is not a feature of the platform; it is how the platform is used.
     Every other capability is a skill the Copilot reaches, through the Control Plane, with evidence
     and an audit trail. Reports and Work Orders keep their own screens — the Copilot is a third
@@ -2331,7 +2450,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 13. DELIVERY PRIORITIES ===================== -->
 <section id="roadmap">
   <div class="wrap">
-    <h2><span class="num">13</span>Delivery priorities</h2>
+    <h2><span class="num">14</span>Delivery priorities</h2>
     <p class="lede">The build order carried forward from the reference document, which the eight MVP
     stages in section 9 implement.</p>
     <div class="scroll">
@@ -2361,7 +2480,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 14. OPEN QUESTIONS ===================== -->
 <section id="questions">
   <div class="wrap">
-    <h2><span class="num">14</span>Open questions</h2>
+    <h2><span class="num">15</span>Open questions</h2>
     <p class="lede">Twenty-three open, none closed. Five of them block work right now.
     <code>decisions/OPEN-QUESTIONS.md</code> is the live list.</p>
 
@@ -2416,7 +2535,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 15. PLATFORM ===================== -->
 <section id="platform">
   <div class="wrap">
-    <h2><span class="num">15</span>Platform facts</h2>
+    <h2><span class="num">16</span>Platform facts</h2>
 
     <h3>15.1 The four local models</h3>
     <p style="font-size:.88rem">There is no fifth. Power comes from models + agents + tools +
@@ -2453,7 +2572,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 16. ROLES AND PERSONAS ===================== -->
 <section id="roles">
   <div class="wrap">
-    <h2><span class="num">16</span>Roles, personas and who reviews what</h2>
+    <h2><span class="num">17</span>Roles, personas and who reviews what</h2>
     <p class="lede">Three different things get called roles, and conflating them causes real routing
     bugs. The table in 16.2 is computed from the register's own primary-user column, so it cannot drift
     from what is actually being built.</p>
@@ -2552,8 +2671,8 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 
 <script>
 /* BEGIN GENERATED — scripts/sync_mvp_html.py. Do not edit by hand. */
-/* 133 features from mvp/FEATURE-REGISTER.md,
-   80 of them in the proposed MVP cut. */
+/* 135 features from mvp/FEATURE-REGISTER.md,
+   82 of them in the proposed MVP cut. */
 const DOMAINS = {
   C:"Synex Copilot",
   R:"Reports",
@@ -2702,6 +2821,10 @@ const FEATURES = [
    w:"A repaired machine may have a legitimately new normal.", u:"Reliability", e:["ML"], p:"P1", ph:"Phase 2"},
   {id:"F13", d:"F", n:"Cooling tower assessment",
    w:"Wet bulb, approach and tower running hours.", u:"Reliability", e:["ML", "R"], p:"P1", ph:"Phase 2"},
+  {id:"F15", d:"F", n:"Per-asset residual reference band",
+   w:"\"High\" and \"Normal\" are measured against that asset's own healthy distribution, never an absolute threshold.", u:"Reliability", e:["ML", "R"], p:"P0", ph:"MVP"},
+  {id:"F16", d:"F", n:"Cross-signal physical plausibility",
+   w:"Rejects combinations that cannot physically occur \u2014 zero flow with a normal &Delta;T and normal power, or a condenser &Delta;T with the wrong sign.", u:"Data / Reliability", e:["R"], p:"P0", ph:"MVP"},
   {id:"F14", d:"F", n:"Chilled-water delta-T health check",
    w:"Flags sustained low delta-T against the design band.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
   {id:"RC1", d:"RC", n:"Fault-case state machine",
@@ -3328,7 +3451,7 @@ const SECTIONS = [...document.querySelectorAll('main > section[id]')].map(s => {
 
 // Grouped by the question a reader is actually asking.
 const GROUPS = [
-  {label: 'WHAT THE MVP IS',    ids: ['test', 'in', 'out', 'register']},
+  {label: 'WHAT THE MVP IS',    ids: ['test', 'glance', 'in', 'out', 'register']},
   {label: 'THE COPILOT — THE CORE', ids: ['copilot', 'roles']},
   {label: 'HOW IT WORKS',       ids: ['workflows', 'cases', 'worked']},
   {label: 'HOW IT IS BUILT',    ids: ['separation', 'fdd', 'platform']},
@@ -4045,6 +4168,32 @@ const ROLE_NOTES = {
     </div>`).join('') + `
     <p class="bar-foot"><b>${det} of ${mvp.length}</b> features in the cut are fully deterministic \u2014
     plain software or a rule, with no model anywhere in the path.</p>`;
+}
+
+
+/* --- at a glance: the domains, from the register --------------------------- */
+{
+  const rows = Object.entries(DOMAINS).map(([key, name]) => {
+    const own = FEATURES.filter(f => f.d === key);
+    return {key, name, total: own.length, mvp: own.filter(f => f.ph === 'MVP').length};
+  }).sort((a, b) => b.mvp - a.mvp || b.total - a.total);
+  document.getElementById('glancegrid').innerHTML = rows.map(d => {
+    const cls = d.mvp === 0 ? 'none' : (d.mvp === d.total ? 'whole' : '');
+    const pct = d.total ? (d.mvp / d.total) * 100 : 0;
+    return `<button class="gcard ${cls}" type="button" data-glance="${d.key}"
+              aria-label="${esc(d.name)} — ${d.mvp} of ${d.total} in the cut. Filter the register to it.">
+      <span class="gk"><span class="gid">${d.key}</span><span class="gn">${esc(d.name)}</span></span>
+      <span class="gbar"><i style="width:${pct}%"></i></span>
+      <span class="gc"><b>${d.mvp}</b> of ${d.total} in the cut${
+        d.mvp === 0 ? ' — deferred whole' : (d.mvp === d.total ? ' — all of it' : '')}</span>
+    </button>`;
+  }).join('');
+  document.getElementById('glancegrid').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-glance]');
+    if (!b) return;
+    const key = b.dataset.glance;
+    setView({domain: key}, DOMAINS[key]);
+  });
 }
 
 WORKFLOWS.forEach((_, i) => showStep(i, 0));

@@ -28,6 +28,11 @@ the row to the Closed section — do not delete it.
 | Q25 | Should a case age, and into what? Auto-escalation on a timer dispatches people on a clock rather than on evidence | `RC9` | Harshan + Vishnu | Open |
 | Q26 | What should marking a window untrusted actually do to reports, efficiency figures and the models? | `C23`, `C22` | Harshan + platform | Open |
 | Q27 | Who owns model refits, on what trigger, and is there a schedule? | `F10`, `F11`, `F12` | Platform + Vishnu | Open |
+| Q29 | Are the entering and leaving condenser water columns swapped on affected assets? A negative condenser &Delta;T every month is physically impossible | `F16`, and every residual on that machine | Vishnu + site | Open |
+| Q30 | What separates a starved evaporator caused by restriction from one caused by undercharge? The proposed test is the temperature drop across the filter-drier — can an undercharged circuit also produce a cold spot, and is it safe to measure while running? | `F7`; it is the first question asked on six fault episodes | Vishnu | Open — highest-consequence |
+| Q31 | Is the ~4 °C gap in condenser leaving-water temperature between water-side and refrigerant-side faults a real physical difference, or a coincidence of when those faults occurred? | `F5`; if real, whole cause groups can be ruled out from data already held | Vishnu | Open |
+| Q32 | Does an unusually equal split between two compressors (1.03 against a normal 1.17) indicate compressor inefficiency, or is it staging, lead/lag rotation or unloading? | `F5`; if real, it replaces a three-day oil analysis with a reading already held | Vishnu | Open |
+| Q33 | What words do technicians actually use for "nothing found", and which words look negative but are positive findings? A wording detector read "clear cold spot" as a negative | `RC4`, `RC6` — a conclusion built on all-negative findings is misleading | Vishnu | Open |
 | Q28 | Is the brain's reasoning mode toggled per stage? The turn budget allows 1–3 s to plan and 2–6 s to reason, against a p95 of 8 s for a read-only answer and a first token inside 2 s. Reasoning always on will not hold those budgets; always off costs answer quality on the two stages that need it | Copilot latency and answer quality; `C3`, `C20` | Platform | Open — proposed: on for plan and reason, off for narration and routing |
 | Q19 | Three inherited gaps are adopted as unsolved: no interim holding action for a deferred critical fault, no retraction mechanism (so learning from closed cases stays out), and duplicated checklist work under event grouping. Which, if any, does this programme take on? | `F9`, `V7`, and the deferred-fault risk | Harshan + Vishnu | Open |
 
@@ -48,7 +53,7 @@ the row to the Closed section — do not delete it.
 | Q5 | Settling time after a leaving-water setpoint change | TBD | Open |
 | Q6 | Persistence window — one value or per fault class? | 20–30 minutes as a common default | Open |
 | Q7 | Healthy chilled-water ΔT band per machine | Design ΔT from the machine data sheet | Open |
-| Q8 | Condenser approach temperature thresholds for fouling | Per OEM data sheet | Open |
+| Q8 | Condenser approach temperature thresholds for fouling. **Currently unanswerable:** on the reference plant `dpt` is a constant, so approach cannot be computed at all. Is that tag a setpoint or design value rather than a measurement? | Per OEM data sheet — but the input must exist first | Open — blocked on the input |
 | Q9 | Time constants separating low condenser flow from fouling | Low flow spiky/intermittent; fouling steady drift over weeks | Open |
 | Q10 | Split overcharge from non-condensables, or keep combined? | Keep combined until instrumentation supports a split | Open |
 | Q11 | Confirm undercharge and restriction stay combined | Keep combined, label the ambiguity honestly | Open |

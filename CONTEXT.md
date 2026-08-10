@@ -90,6 +90,23 @@ Six normal-operation models per chiller. A residual is
 | Comp Amps | Compressor amps | Suction pressure; discharge pressure; chiller load; lead/lag | `rAmp` |
 | Cond Leaving | Condenser water leaving temp | Chiller load; condenser water entry temp; condenser flow; lead/lag | `rCWL` |
 
+**A residual is not zero-centred.** This is the single most consequential thing
+the discovery pass found, and it changes how the table below must be read.
+Measured healthy baselines on the reference plant: chiller 1's current residual
+sits at a median of **−25.65** in normal operation; chiller 2's discharge-pressure
+residual sits at **−27.86** against chiller 1's −7.53. So:
+
+- "High" and "Normal" in the isolation path mean **high or normal for this asset,
+  against its own healthy distribution** — median and spread. They never mean a
+  number above an absolute threshold. That is `F15`.
+- Severity is never derived from `|residual|`, because non-faults were measured to
+  deviate *more* than faults. That is inherited constraint 3.
+- Two identical machines will have different bands. This is why models are fitted
+  per asset and never per fleet.
+
+A design that compares residuals against zero, or against a shared threshold,
+will rank ordinary operation above a real fault.
+
 Computed: evaporator ΔT, condenser ΔT, and
 `efficiency proxy = (condenser ΔT × condenser flow) ÷ (evaporator ΔT × evaporator flow)`.
 
@@ -194,6 +211,11 @@ not yet confirmed for the sites Synex will target. That confirmation is Q1 and Q
 | Models trained once, never refitted, still scoring months later | Nobody owns the refit trigger. Q27. |
 | Efficiency: design band 0.65–0.85, healthiest measured month **1.40** | There is no defensible baseline yet, so `E1` cannot be built as specified. Q21. |
 | The taxonomy has **no safety impact class** — every escalation route ends in a work order | There was no way to say "stop the machine now". `S6` exists because of this. |
+| `dpt` never changes — a constant 107.0 on one chiller and 112.9 on the other | **Condenser approach temperature cannot be computed at all**, which is the fouling threshold *and* a question inside a differential. Q8 is unanswerable until this is resolved. |
+| Condenser ΔT is **negative every month** on one chiller, −3.0 to −3.4 | A condenser rejects heat, so leaving water must be warmer than entering. The two columns are swapped or mislabelled. No residual model can be trusted on that machine until it is fixed — and nothing detected it. `F16` exists because of this. |
+| Both chilled-water flow transmitters have read near zero since May while ΔT and power stayed normal | Physically impossible, and it quietly invalidated two months of efficiency figures while blinding the fault model. A single-signal validity flag did not catch it; a cross-signal check would have. `F16`. |
+| Four of seven fault classes are **declared undecidable** by their own names | Our `F7` keeps two combined pairs. Theirs has four classes whose names say `UNSPECIFIED` or `AMBIGUOUS`. Any confidence figure printed against those would be actively misleading — which is why section 7 allows four words and no number. |
+| The checklist library is **131 checks across 11 fault types with 4 decision trees**, none reviewed by a refrigeration engineer | This is the last gate before a technician sees any of it, and it is about one hour of SME time. It is also the long pole in `RC2`. |
 
 **The honest read:** the platform's own detection layer is largely blind on the
 branch this product leads with. That is an argument for `NO_DIAGNOSIS` being a

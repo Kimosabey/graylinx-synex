@@ -98,6 +98,8 @@ question S1 is closed.
 | F11 | Model quarantine | A failed model stops being used, not merely flagged. | Data / Reliability | `SW` | P0 | MVP |
 | F12 | Re-baseline after verified major work | A repaired machine may have a legitimately new normal. | Reliability | `ML` | P1 | Phase 2 |
 | F13 | Cooling tower assessment | Wet bulb, approach and tower running hours. | Reliability | `ML + R` | P1 | Phase 2 |
+| F15 | Per-asset residual reference band | "High" and "Normal" are measured against that asset's own healthy distribution, never an absolute threshold. | Reliability | `ML + R` | P0 | MVP |
+| F16 | Cross-signal physical plausibility | Rejects combinations that cannot physically occur — zero flow with a normal &Delta;T and normal power, or a condenser &Delta;T with the wrong sign. | Data / Reliability | `R` | P0 | MVP |
 | F14 | Chilled-water delta-T health check | Flags sustained low delta-T against the design band. | Reliability | `R` | P0 | MVP |
 
 ## RC — Case Resolution
@@ -215,7 +217,7 @@ evaluation suite that cannot fail is decoration.
 
 ---
 
-**Totals:** 133 features, of which 80 are in the proposed MVP cut.
+**Totals:** 135 features, of which 82 are in the proposed MVP cut.
 
 The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
 implementation. Four groups of capability were in daily use there, or required for
