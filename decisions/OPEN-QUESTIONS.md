@@ -21,6 +21,13 @@ the row to the Closed section — do not delete it.
 | S4 | Relative weighting of criticality, SLA and production impact in the priority formula | W4 | Operations | Open |
 | Q17 | Which build stage delivers `A1`, `U3`, `S1` and `S4`? Four MVP features are named by no stage, two of them safety features | Sequencing, and the stage-9 estimate | Harshan | Open |
 | Q18 | Three different things are called roles — user personas, capability roles and agent skills. Which system governs which decision? | `C11`, `C20`, `RC3`, `U1`–`U8` | Harshan + Vishnu | Open |
+| Q21 | What is a defensible efficiency baseline for these machines? Design band 0.65–0.85; the healthiest measured month on the reference plant is 1.40 | `E1`, and any cost or ROI figure | Vishnu | Open |
+| Q22 | Which faults are answered by stopping the machine rather than by raising a work order? | `S6`, the escalation matrix | Vishnu + EHS | Open |
+| Q23 | Does an estimated answer settle a blocking check, or only a measured one? | `RC5`, `RC10` | Vishnu | Open — proposed: measured only |
+| Q24 | What triggers case seeding in live operation? | `RC8`; a detector that fires into nowhere leaves the queue reading empty | Harshan + platform | Open |
+| Q25 | Should a case age, and into what? Auto-escalation on a timer dispatches people on a clock rather than on evidence | `RC9` | Harshan + Vishnu | Open |
+| Q26 | What should marking a window untrusted actually do to reports, efficiency figures and the models? | `C23`, `C22` | Harshan + platform | Open |
+| Q27 | Who owns model refits, on what trigger, and is there a schedule? | `F10`, `F11`, `F12` | Platform + Vishnu | Open |
 | Q19 | Three inherited gaps are adopted as unsolved: no interim holding action for a deferred critical fault, no retraction mechanism (so learning from closed cases stays out), and duplicated checklist work under event grouping. Which, if any, does this programme take on? | `F9`, `V7`, and the deferred-fault risk | Harshan + Vishnu | Open |
 
 ## Instrumentation and data
@@ -28,7 +35,7 @@ the row to the Closed section — do not delete it.
 | ID | Question | Blocks | Owner | Status |
 |---|---|---|---|---|
 | Q1 | Is condenser flow measured at target sites, and is the signal trustworthy? | F1–F8: four of six models, and most fault classes | Vishnu + site survey | Open |
-| Q2 | How is evaporator flow derived — measured, from DPT, or assumed constant? | `rSP` validity, efficiency proxy | Vishnu + site survey | Open |
+| Q2 | How is evaporator flow derived? **The documented derivation is known broken on the reference plant** — the differential-pressure input reads NULL while flow reports healthy values. What feeds it now? | `rSP` validity, efficiency proxy | Vishnu + site survey | Open — chain broken |
 | Q14 | Is compressor lead/lag state reliably available from the BMS? | Five of six models | Site survey | Open |
 
 ## FDD thresholds — Vishnu
@@ -57,15 +64,22 @@ the row to the Closed section — do not delete it.
 
 ## To reconcile
 
-The Thermynx FDD initiative holds **57 open questions** of its own at
-`docs/plan-v4.9.1/fdd/04-sme/questions.md`, and its 14 pre-existing decisions are
-already adopted here (`CONTEXT.md` §10, decision D-003). The two question sets
-have not been reconciled. Several of their questions almost certainly answer
-Q3–Q13 below, and asking Vishnu the same threshold twice would be a waste of the
-one review session that matters.
+The Thermynx FDD initiative holds **57 open questions** at
+`docs/plan-v4.9.1/fdd/04-sme/questions.md`, none of them answered. That agenda has
+been **read** and the findings that change this programme are folded in — see
+`CONTEXT.md` §10a and questions Q21–Q27. What has **not** been done is a
+question-by-question reconciliation.
 
-**Owner:** Harshan. **Blocks:** nothing today, because every affected threshold is
-already marked open here — but it should be done before the SME session, not after.
+Their §1 is nine safety-critical questions about whether the system may *eliminate*
+a candidate cause on unreviewed judgement, and it deserves the SME hour on its own
+merits. Two of them bear directly on our `F7`: whether a wide approach eliminates
+the cooling tower on the commonest fault class, and whether measured separations of
+about 4 °C are strong enough to eliminate on or must stay priors. Our answer today
+is the conservative one — keep the combined labels — and their reasoning supports it.
+
+**Owner:** Harshan. **Blocks:** nothing today. **Do before the SME session**, not
+after: their §3 overlaps our Q3–Q13, and asking Vishnu the same threshold twice
+wastes the one review that matters.
 
 ## Closed
 

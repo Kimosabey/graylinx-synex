@@ -83,3 +83,33 @@ chapters. If it is not in this file, it did not happen.
 - **Note:** three of the thirteen are open capability gaps rather than settled
   design — no interim holding action, no retraction mechanism, and duplicated
   checklist work under event grouping. They are inherited as unsolved. See Q19.
+
+### D-004 — The FDD instrumentation reality is recorded, and four gaps are closed
+- **Date:** 2026-08-10
+- **Decided by:** Harshan
+- **Closes:** nothing. It sharpens Q1 and Q2 and raises Q21–Q27
+- **Decision:** The findings from the Thermynx FDD discovery pass are recorded in
+  `CONTEXT.md` §10a as evidence about instrumentation reality, and four
+  capabilities are added because each closes a gap that already produced a real
+  incident there: `C23` untrusted-window marking, `RC9` case ageing and
+  auto-stale, `RC10` measured-versus-estimated per finding, and `S6` a
+  stop-the-machine response class. Cut goes from 75 to 79 of 132.
+- **Reason:** the discovery pass found that condenser flow has never recorded a
+  non-zero value at the reference plant. That is the signal `CONTEXT.md` §6 calls
+  the highest-leverage single measurement, feeding four of six models. It does not
+  change what we build, but it changes what the MVP can honestly promise, and a
+  roadmap that assumes the FDD half is nearly done would be wrong. The other three
+  additions each have an incident behind them: an untagged finding defaulting to
+  *estimated* opened a blocking gate; twenty-two detected episodes never reached
+  the queue; four open cases described transmitters repaired weeks earlier. `S6`
+  exists because that taxonomy had no safety impact class at all — every
+  escalation route ended in a work order, so there was no way to say stop now.
+- **Reason it is not deferred:** three of the four are one-line rules. The
+  expensive one is `S6`, and it is the one whose absence is least acceptable.
+- **Affects:** `mvp/FEATURE-REGISTER.md`, `CONTEXT.md` §10 (constraints 20–22)
+  and §10a, `decisions/OPEN-QUESTIONS.md` (Q1, Q2 restated; Q21–Q27 added),
+  `mvp/MVP.html`.
+- **Reflected in docs:** yes.
+- **Note:** the evidence is from one plant's snapshot. Whether the target sites
+  match it is exactly Q1 and Q2, and those remain the highest-leverage questions
+  in the programme.

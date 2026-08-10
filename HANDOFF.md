@@ -81,11 +81,18 @@ question, answered by one, or confirmed as genuinely new — and the SME session
 agenda contains no duplicate.
 
 ### T6 — Read the rest of the Thermynx knowledge base
-Covered so far: `docs/nyx`, the intent router, the route list, Resolve, the fault
-taxonomy, and the 14 pre-existing SME decisions. **Not yet read:** the 57
-questions, `docs/plan-v5` (data layers, Kafka, ETL, the MySQL→Postgres decision),
-`docs/architecture`, `docs/layers`, `docs/playbook-expansion`,
-`docs/models-decision`, `docs/analysis` and `docs/ai-investigation`.
+Covered: `docs/nyx`, the intent router, the route list, Resolve, the fault
+taxonomy, the 14 pre-existing SME decisions, the hardware and Jarvis docs, the
+v6 horizon, the chat implementation status, and the **57-question FDD SME
+agenda** with its discovery findings (D-004).
+
+**Still not read:** `docs/plan-v4.9.1/fdd/01-fdd-discovery` (the rule inventory,
+fault catalog, schema and engine analysis) and `02-fault-analysis` (severity
+model, confidence scoring, fault relationships, the four differentials) —
+about 30k words that would sharpen `F1`–`F14` further. Also `docs/plan-v5`
+(data layers, Kafka, ETL, the MySQL→Postgres decision), `docs/architecture`,
+`docs/layers`, `docs/playbook-expansion`, `docs/models-decision`,
+`docs/analysis` and `docs/ai-investigation`.
 **Done when:** anything that changes the cut is registered, and anything that
 constrains a feature is in `CONTEXT.md` §10.
 
@@ -126,6 +133,7 @@ On Windows, use `py scripts\verify.py` if `python` is not on PATH.
 | 2026-08-10 | Feature count corrected 85 → 101; Planning IDs renamed `P1–P5` → `PL1–PL5` to stop colliding with priority labels; review pack rebuilt under the Synex name | Claude |
 | 2026-08-10 | Workspace organised into a git repository and published privately to `Kimosabey/graylinx-synex`; superseded pre-rename review pack editions filed under `docs/90-archive/`; tagged `v0.1.0`, `develop` branch cut from `main` | Claude |
 | 2026-08-10 | `mvp/MVP.html` added — an interactive derived view of the MVP: filterable 101-feature register, the six priority workflows as steppers, the eight cases, the chiller worked example with its `NO_DIAGNOSIS` variant, the FDD engine and the Copilot specification. Domain and case coverage badges are computed from the register, so they cannot drift from it | Claude |
+| 2026-08-10 | Thermynx FDD knowledge base read (task T6, partial): the 57-question SME agenda and the discovery findings. Condenser flow has never recorded a non-zero value on the reference plant — the signal four of six models depend on. Recorded in `CONTEXT.md` §10a with three more inherited constraints; `C23`, `RC9`, `RC10`, `S6` added (79 of 132); Q1 and Q2 restated with the evidence; Q21–Q27 raised. Decision D-004 | Claude |
 | 2026-08-10 | MVP cut grown 51 → 69 of 122 after reviewing the flows in the existing Thermynx implementation: conversation shell `C15`–`C20`, case resolution `RC1`–`RC8`, energy and cost `E1`–`E4`, personas `U6`–`U8`. Two new prefixes `RC` and `E`; `verify.py` `ID_PREFIX` extended so `RC1` is not read as `C1`. 13 acceptance criteria, 10 build stages. Recorded as D-002 | Claude |
 | 2026-08-10 | Thirteen Thermynx platform decisions adopted as inherited constraints in `CONTEXT.md` §10, with the graylinx-v2 database, the Jarvis box and the shared stack recorded as what Synex stands on. Three of the thirteen are inherited as unsolved gaps — Q19. Recorded as D-003 | Claude |
 | 2026-08-10 | `scripts/sync_mvp_html.py` added: the explorer's feature data is now generated from the register instead of hand-transcribed, so the page cannot drift from it. `--check` fails if it is stale | Claude |

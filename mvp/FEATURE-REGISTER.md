@@ -36,6 +36,8 @@ question S1 is closed.
 | C20 | Skill registry | The named set of analysis skills, each with its tool scope and its control level. What `C3` routes to and `C18` reports. | Platform | `SW` | P0 | MVP |
 | C21 | Figure discipline | Every number is either a value or a stated absence — never both, never neither. | Everyone | `SW` | P0 | MVP |
 | C22 | Data window on every artefact | Every answer, report and export states the period it was computed over. | All | `SW` | P0 | MVP |
+| C23 | Untrusted-window marking | A period can be marked untrusted, and reports, efficiency figures and models all honour it. | Data / Reliability | `SW` | P0 | MVP |
+| C24 | Inline evidence rendering | Trends, comparisons and result tables drawn in the answer from the evidence pack — never decoration, and never a figure the pack does not contain. | Everyone | `SW` | P0 | MVP |
 
 ## R — Reports
 
@@ -114,6 +116,8 @@ Every row here is constrained by an inherited decision; see `CONTEXT.md` §10.
 | RC6 | Root cause with corrective and preventive actions | Recording the cause attaches both follow-up checklists. | Reliability | `SW + R` | P0 | MVP |
 | RC7 | Three escalation routes | Sideways for the wrong skill, up for authority, defer for the wrong moment. Escalating up lands unassigned and says so. | Supervisor | `R` | P0 | MVP |
 | RC8 | Idempotent case seeding | A rescan can never open a second case for the same episode. | Data / Reliability | `SW` | P0 | MVP |
+| RC9 | Case ageing and auto-stale | A case whose condition has cleared marks itself stale; one nobody has touched ages visibly rather than sitting silently. | Supervisor | `R` | P0 | MVP |
+| RC10 | Measured or estimated, per finding | Only a measured answer settles a blocking check. An estimate is recorded and does not open the gate. | Technician | `SW` | P0 | MVP |
 
 ## K — Knowledge
 
@@ -199,6 +203,7 @@ evaluation suite that cannot fail is decoration.
 | S3 | Qualification check | Only qualified people are proposed for restricted work. | Supervisor | `SW` | P0 | Phase 2 |
 | S4 | Safety answers from the SOP | Never answered from model memory. | Technician | `LLM` | P0 | MVP |
 | S5 | EHS escalation | Routed per the escalation matrix. | EHS | `R` | P0 | Phase 2 |
+| S6 | Stop-the-machine response class | Some faults are answered by stopping the machine now, not by raising a work order. A response class that is not a work order. | EHS | `R` | P0 | MVP |
 | G1 | Identity and scope per turn | Scope recomputed every turn, never inherited. | Platform | `SW` | P0 | MVP |
 | G2 | Risk classification | Low / medium / high / safety-critical / system-critical. | Platform | `R` | P0 | MVP |
 | G3 | Approval engine | Who must approve what, under which conditions. | Platform | `SW` | P0 | MVP |
@@ -210,7 +215,7 @@ evaluation suite that cannot fail is decoration.
 
 ---
 
-**Totals:** 128 features, of which 75 are in the proposed MVP cut.
+**Totals:** 133 features, of which 80 are in the proposed MVP cut.
 
 The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
 implementation. Four groups of capability were in daily use there, or required for
@@ -221,5 +226,9 @@ the loop to close, and named nowhere in this register:
 - energy and cost analytics — `E1`–`E4`
 - the three personas the loop cannot close without — `U6`, `U7`, `U8`
 - honesty discipline and the standing evaluation gates — `C21`, `C22`, `EV1`–`EV4`
+
+A later pass over the Thermynx FDD knowledge base added four more, each closing a
+gap that had already produced a real incident there: `C23`, `RC9`, `RC10`, `S6`.
+See `CONTEXT.md` §10 constraints 20–22 and decision D-004.
 
 Recorded as decision D-002.

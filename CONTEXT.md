@@ -173,6 +173,32 @@ is wrong.
 | 17 | Some evaluation dimensions are **hard** — exempt from any overall tolerance | A report whose own figures disagree cannot pass because it scored well elsewhere. Constrains `EV3`. |
 | 18 | The evaluation suite **has its own tests** | Deliberately dishonest inputs are fed to the gate so it cannot silently start passing everything. Constrains `EV4`. |
 | 19 | **Do not take the absolute value of a signal before judging credibility** | `ABS()` let a flow reading of −2.49 count as credible and understated a dead transmitter by 62 days. |
+| 20 | **An estimate does not settle a blocking check** | On the reference plant an untagged answer defaulted to `estimated` and opened a blocking gate. This is the same failure as constraint 8, by a second route. Constrains `RC10`. |
+| 21 | **Detection is not seeding** | Twenty-two detected episodes sat outside the case queue because nothing called the seed. A detector that fires into nowhere is worse than no detector, because the queue reads as empty. Constrains `RC8`. |
+| 22 | **A case must be able to go stale** | Four open cases described transmitters that had been repaired weeks earlier, and twenty had been waiting since April. Constrains `RC9`. |
+
+## 10a. What the reference plant's data actually says
+
+The first vertical is not a clean slate, and the numbers below change what the MVP
+can honestly promise. All are from the Thermynx FDD discovery pass, 5 August 2026,
+against one plant's snapshot — they are **evidence about instrumentation reality**,
+not yet confirmed for the sites Synex will target. That confirmation is Q1 and Q2.
+
+| Finding | What it does to the design |
+|---|---|
+| **Condenser flow has never recorded a non-zero value** at that site | This is the signal `CONTEXT.md` §6 calls the highest-leverage single measurement, feeding four of the six models. If the target sites match, the correct output for the whole efficiency and high-head branch is `NO_DIAGNOSIS` plus a data-quality work order — by design, on day one. |
+| The documented chilled-water flow derivation **no longer holds** — the differential-pressure input reads NULL while flow reports healthy values | Q2 is not merely open; the chain it asks about is known to be broken. |
+| **No phase currents, voltages, insulation or VFD data are streamed** | The electrical branch cannot be contradicted by measurement, so an operator's judgement is the only input — which is exactly where elimination becomes dangerous. |
+| The dominant fault class is the **ambiguous** one — 47% of fault slots, 62% of fault days | Honest ambiguity (`F7`) is not an edge case to be tidied up later. It is the median outcome. |
+| One model runs at **nRMSE 48%**, and its residual is partly model error | `F10` model health and `F11` quarantine are load-bearing, not hygiene. |
+| Models trained once, never refitted, still scoring months later | Nobody owns the refit trigger. Q27. |
+| Efficiency: design band 0.65–0.85, healthiest measured month **1.40** | There is no defensible baseline yet, so `E1` cannot be built as specified. Q21. |
+| The taxonomy has **no safety impact class** — every escalation route ends in a work order | There was no way to say "stop the machine now". `S6` exists because of this. |
+
+**The honest read:** the platform's own detection layer is largely blind on the
+branch this product leads with. That is an argument for `NO_DIAGNOSIS` being a
+first-class output rather than a fallback, and against any roadmap that assumes
+the FDD half is nearly done.
 
 ## 11. The three role systems
 
