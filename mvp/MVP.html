@@ -1079,64 +1079,39 @@ details.case[open]>summary::before{transform:rotate(180deg)}
   <div class="wrap">
     <h2><span class="num">1</span>The MVP test</h2>
     <p class="lede">The MVP is the smallest set of features that closes the loop end to end for one
-    asset class on one site.</p>
+    asset class on one site. Seven stages, not five &mdash; the case in the middle is where the work actually happens.</p>
 
     <figure class="figure">
-      <svg class="loop-svg" viewBox="0 0 980 190" role="img" aria-label="The MVP loop: a fault is detected, it is explained with evidence, a work order is created, the work is done, and the platform proves it worked.">
-        <defs>
-          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
-          </marker>
-        </defs>
-        <g font-family="Segoe UI, system-ui, sans-serif">
-          <!-- five stages -->
-          <g>
-            <rect x="4" y="34" width="176" height="62" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/>
-            <text x="92" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)">DETECT</text>
-            <text x="92" y="77" text-anchor="middle" font-size="12.5" fill="var(--body)">a fault is detected</text>
-          </g>
-          <line x1="186" y1="65" x2="212" y2="65" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
-          <g>
-            <rect x="218" y="34" width="176" height="62" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/>
-            <text x="306" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)">EXPLAIN</text>
-            <text x="306" y="77" text-anchor="middle" font-size="12.5" fill="var(--body)">with its evidence</text>
-          </g>
-          <line x1="400" y1="65" x2="426" y2="65" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
-          <g>
-            <rect x="432" y="34" width="176" height="62" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/>
-            <text x="520" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)">CREATE</text>
-            <text x="520" y="77" text-anchor="middle" font-size="12.5" fill="var(--body)">a work order</text>
-          </g>
-          <line x1="614" y1="65" x2="640" y2="65" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
-          <g>
-            <rect x="646" y="34" width="150" height="62" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/>
-            <text x="721" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)">DO</text>
-            <text x="721" y="77" text-anchor="middle" font-size="12.5" fill="var(--body)">the work is done</text>
-          </g>
-          <line x1="802" y1="65" x2="828" y2="65" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
-          <g>
-            <rect x="834" y="34" width="142" height="62" rx="7" fill="var(--ink)" stroke="var(--ink)" stroke-width="1.5"/>
-            <text x="905" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="var(--page)">PROVE</text>
-            <text x="905" y="77" text-anchor="middle" font-size="12.5" fill="var(--page)">it worked</text>
-          </g>
-          <!-- return path -->
-          <path class="loop-return" d="M905,102 L905,138 L92,138 L92,102" fill="none"
-                stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 4"
-                marker-end="url(#ah)"/>
-          <text x="498" y="132" text-anchor="middle" font-size="11.5" fill="var(--muted)">
-            FAIL or UNKNOWN reopens the work order — it cannot close unproven
-          </text>
-          <text x="4" y="176" font-size="11.5" fill="var(--muted)">
-            Anything that does not sit on this path is deferred, however attractive it is.
-          </text>
+      <svg class="loop-svg" viewBox="0 0 1180 210" role="img" aria-label="The MVP loop in seven stages: a fault is detected, a case opens, it is explained with evidence, checks narrow it to a root cause, a work order is created, the work is done, and the platform proves it worked. A failed or unknown verification reopens the work order.">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+        <g font-family="Inter, Segoe UI, system-ui, sans-serif">
+          <g><rect x="4" y="34" width="148" height="64" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/><text x="78" y="57" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--accent)">DETECT</text><text x="78" y="76" text-anchor="middle" font-size="12" fill="var(--body)">a fault is</text><text x="78" y="90" text-anchor="middle" font-size="12" fill="var(--body)">detected</text></g>
+          <line x1="155" y1="66" x2="169" y2="66" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
+          <g><rect x="172" y="34" width="148" height="64" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/><text x="246" y="57" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--accent)">CASE OPENS</text><text x="246" y="76" text-anchor="middle" font-size="12" fill="var(--body)">somewhere for</text><text x="246" y="90" text-anchor="middle" font-size="12" fill="var(--body)">it to live</text></g>
+          <line x1="323" y1="66" x2="337" y2="66" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
+          <g><rect x="340" y="34" width="148" height="64" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/><text x="414" y="57" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--accent)">EXPLAIN</text><text x="414" y="76" text-anchor="middle" font-size="12" fill="var(--body)">with its</text><text x="414" y="90" text-anchor="middle" font-size="12" fill="var(--body)">evidence</text></g>
+          <line x1="491" y1="66" x2="505" y2="66" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
+          <g><rect x="508" y="34" width="148" height="64" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/><text x="582" y="57" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--accent)">NARROW</text><text x="582" y="76" text-anchor="middle" font-size="12" fill="var(--body)">checks to a</text><text x="582" y="90" text-anchor="middle" font-size="12" fill="var(--body)">root cause</text></g>
+          <line x1="659" y1="66" x2="673" y2="66" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
+          <g><rect x="676" y="34" width="148" height="64" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/><text x="750" y="57" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--accent)">CREATE</text><text x="750" y="76" text-anchor="middle" font-size="12" fill="var(--body)">a work</text><text x="750" y="90" text-anchor="middle" font-size="12" fill="var(--body)">order</text></g>
+          <line x1="827" y1="66" x2="841" y2="66" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
+          <g><rect x="844" y="34" width="148" height="64" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/><text x="918" y="57" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--accent)">DO</text><text x="918" y="76" text-anchor="middle" font-size="12" fill="var(--body)">the work</text><text x="918" y="90" text-anchor="middle" font-size="12" fill="var(--body)">is done</text></g>
+          <line x1="995" y1="66" x2="1009" y2="66" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah)"/>
+          <g><rect x="1012" y="34" width="148" height="64" rx="7" fill="var(--ink)" stroke="var(--ink)" stroke-width="1.5"/><text x="1086" y="57" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink)">PROVE</text><text x="1086" y="76" text-anchor="middle" font-size="12" fill="var(--page)">it worked</text><text x="1086" y="90" text-anchor="middle" font-size="12" fill="var(--page)"></text></g>
+          <path class="loop-return" d="M1086,104 L1086,142 L78,142 L78,104" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ah)"/>
+          <text x="543" y="136" text-anchor="middle" font-size="11.5" fill="var(--muted)">FAIL or UNKNOWN reopens the work order &mdash; it cannot close unproven</text>
+          <text x="4" y="176" font-size="11.5" fill="var(--muted)">The case is the step the first draft missed: a fault does not become a work order in one hop. Somebody answers questions first &mdash; and some answers come back &quot;could not check&quot;.</text>
+          <text x="4" y="196" font-size="11.5" fill="var(--muted)">Anything that does not sit on this path is deferred, however attractive it is.</text>
         </g>
       </svg>
       <ol class="loop-list">
         <li data-n="1"><b>DETECT</b>a fault is detected</li>
-        <li data-n="2"><b>EXPLAIN</b>with its evidence</li>
-        <li data-n="3"><b>CREATE</b>a work order</li>
-        <li data-n="4"><b>DO</b>the work is done</li>
-        <li data-n="5"><b>PROVE</b>it worked — FAIL or UNKNOWN reopens the work order</li>
+        <li data-n="2"><b>CASE OPENS</b>somewhere for it to live</li>
+        <li data-n="3"><b>EXPLAIN</b>with its evidence</li>
+        <li data-n="4"><b>NARROW</b>checks narrow it to a root cause</li>
+        <li data-n="5"><b>CREATE</b>a work order</li>
+        <li data-n="6"><b>DO</b>the work is done</li>
+        <li data-n="7"><b>PROVE</b>it worked &mdash; FAIL or UNKNOWN reopens the work order</li>
       </ol>
       <figcaption>The loop the MVP must close, for one asset class on one site.
       Anything off this path is deferred, however attractive it is.</figcaption>
@@ -1330,7 +1305,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <section id="cases">
   <div class="wrap">
     <h2><span class="num">6</span>Cases — the features in use</h2>
-    <p class="lede">Eight cases, each opening to its flow, its result and the features it needs.
+    <p class="lede">Twelve cases, each opening to its flow, its result and the features it needs.
     <span id="case-split"></span> Every badge is computed from the register rather than claimed.</p>
     <div class="cases" id="case-host"></div>
 
@@ -2713,14 +2688,14 @@ const WORKFLOWS = [
   {l:'ANALYSIS', who:'Reports · LLM + SW', d:'The movement is traced back to the equipment, faults and work behind it.', ids:['R3']},
   {l:'EVIDENCE', who:'Copilot · SW', d:'The readings, versions and records behind the answer are collected into an evidence pack.', ids:['C4','R5']},
   {l:'RECOMMENDATION', who:'Copilot · LLM + R', d:'Ranked next actions, each with its reason, its confidence and its alternatives.', ids:['C6']},
-  {l:'WORK ORDER or ESCALATION', who:'Copilot + Control Plane', d:'Either a drafted work order carrying the evidence, or a routed approval request naming the approver. Never a silent write.', ids:['C8','C9','W1']}
+  {l:'WORK ORDER or ESCALATION', who:'Copilot + Control Plane', d:'Either a drafted work order carrying the evidence, a routed approval request naming the approver, or the whole thread exported as one record. Never a silent write.', ids:['C8','C9','W1','C19','G3']}
  ]},
  {t:'Fault → Fix → Proof', src:'v4 \u00a735.2', ends:'ANSWERED → PASS / FAIL / UNKNOWN',
   note:'This is the loop the MVP exists to close. Every step is inside the proposed cut.', steps:[
   {l:'ML / FDD', who:'Equipment ML · ML', d:'Six normal-operation models per asset produce residuals, each carrying a validity flag.', ids:['F1','F2']},
   {l:'EVIDENCE', who:'Platform · SW', d:'Residuals, gates, trends and similar cases are assembled once, and travel with whatever comes next.', ids:['C4','W3']},
-  {l:'DIAGNOSIS', who:'FDD rules · R', d:'Gates pass, the pattern persists, and the deterministic isolation path names one fault class. The language model is not involved here.', ids:['F3','F4','F5']},
-  {l:'EXPLANATION', who:'Copilot · LLM', d:'The Copilot explains the rule path in plain English, without inventing it.', ids:['C5']},
+  {l:'DIAGNOSIS', who:'FDD rules · R', d:'Gates pass, the pattern persists, and the deterministic isolation path names one fault class. The language model is not involved here.', ids:['F3','F4','F5','F6','F7']},
+  {l:'EXPLANATION', who:'Copilot · LLM', d:'The Copilot explains the rule path in plain English, without inventing it — with residuals drawn rather than described where that reads better, and every figure either a value or a stated absence.', ids:['C5','C21','C24','U6']},
   {l:'RECOMMENDATION', who:'Copilot · LLM + R', d:'Ranked maintenance actions with confidence and alternatives.', ids:['C6']},
   {l:'WORK ORDER', who:'Work orders · R + SW', d:'Created straight from the fault, pre-populated, with a priority from a formula that can be recalculated by hand.', ids:['W2','W3','W4']},
   {l:'TECHNICIAN', who:'Roles · LLM + SW', d:'The job pack carries context, safety, the SOP, history and parts. Findings are captured as structured data, because verification will need them.', ids:['U3','W8']},
@@ -2739,7 +2714,7 @@ const WORKFLOWS = [
   {l:'FINDINGS', who:'Work orders · SW', d:'Structured findings, readings and photographs — the input verification depends on.', ids:['W8']},
   {l:'REPAIR', who:'The technician', d:'Completed physically. This is not the same thing as proven.', ids:[]},
   {l:'COMPLETE', who:'Work orders · R', d:'Closure is requested, and the verification gate decides whether it is allowed.', ids:['W9']},
-  {l:'VERIFY', who:'Verification · ML + R', d:'Post-work residuals decide the outcome — not the closure note.', ids:['V1','V6']}
+  {l:'VERIFY', who:'Verification · ML + R', d:'Post-work residuals decide the outcome — not the closure note.', ids:['V1','V6','U7']}
  ]},
  {t:'Executive workflow', src:'v4 \u00a735.4', ends:'ANSWERED',
   note:'Almost entirely deferred, and deliberately so: the executive story needs a history of verified outcomes to summarise, and the MVP will not have produced one yet.', steps:[
@@ -2749,7 +2724,7 @@ const WORKFLOWS = [
   {l:'DRILL-DOWN', who:'Reports · SW', d:'Any number opens to the records that produced it.', ids:['R5']},
   {l:'TOP RISKS', who:'Asset · R + ML', d:'Health scores with their contributing factors, and the assets consuming disproportionate effort.', ids:['A2','A5']},
   {l:'ACTIONS', who:'Copilot · LLM + R', d:'Ranked actions, with the reason attached to each.', ids:['C6']},
-  {l:'OUTCOME / ROI', who:'Verification · SW', d:'Did the expected energy or downtime improvement actually appear?', ids:['V5']}
+  {l:'OUTCOME / ROI', who:'Verification · SW', d:'Did the expected energy or downtime improvement actually appear, measured against the efficiency baseline?', ids:['V5','E1']}
  ]},
  {t:'Unallowed workflow', src:'v4 \u00a735.5', ends:'BLOCKED',
   note:'Acceptance criterion 6 tests this path: an out-of-scope request must be blocked with a plain reason and the correct route.', steps:[
@@ -2757,7 +2732,7 @@ const WORKFLOWS = [
   {l:'IDENTITY / SCOPE', who:'Control Plane · SW', d:'Scope is recomputed for this turn, before any retrieval happens.', ids:['G1']},
   {l:'DENY', who:'Control Plane · R', d:'The request is risk-classified and refused, with the rule named and the correct route offered.', ids:['C11','G2']},
   {l:'NO DATA, NO SIDE EFFECT', who:'Tool gateway · SW', d:'Nothing is retrieved and nothing is written. A retry cannot slip through either.', ids:['G4','G5']},
-  {l:'AUDIT', who:'Audit · SW', d:'The refusal itself is a material decision, so it is recorded with its policy version.', ids:['G6']},
+  {l:'AUDIT', who:'Audit · SW', d:'The refusal itself is a material decision, so it is recorded against the policy version the administrator authored.', ids:['G6','U8']},
   {l:'OPTIONAL ESCALATION', who:'Copilot / EHS · SW + R', d:'Where a legitimate need exists, the request is routed to someone who can grant it.', ids:['C9','S5']}
  ]},
  {t:'Conversational front door', src:'Thermynx flow review', ends:'ANSWERED',
@@ -2766,7 +2741,7 @@ const WORKFLOWS = [
   {l:'CAPABILITY', who:'Router \u00b7 SW', d:'"What can you do?" answered from the skill registry rather than from model memory, so the answer cannot drift from what is actually built.', ids:['C16','C20']},
   {l:'STARTER PROMPTS', who:'Copilot \u00b7 SW', d:'Three or four real questions offered as chips. The fastest way to teach an operator what the Copilot is for.', ids:['C16']},
   {l:'FIRST REAL QUESTION', who:'Router \u00b7 phi4', d:'Classified into a skill, and from here the ordinary fourteen stages run.', ids:['C1','C3']},
-  {l:'THE TURN IS SAVED', who:'Platform \u00b7 SW', d:'Including this one. A greeting that is not persisted puts a hole in the transcript, and the follow-up after it loses its referent.', ids:['C15']}
+  {l:'THE TURN IS SAVED', who:'Platform \u00b7 SW', d:'Including this one. A greeting that is not persisted puts a hole in the transcript, and the follow-up after it loses its referent.', ids:['C15','C10','EV1','EV4']}
  ]},
  {t:'Data lookup route', src:'Thermynx flow review', ends:'ANSWERED',
   note:'"How many hours did chiller 2 run last week?" does not need a diagnosis. It needs a number, and it must never be able to write.', steps:[
@@ -2774,16 +2749,16 @@ const WORKFLOWS = [
   {l:'SCOPE', who:'Control Plane \u00b7 SW', d:'Recomputed before the query is built, not after \u2014 scope decides what the query may see.', ids:['G1']},
   {l:'TRANSLATE', who:'Executor \u00b7 devstral', d:'Natural language to SQL, read-only. No statement that writes can be generated at all.', ids:['C17']},
   {l:'CARRY THE PRIOR TURN', who:'Platform \u00b7 SW', d:'A compact snippet of the previous turn, so "and for chiller 2?" works \u2014 without pasting the whole history into the query.', ids:['C15']},
-  {l:'ANSWER WITH LINEAGE', who:'Copilot \u00b7 SW', d:'The number, the definition behind it, and the records it came from.', ids:['R5','R10','C4']},
+  {l:'ANSWER WITH LINEAGE', who:'Copilot \u00b7 SW', d:'The number, the definition behind it, and the records it came from.', ids:['R5','R10','C4','C22','C24']},
   {l:'NAME THE ROUTE', who:'Copilot \u00b7 SW', d:'The answer says it came from a data lookup, so nobody mistakes a query result for a diagnosis.', ids:['C18']}
  ]},
  {t:'Case resolution route', src:'Thermynx flow review', ends:'PASS / FAIL / UNKNOWN',
   note:'The step the first draft missed. A fault does not become a work order in one hop \u2014 somebody answers questions first, and some answers come back "could not check".', steps:[
-  {l:'CASE OPENS', who:'Case service \u00b7 SW', d:'Seeded from the FDD episode. Idempotent: a rescan of the same window opens no second case.', ids:['RC1','RC8']},
+  {l:'CASE OPENS', who:'Case service \u00b7 SW', d:'Seeded from the FDD episode. Idempotent: a rescan of the same window opens no second case.', ids:['RC1','RC8','RC9','U6']},
   {l:'CHECKLIST ATTACHES', who:'Curated library \u00b7 SW', d:'Human-written for this fault class and reviewable. Never model output \u2014 a plausible-but-wrong item directs physical work on pressurised equipment.', ids:['RC2']},
   {l:'ROUTED BY CAPABILITY', who:'Case service \u00b7 SW', d:'Each item names who can answer it \u2014 operator, maintenance, technician, supervisor, vendor \u2014 by capability, never by rank.', ids:['RC3']},
   {l:'FINDINGS COME BACK', who:'Technician \u00b7 SW', d:'With "could not check" recorded separately from "not applicable", because six N/A presses once opened a blocking gate with no evidence behind it.', ids:['RC4','W8']},
-  {l:'THE GATE HOLDS', who:'Case service \u00b7 R', d:'The case cannot advance while a blocking item is unanswered, and a cannot-check does not satisfy one.', ids:['RC5']},
+  {l:'THE GATE HOLDS', who:'Case service \u00b7 R', d:'The case cannot advance while a blocking item is unanswered, and a cannot-check does not satisfy one.', ids:['RC5','RC10','U7']},
   {l:'OR IT ESCALATES', who:'Case service \u00b7 R', d:'Sideways for the wrong skill, up for authority, defer for the wrong moment. Escalating up lands unassigned and says so.', ids:['RC7']},
   {l:'ROOT CAUSE', who:'Reliability \u00b7 SW + R', d:'Recorded, which attaches the corrective and the preventive checklists together.', ids:['RC6']},
   {l:'WORK ORDER', who:'Work orders \u00b7 R + SW', d:'Raised from the resolved case, carrying every finding as evidence.', ids:['W2','W3','W4']},
@@ -2795,7 +2770,7 @@ const WORKFLOWS = [
   {l:'NO_DIAGNOSIS', who:'FDD rules · R', d:'No fault class is named and no softened guess is offered.', ids:['C7','F8']},
   {l:'EXPLAIN THE LIMITATION', who:'Copilot · LLM', d:'Which check failed, which signal is missing, and what that rules out.', ids:['C5']},
   {l:'DATA-QUALITY ACTION', who:'Work orders · SW', d:'A data-quality or instrumentation work order, rather than a crew sent to the wrong equipment.', ids:['W1','W2']},
-  {l:'RECHECK', who:'Reliability · ML + SW', d:'Model health is monitored, and a model that has gone stale is quarantined rather than merely flagged.', ids:['F10','F11']}
+  {l:'RECHECK', who:'Reliability · ML + SW', d:'Model health is monitored, a stale model is quarantined rather than merely flagged, and the affected window is marked untrusted so no report averages over it.', ids:['F10','F11','C23']}
  ]}
 ];
 
@@ -2831,6 +2806,22 @@ const CASES = [
   flow:'ML and FDD data are checked → the operating conditions turn out invalid, or the evidence conflicts → the Copilot does not invent a fault class → it states what is missing and which check is needed next.',
   res:'The platform stays useful without pretending to know something it cannot prove.',
   ids:['F3','F8','C7','C5','C4']},
+ {t:'A detected fault nobody ever looked at', ask:'What is sitting in the queue that should not be?',
+  flow:'Detected episodes were never seeded, so the queue read as empty \u2192 seeding is idempotent, so a rescan opens the missing cases without duplicating the ones that exist \u2192 cases that have waited age visibly rather than silently \u2192 cases describing transmitters repaired weeks ago mark themselves stale.',
+  res:'An empty queue means no diagnosed faults, never no faults \u2014 and a full one is not allowed to rot.',
+  ids:['RC8','RC9','RC1','U7','U6','F8']},
+ {t:'The check could not be done', ask:'The technician could not reach the sight glass.',
+  flow:'Recorded as cannot-check, not as not-applicable \u2192 the blocking gate stays shut, because an estimate does not settle it \u2192 the item routes sideways to whoever can reach it rather than up \u2192 the case stays open with the reason visible.',
+  res:'A gate that cannot be walked past by pressing N/A six times.',
+  ids:['RC4','RC10','RC5','RC7','RC3','U3']},
+ {t:'The machine has to stop now', ask:'There is a refrigerant smell near Chiller-03.',
+  flow:'Safety-critical, so the Copilot stops rather than weighing it \u2192 the response class is stop-the-machine, which is not a work order \u2192 routed to EHS per the escalation matrix \u2192 the safety answer comes from the approved SOP with its version, never from model memory.',
+  res:'Some faults are answered by stopping the machine. The taxonomy this was learned from had no way to say that.',
+  ids:['S6','S1','S4','S5','RC7','G6']},
+ {t:'The window was blind, and the report says so', ask:'Why does last month look so good?',
+  flow:'The signal was unavailable for part of the window \u2192 the period is marked untrusted, and reports, efficiency figures and models honour it \u2192 figures are a value or a stated absence, never both \u2192 the data window is printed on the artefact \u2192 the honesty gate fails a report whose figures disagree, whatever else it scored.',
+  res:'A reassuring headline over a blind window is replaced, and the record says it was corrected.',
+  ids:['C23','C22','C21','EV2','EV3','EV1','EV4','E1','R10']},
  {t:'Many alerts are really one problem', ask:'Why am I getting so many alerts?',
   flow:'Related alerts are grouped → the common equipment or event is found → the real issue is explained → one appropriate alert is sent instead of the same message repeated.',
   res:'Less noise, and faster attention to the actual issue.',
@@ -3113,10 +3104,12 @@ document.getElementById('toc-domains').innerHTML = DOMAIN_ROWS.map(d => `
   const whole = tally.filter(c => c.total && c.mvp === c.total).length;
   const none = tally.filter(c => c.total && c.mvp === 0).length;
   const part = tally.length - whole - none;
-  const n = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+  const n = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+  const N = w => n[w] ?? String(w);
   document.getElementById('case-split').textContent =
-    `${n[whole][0].toUpperCase() + n[whole].slice(1)} of the eight sit entirely inside the ` +
-    `proposed cut, ${n[part]} are partly deferred, and ${n[none]} falls entirely outside it.`;
+    `Of ${N(tally.length)} cases, ${N(whole)} sit entirely inside the proposed cut, ` +
+    `${N(part)} ${part === 1 ? 'is' : 'are'} partly deferred, and ${N(none)} ` +
+    `${none === 1 ? 'falls' : 'fall'} entirely outside it.`;
 }
 
 /* --- views over the register ---------------------------------------------
