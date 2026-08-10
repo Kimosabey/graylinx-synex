@@ -221,6 +221,59 @@ def check_questions(rep: Report) -> None:
         rep.error(q, 1, "missing a '## Closed' section — closed questions are archived, not deleted")
 
 
+# Phrases that use a banned word generically rather than about this product.
+# "the difference between a chatbot and a copilot" contrasts two categories; the
+# naming law bans the word for our product, not from the language.
+DOCX_EXEMPT_PHRASES = (
+    "between a chatbot and a copilot",
+)
+
+
+def check_docx(rep: Report) -> int:
+    """Scan the .docx sources for legacy names.
+
+    This gate scanned *.md only, so the 78-page reference document was never
+    checked — which is how 40 occurrences of "AI Copilot" and "Chatbot" survived
+    in it unnoticed while every markdown file was clean. A .docx is a zip of XML:
+    the body is word/document.xml, and the headers, footers and docProps (the
+    title and keywords Word displays) all carry text too. All of them count.
+
+    docs/90-archive/ is exempt. Superseded editions are kept precisely because
+    they record what the document used to say.
+    """
+    import zipfile
+
+    scanned = 0
+    for path in sorted((ROOT / "docs").rglob("*.docx")):
+        if "90-archive" in path.parts or path.name.startswith("~$"):
+            continue
+        scanned += 1
+        try:
+            with zipfile.ZipFile(path) as z:
+                text = "".join(
+                    z.read(n).decode("utf-8", "ignore")
+                    for n in z.namelist() if n.endswith(".xml")
+                )
+        except (zipfile.BadZipFile, OSError) as exc:
+            rep.errors.append(f"{rel(path)}: could not be read ({exc})")
+            continue
+
+        for phrase in DOCX_EXEMPT_PHRASES:
+            text = text.replace(phrase, "")
+
+        for pattern, replacement in LEGACY_NAMES:
+            hits = len(re.findall(pattern, text))
+            if hits:
+                rep.errors.append(
+                    f"{rel(path)}: {hits} occurrence(s) of a legacy name matching "
+                    f"/{pattern}/ — use {replacement!r}")
+        for pattern, why in NAMING_VIOLATIONS:
+            hits = len(re.findall(pattern, text))
+            if hits:
+                rep.errors.append(f"{rel(path)}: {hits} occurrence(s) — naming law: {why}")
+    return scanned
+
+
 def check_structure(rep: Report) -> None:
     required = [
         "CLAUDE.md", "CONTEXT.md", "HANDOFF.md", "README.md",
@@ -280,12 +333,14 @@ def main() -> int:
     check_handoff_freshness(rep)
     check_questions(rep)
     known, count = check_register(rep)
+    docx = check_docx(rep)
 
     for path in files:
         check_file(path, path.read_text(encoding="utf-8"), rep, args.strict)
     check_id_references(files, known, rep)
 
-    print(f"Scanned {len(files)} file(s). Register holds {count} feature(s).\n")
+    print(f"Scanned {len(files)} markdown file(s) and {docx} source document(s). "
+          f"Register holds {count} feature(s).\n")
 
     if rep.warnings:
         print(f"Warnings ({len(rep.warnings)}):")

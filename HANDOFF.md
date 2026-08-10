@@ -46,17 +46,26 @@ change anything.
 
 ## 4. Immediate tasks
 
-### T1 — Apply the Synex rename (still outstanding, and narrower than it looks)
-Measured in the source document today: **"Graylinx Enterprise AI Platform" and
-"GEAP" are already gone — zero occurrences.** What remains is **13 "AI Copilot"
-and 14 "Chatbot"**. So this is a targeted rename of the assistant, not a rewrite
-of the product identity.
+### ~~T1 — Apply the Synex rename~~ — DONE
+Both source documents renamed, verified at zero occurrences by the gate:
 
-`scripts/verify.py` cannot catch these: it scans `*.md` only, and this is a
-`.docx`. That is why the task has survived this long unnoticed.
-**Done when:** every "AI Copilot" reads "Synex Copilot", every "Chatbot" reads
-"the Copilot", the .docx moves to `docs/90-archive/` if T2 has run, and the count
-above is zero. Do not touch the Thermynx relationship.
+- **v4 reference document** — 13 "AI Copilot", 14 "Chatbot", 13 "the chatbot",
+  1 "Enterprise AI Platform" and 1 "Enterprise AI Copilot", plus the title,
+  subject and keywords in `docProps`. Compound forms collapsed to one name
+  rather than two: "Chatbot / AI Copilot" is "Synex Copilot", not both.
+- **Feature Review Pack** — this file previously claimed it was already done. It
+  was not: 1 "Graylinx Enterprise AI Platform", 3 "AI Copilot" and an all-caps
+  `SYNEX` running header. The gate found all four the moment it learned to read
+  `.docx`.
+
+One occurrence was deliberately left: *"the single biggest difference between a
+chatbot and a copilot is context"* contrasts the two categories rather than naming
+this product, and rewriting it would destroy the sentence. `verify.py` carries that
+exemption explicitly.
+
+Pre-rename editions are in `docs/90-archive/`. `verify.py` now scans `.docx`
+sources, so this class of drift cannot hide again — and the check was self-tested
+against the archived original to prove it fails when it should.
 
 ### T2 — Split the source documents into per-chapter markdown
 Convert v4 into one markdown file per chapter under `docs/10-product/` and
@@ -135,6 +144,8 @@ On Windows, use `py scripts\verify.py` if `python` is not on PATH.
 | 2026-08-10 | Feature count corrected 85 → 101; Planning IDs renamed `P1–P5` → `PL1–PL5` to stop colliding with priority labels; review pack rebuilt under the Synex name | Claude |
 | 2026-08-10 | Workspace organised into a git repository and published privately to `Kimosabey/graylinx-synex`; superseded pre-rename review pack editions filed under `docs/90-archive/`; tagged `v0.1.0`, `develop` branch cut from `main` | Claude |
 | 2026-08-10 | `mvp/MVP.html` added — an interactive derived view of the MVP: filterable 101-feature register, the six priority workflows as steppers, the eight cases, the chiller worked example with its `NO_DIAGNOSIS` variant, the FDD engine and the Copilot specification. Domain and case coverage badges are computed from the register, so they cannot drift from it | Claude |
+| 2026-08-10 | T1 done: the Synex rename applied to both source documents including their metadata, 41 legacy occurrences to zero, with one generic use of "chatbot" deliberately preserved. `verify.py` extended to scan `.docx` — which immediately disproved this file's claim that the review pack was already renamed. Pre-rename editions archived | Claude |
+| 2026-08-10 | T6 done: the differential mechanism registered — `RC12` narrowing, `RC13` elimination audit, `RC14` exhausted-not-settled — with constraints 27–32 and Q37–Q39. 86 of 139 | Claude |
 | 2026-08-10 | `mvp/SME-REVIEW.md` added — the two open-question sets merged into one agenda ordered by what a wrong answer costs (task T5b). Published the explorer to Netlify from `develop` with the publish directory pinned to a built `site/`, so `docs/00-source/` stays off the internet; three layers of noindex. Live and byte-identical to the repository copy | Claude |
 | 2026-08-10 | Thermynx FDD knowledge base read (task T6, partial): the 57-question SME agenda and the discovery findings. Condenser flow has never recorded a non-zero value on the reference plant — the signal four of six models depend on. Recorded in `CONTEXT.md` §10a with three more inherited constraints; `C23`, `RC9`, `RC10`, `S6` added (79 of 132); Q1 and Q2 restated with the evidence; Q21–Q27 raised. Decision D-004 | Claude |
 | 2026-08-10 | MVP cut grown 51 → 69 of 122 after reviewing the flows in the existing Thermynx implementation: conversation shell `C15`–`C20`, case resolution `RC1`–`RC8`, energy and cost `E1`–`E4`, personas `U6`–`U8`. Two new prefixes `RC` and `E`; `verify.py` `ID_PREFIX` extended so `RC1` is not read as `C1`. 13 acceptance criteria, 10 build stages. Recorded as D-002 | Claude |
