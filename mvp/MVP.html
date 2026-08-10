@@ -755,6 +755,10 @@ tr.rowflag>td,tbody tr>td{transition:background .7s ease}
   .wf{padding:.85rem}
   footer{padding-bottom:2.5rem}
 }
+@media (max-width:560px){
+  /* three controls will not fit; the labels go before the controls do */
+  .barbtn span:not(.count){display:none}
+}
 @media (max-width:400px){
   .wrap{padding:0 .75rem}
   .mark{width:84px}
