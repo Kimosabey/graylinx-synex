@@ -28,6 +28,9 @@ the row to the Closed section — do not delete it.
 | Q25 | Should a case age, and into what? Auto-escalation on a timer dispatches people on a clock rather than on evidence | `RC9` | Harshan + Vishnu | Open |
 | Q26 | What should marking a window untrusted actually do to reports, efficiency figures and the models? | `C23`, `C22` | Harshan + platform | Open |
 | Q27 | Who owns model refits, on what trigger, and is there a schedule? | `F10`, `F11`, `F12` | Platform + Vishnu | Open |
+| Q37 | Should `REFRIGERANT_SIDE_HIGH_HEAD` get a differential and blocking items? It names a region, probes five mechanisms, and has neither — so a case can conclude there with no evidence | `RC12`, `F7` | Vishnu | Open |
+| Q38 | Two severity scales disagree on four of seven classes. Which one governs? | `W4`, and any queue ordering | Vishnu + Harshan | Open |
+| Q39 | Evidence a checklist asks for already sits in the database and is not carried into the case, so a human is asked to fetch what the platform holds | `C4`, `RC2`, `W3` | Platform | Open |
 | Q34 | Is the maintenance/technician split drawn in the right place for this crew? Only 7 of 124 items are tagged maintenance, yet brushing tubes, cleaning strainers and venting a loop are in-house mechanical work | `RC3`; the wrong split generates unnecessary callouts | Vishnu | Open |
 | Q35 | Who approves a recurring obligation? A preventive item that creates a PM schedule commits somebody to future work | `RC11` | Harshan + Vishnu | Open |
 | Q36 | Is there a plant document — an OEM manual or O&M schedule — the 124-item library should be reconciled *against*, rather than reviewed from scratch? | Could turn an hour of review into a cross-check | Vishnu | Open |

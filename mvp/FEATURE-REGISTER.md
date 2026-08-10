@@ -120,6 +120,9 @@ Every row here is constrained by an inherited decision; see `CONTEXT.md` §10.
 | RC8 | Idempotent case seeding | A rescan can never open a second case for the same episode. | Data / Reliability | `SW` | P0 | MVP |
 | RC9 | Case ageing and auto-stale | A case whose condition has cleared marks itself stale; one nobody has touched ages visibly rather than sitting silently. | Supervisor | `R` | P0 | MVP |
 | RC10 | Measured or estimated, per finding | Only a measured answer settles a blocking check. An estimate is recorded and does not open the gate. | Technician | `SW` | P0 | MVP |
+| RC12 | Differential narrowing | Candidate causes per ambiguous class, narrowed by asking the single most discriminating question at a time rather than presenting a flat list. | Reliability | `R` | P0 | MVP |
+| RC13 | Elimination audit | Every ruled-out cause records the check and the answer that ruled it out. "The software decided" is not an answer. | Reliability | `SW` | P0 | MVP |
+| RC14 | Honestly exhausted, distinct from settled | A differential that runs out of questions says so, rather than concluding on whichever cause is left. | Reliability | `R` | P0 | MVP |
 | RC11 | Preventive actions become a scheduled obligation | A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns. | Supervisor | `SW` | P0 | MVP |
 
 ## K — Knowledge
@@ -218,7 +221,7 @@ evaluation suite that cannot fail is decoration.
 
 ---
 
-**Totals:** 136 features, of which 83 are in the proposed MVP cut.
+**Totals:** 139 features, of which 86 are in the proposed MVP cut.
 
 The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
 implementation. Four groups of capability were in daily use there, or required for

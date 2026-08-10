@@ -104,6 +104,33 @@ measured and deliberately withheld.
 
 > **Answer:**
 
+### 1.4a How the narrowing works — so you can judge one line at a time
+
+Four differentials, 19 candidate causes, 19 discriminating questions. Each answer
+does one of three things:
+
+| Effect | Meaning | Reversible |
+|---|---|---|
+| `confirm` | evidence **for** this cause | — |
+| `eliminate` | rules it **out** | **no** |
+| `keep` | consistent, decides nothing | — |
+
+Three properties are already built in, and we would like you to check the reasoning
+rather than the code:
+
+- **A confirmation never eliminates its siblings.** A fouled condenser on a machine
+  that is also low on flow is two real causes, and collapsing to the first
+  confirmation is how the second gets missed.
+- **"Can't tell" does nothing.** Every question carries it explicitly, with no
+  effect, because otherwise uncertainty would quietly eliminate something.
+- **Every elimination records the check and the answer that caused it** — so *"why
+  did nobody look at the tower?"* has a better answer than *"the software decided"*.
+
+**Thirty-one causes have already been ruled out on the live queue**, every one by a
+discriminator nobody qualified has reviewed. That is the whole reason for this hour.
+
+> **Answer / corrections, one line at a time:**
+
 ### 1.5 Are any causes missing from the candidate lists?
 
 An absent cause can never be found, which is worse than a wrong elimination.
@@ -224,6 +251,14 @@ Our position is **measured only**. An untagged answer once defaulted to *estimat
 and opened a blocking gate; separately, six "N/A" presses opened one with no evidence
 behind it. `RC10` records three answers rather than two — measured, estimated, and
 cannot-check — and only the first satisfies a blocking item.
+
+> **Answer:**
+
+### 4.3a Does `REFRIGERANT_SIDE_HIGH_HEAD` need a differential?
+
+It names a *region* rather than a mechanism, probes five mechanisms, and has **no
+blocking items and no differential** — so a case can conclude there having gathered
+no evidence at all. Should it get one?
 
 > **Answer:**
 

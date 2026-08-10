@@ -197,6 +197,12 @@ is wrong.
 | 24 | **An untagged item defaults to technician, and that asymmetry is deliberate** | Mis-tagging a technician task as operator puts an unqualified person on a pressurised circuit. The reverse wastes a callout. Over-escalating is the cheap error. |
 | 25 | **Role order is display order, not a capability ladder** | A supervisor is not a more capable technician; it is a different capability — authority and records, not gauges. Treating it as seniority once sent a filter-drier restriction to a supervisor because one incidental records question outranked three refrigeration measurements. Escalation therefore targets by **workload**, blocking items weighted double, ties broken toward whoever can physically measure. |
 | 26 | **The language model selects and contextualises library content; it never authors a field instruction** | A checklist directs physical work on pressurised refrigerant equipment. It also removes the evaluation gate for that content, because data is unit-testable without a GPU. Constrains `RC2`. |
+| 27 | **Only a class the model itself declares undecidable gets a differential** | Narrowing a class that already names a mechanism would be inventing ambiguity the model did not report. Four of eleven classes qualify. Constrains `RC12`. |
+| 28 | **A confirmation never eliminates its siblings** | A fouled condenser on a machine that is also low on flow is *two real causes*, and collapsing to the first confirmation is how the second gets missed. |
+| 29 | **Elimination is final** | An answer does not resurrect a cause that has been ruled out. This is why an unreviewed discriminator is dangerous: nobody re-examines a settled question. |
+| 30 | **"Can't tell" must have no effect at all** | Every discriminating question carries an explicit *can't tell* option with empty effects, or uncertainty would silently eliminate something. |
+| 31 | **Every elimination records the check and the answer that caused it** | *"Why did nobody look at the tower?"* needs a better answer than *"the software decided"* — especially while the discriminators are unreviewed engineering judgement. Constrains `RC13`. |
+| 32 | **Exhausted is not the same as settled** | A differential that runs out of questions has established *"we cannot separate these with the checks we have"*, which is a different statement from a conclusion. Constrains `RC14`. |
 
 ## 10a. What the reference plant's data actually says
 
@@ -227,6 +233,38 @@ not yet confirmed for the sites Synex will target. That confirmation is Q1 and Q
 branch this product leads with. That is an argument for `NO_DIAGNOSIS` being a
 first-class output rather than a fallback, and against any roadmap that assumes
 the FDD half is nearly done.
+
+## 10b. The differential — how a cause is ruled out
+
+A flat checklist says *go and do all six of these*. A differential says *three
+causes fit; this one test kills two of them*. Same library, different question —
+and it is the mechanism `F5` hands off to once a class is named but ambiguous.
+
+**Scale on the reference plant:** 4 differentials · 19 candidate causes · 19
+discriminating questions · about 41 effects. Only the four classes the trained
+model declares undecidable have one.
+
+| Effect | Meaning | Reversible |
+|---|---|---|
+| `confirm` | positive evidence **for** this cause | — |
+| `eliminate` | rules the cause **out** | **no** |
+| `keep` | consistent; neither confirms nor eliminates | — |
+
+Two terminal states, kept deliberately distinct: **settled**, and **exhausted but
+not settled** — the honest *"we cannot separate these with the checks we have"*.
+
+**Why this is the highest-risk content in the programme.** Thirty-one causes have
+already been eliminated on that queue, every one by a discriminator no refrigeration
+engineer has reviewed. Elimination is irreversible and nobody re-examines a settled
+question, so a wrong discriminator does not produce a wrong answer once — it
+produces a confident wrong answer that is never revisited. That is why the SME hour
+is spent on §1 of `mvp/SME-REVIEW.md` and nowhere else.
+
+Two known holes, recorded rather than fixed: the highest-power question in the
+condenser-water-side differential **cannot be answered from telemetry**, and
+`REFRIGERANT_SIDE_HIGH_HEAD` names a region, probes five mechanisms, and has no
+differential and no blocking items — so a case can conclude there with no evidence.
+That is Q37.
 
 ## 11. The three role systems
 

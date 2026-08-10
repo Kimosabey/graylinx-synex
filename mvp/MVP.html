@@ -2915,8 +2915,8 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 
 <script>
 /* BEGIN GENERATED — scripts/sync_mvp_html.py. Do not edit by hand. */
-/* 136 features from mvp/FEATURE-REGISTER.md,
-   83 of them in the proposed MVP cut. */
+/* 139 features from mvp/FEATURE-REGISTER.md,
+   86 of them in the proposed MVP cut. */
 const DOMAINS = {
   C:"Synex Copilot",
   R:"Reports",
@@ -3091,6 +3091,12 @@ const FEATURES = [
    w:"A case whose condition has cleared marks itself stale; one nobody has touched ages visibly rather than sitting silently.", u:"Supervisor", e:["R"], p:"P0", ph:"MVP"},
   {id:"RC10", d:"RC", n:"Measured or estimated, per finding",
    w:"Only a measured answer settles a blocking check. An estimate is recorded and does not open the gate.", u:"Technician", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"RC12", d:"RC", n:"Differential narrowing",
+   w:"Candidate causes per ambiguous class, narrowed by asking the single most discriminating question at a time rather than presenting a flat list.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
+  {id:"RC13", d:"RC", n:"Elimination audit",
+   w:"Every ruled-out cause records the check and the answer that ruled it out. \"The software decided\" is not an answer.", u:"Reliability", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"RC14", d:"RC", n:"Honestly exhausted, distinct from settled",
+   w:"A differential that runs out of questions says so, rather than concluding on whichever cause is left.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
   {id:"RC11", d:"RC", n:"Preventive actions become a scheduled obligation",
    w:"A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
   {id:"K1", d:"K", n:"SOP search",
@@ -3322,7 +3328,7 @@ const WORKFLOWS = [
  ]},
  {t:'Fault → Fix → Proof', src:'v4 \u00a735.2', ends:'ANSWERED → PASS / FAIL / UNKNOWN',
   note:'This is the loop the MVP exists to close. Every step is inside the proposed cut.', steps:[
-  {l:'ML / FDD', who:'Equipment ML · ML', d:'Six normal-operation models per asset produce residuals, each carrying a validity flag.', ids:['F1','F2']},
+  {l:'ML / FDD', who:'Equipment ML · ML', d:'Six normal-operation models per asset produce residuals, each carrying a validity flag.', ids:['F1','F2','F15']},
   {l:'EVIDENCE', who:'Platform · SW', d:'Residuals, gates, trends and similar cases are assembled once, and travel with whatever comes next.', ids:['C4','W3']},
   {l:'DIAGNOSIS', who:'FDD rules · R', d:'Gates pass, the pattern persists, and the deterministic isolation path names one fault class. The language model is not involved here.', ids:['F3','F4','F5','F6','F7']},
   {l:'EXPLANATION', who:'Copilot · LLM', d:'The Copilot explains the rule path in plain English, without inventing it — with residuals drawn rather than described where that reads better, and every figure either a value or a stated absence.', ids:['C5','C21','C24','U6']},
@@ -3386,17 +3392,17 @@ const WORKFLOWS = [
   note:'The step the first draft missed. A fault does not become a work order in one hop \u2014 somebody answers questions first, and some answers come back "could not check".', steps:[
   {l:'CASE OPENS', who:'Case service \u00b7 SW', d:'Seeded from the FDD episode. Idempotent: a rescan of the same window opens no second case.', ids:['RC1','RC8','RC9','U6']},
   {l:'CHECKLIST ATTACHES', who:'Curated library \u00b7 SW', d:'Human-written for this fault class and reviewable. Never model output \u2014 a plausible-but-wrong item directs physical work on pressurised equipment.', ids:['RC2']},
-  {l:'ROUTED BY CAPABILITY', who:'Case service \u00b7 SW', d:'Each item names who can answer it \u2014 operator, maintenance, technician, supervisor, vendor \u2014 by capability, never by rank.', ids:['RC3']},
+  {l:'ROUTED BY CAPABILITY', who:'Case service \u00b7 SW', d:'Each item names who can answer it \u2014 operator, maintenance, technician, supervisor, vendor \u2014 by capability, never by rank.', ids:['RC3','RC12']},
   {l:'FINDINGS COME BACK', who:'Technician \u00b7 SW', d:'With "could not check" recorded separately from "not applicable", because six N/A presses once opened a blocking gate with no evidence behind it.', ids:['RC4','W8']},
   {l:'THE GATE HOLDS', who:'Case service \u00b7 R', d:'The case cannot advance while a blocking item is unanswered, and a cannot-check does not satisfy one.', ids:['RC5','RC10','U7']},
   {l:'OR IT ESCALATES', who:'Case service \u00b7 R', d:'Sideways for the wrong skill, up for authority, defer for the wrong moment. Escalating up lands unassigned and says so.', ids:['RC7']},
-  {l:'ROOT CAUSE', who:'Reliability \u00b7 SW + R', d:'Recorded, which attaches the corrective and the preventive checklists together.', ids:['RC6']},
+  {l:'ROOT CAUSE', who:'Reliability \u00b7 SW + R', d:'Recorded, which attaches the corrective and the preventive checklists together.', ids:['RC6','RC13','RC14','RC11']},
   {l:'WORK ORDER', who:'Work orders \u00b7 R + SW', d:'Raised from the resolved case, carrying every finding as evidence.', ids:['W2','W3','W4']},
   {l:'VERIFY, THEN CLOSE', who:'Verification \u00b7 ML + R', d:'Post-work residuals decide. PASS closes, FAIL reopens, UNKNOWN is neither.', ids:['V1','V6','W9','W10']}
  ]},
  {t:'Bad-data workflow', src:'v4 \u00a735.6', ends:'NO_DIAGNOSIS',
   note:'Acceptance criterion 2 tests this path by deliberately invalidating a signal. It is the workflow that makes every other answer believable.', steps:[
-  {l:'DATA QUALITY FAIL', who:'Equipment ML · ML + R', d:'A residual loses its validity flag, or an operating gate does not pass.', ids:['F2','F3']},
+  {l:'DATA QUALITY FAIL', who:'Equipment ML · ML + R', d:'A residual loses its validity flag, or an operating gate does not pass.', ids:['F2','F3','F16']},
   {l:'NO_DIAGNOSIS', who:'FDD rules · R', d:'No fault class is named and no softened guess is offered.', ids:['C7','F8']},
   {l:'EXPLAIN THE LIMITATION', who:'Copilot · LLM', d:'Which check failed, which signal is missing, and what that rules out.', ids:['C5']},
   {l:'DATA-QUALITY ACTION', who:'Work orders · SW', d:'A data-quality or instrumentation work order, rather than a crew sent to the wrong equipment.', ids:['W1','W2']},
@@ -3443,7 +3449,7 @@ const CASES = [
  {t:'The check could not be done', ask:'The technician could not reach the sight glass.',
   flow:'Recorded as cannot-check, not as not-applicable \u2192 the blocking gate stays shut, because an estimate does not settle it \u2192 the item routes sideways to whoever can reach it rather than up \u2192 the case stays open with the reason visible.',
   res:'A gate that cannot be walked past by pressing N/A six times.',
-  ids:['RC4','RC10','RC5','RC7','RC3','U3']},
+  ids:['RC4','RC10','RC5','RC7','RC3','RC12','RC13','RC14','U3']},
  {t:'The machine has to stop now', ask:'There is a refrigerant smell near Chiller-03.',
   flow:'Safety-critical, so the Copilot stops rather than weighing it \u2192 the response class is stop-the-machine, which is not a work order \u2192 routed to EHS per the escalation matrix \u2192 the safety answer comes from the approved SOP with its version, never from model memory.',
   res:'Some faults are answered by stopping the machine. The taxonomy this was learned from had no way to say that.',
@@ -3451,7 +3457,7 @@ const CASES = [
  {t:'The window was blind, and the report says so', ask:'Why does last month look so good?',
   flow:'The signal was unavailable for part of the window \u2192 the period is marked untrusted, and reports, efficiency figures and models honour it \u2192 figures are a value or a stated absence, never both \u2192 the data window is printed on the artefact \u2192 the honesty gate fails a report whose figures disagree, whatever else it scored.',
   res:'A reassuring headline over a blind window is replaced, and the record says it was corrected.',
-  ids:['C23','C22','C21','EV2','EV3','EV1','EV4','E1','R10']},
+  ids:['C23','C22','C21','EV2','EV3','EV1','EV4','E1','R10','F15','F16']},
  {t:'Many alerts are really one problem', ask:'Why am I getting so many alerts?',
   flow:'Related alerts are grouped → the common equipment or event is found → the real issue is explained → one appropriate alert is sent instead of the same message repeated.',
   res:'Less noise, and faster attention to the actual issue.',
