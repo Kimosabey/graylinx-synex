@@ -28,6 +28,14 @@ question S1 is closed.
 | C12 | Source-cited knowledge answers | Quotes the SOP or manual and shows where it came from. | Technician | `LLM` | P0 | MVP |
 | C13 | Watches | Monitored condition with a notification when the rule fires. | Plant Manager | `R` | P1 | Phase 2 |
 | C14 | Executive briefing | Condenses the week into a short business summary with drill-down. | Executive | `LLM` | P1 | Phase 2 |
+| C15 | Conversation thread and turn memory | Per-session memory on **every** route, with every turn persisted. | Everyone | `SW` | P0 | MVP |
+| C16 | Conversational fast path | Greetings and capability questions answered at once, with starter prompts, without touching telemetry. | Everyone | `SW + LLM` | P1 | MVP |
+| C17 | Read-only data lookup in natural language | Exact numbers, counts and averages from the database. Read-only, always. | Analyst | `LLM + SW` | P0 | MVP |
+| C18 | Route transparency | Names the skill that answered and why it was chosen. | Everyone | `SW` | P1 | MVP |
+| C19 | Thread export with evidence | The conversation and the evidence behind it leave as one record. | All | `SW` | P1 | MVP |
+| C20 | Skill registry | The named set of analysis skills, each with its tool scope and its control level. What `C3` routes to and `C18` reports. | Platform | `SW` | P0 | MVP |
+| C21 | Figure discipline | Every number is either a value or a stated absence — never both, never neither. | Everyone | `SW` | P0 | MVP |
+| C22 | Data window on every artefact | Every answer, report and export states the period it was computed over. | All | `SW` | P0 | MVP |
 
 ## R — Reports
 
@@ -90,6 +98,23 @@ question S1 is closed.
 | F13 | Cooling tower assessment | Wet bulb, approach and tower running hours. | Reliability | `ML + R` | P1 | Phase 2 |
 | F14 | Chilled-water delta-T health check | Flags sustained low delta-T against the design band. | Reliability | `R` | P0 | MVP |
 
+## RC — Case Resolution
+
+The lifecycle between a named fault and a closed work order. Detection ends where
+this begins (`F5`) and execution starts where it ends (`W2`) — it is neither.
+Every row here is constrained by an inherited decision; see `CONTEXT.md` §10.
+
+| ID | Feature | What it does | Primary user | Engine | Pri | Phase |
+|---|---|---|---|---|---|---|
+| RC1 | Fault-case state machine | detected → awaiting findings → escalated → deferred → root-caused → actioned → closed. | Reliability | `SW + R` | P0 | MVP |
+| RC2 | Curated checklist library | Human-written and reviewable per fault class. Never model output. | Reliability | `SW` | P0 | MVP |
+| RC3 | Capability-routed checklist items | Each item names who can answer it — operator, maintenance, technician, supervisor, vendor — by capability, never by rank. | Supervisor | `SW` | P0 | MVP |
+| RC4 | Findings capture with an explicit cannot-check | "Could not check" is recorded separately from "not applicable", so an unanswered check can never open a gate. | Technician | `SW` | P0 | MVP |
+| RC5 | Blocking-items gate | A case cannot advance while a blocking item is unanswered. | Supervisor | `R` | P0 | MVP |
+| RC6 | Root cause with corrective and preventive actions | Recording the cause attaches both follow-up checklists. | Reliability | `SW + R` | P0 | MVP |
+| RC7 | Three escalation routes | Sideways for the wrong skill, up for authority, defer for the wrong moment. Escalating up lands unassigned and says so. | Supervisor | `R` | P0 | MVP |
+| RC8 | Idempotent case seeding | A rescan can never open a second case for the same episode. | Data / Reliability | `SW` | P0 | MVP |
+
 ## K — Knowledge
 
 | ID | Feature | What it does | Primary user | Engine | Pri | Phase |
@@ -114,6 +139,30 @@ question S1 is closed.
 | I2 | Reservation against a work order | Parts held for the job. | Stores | `SW` | P1 | Phase 2 |
 | I3 | Alternates | Acceptable substitutes when the primary part is out. | Stores | `SW` | P2 | Phase 3 |
 | I4 | Delivery impact on schedule | What the lead time does to the plan. | Planner | `SW` | P2 | Phase 3 |
+
+## E — Energy and Cost
+
+Analytics that already run against the shared platform database. Registered so the
+capability is named and traceable rather than assumed.
+
+| ID | Feature | What it does | Primary user | Engine | Pri | Phase |
+|---|---|---|---|---|---|---|
+| E1 | Efficiency baseline and kW/TR tracking | The per-asset baseline the FDD efficiency proxy is measured against. | Reliability | `ML + SW` | P0 | MVP |
+| E2 | Energy cost attribution | Consumption and cost split by asset, site and period. | Manager | `SW` | P1 | Phase 2 |
+| E3 | Load forecast | Expected load and consumption ahead of a window. | Planner | `ML` | P1 | Phase 2 |
+| E4 | Setpoint and staging optimisation advice | Advice only. No tool issues a control command, in any phase. | Operations | `LLM + R` | P1 | Phase 2 |
+
+## EV — Evaluation
+
+The standing gates. An answer contract nothing measures is a wish, and an
+evaluation suite that cannot fail is decoration.
+
+| ID | Feature | What it does | Primary user | Engine | Pri | Phase |
+|---|---|---|---|---|---|---|
+| EV1 | Golden regression suite | A fixed case set that must stay green before any change to model behaviour ships. | Platform | `SW` | P0 | MVP |
+| EV2 | Answer-honesty gate | Scores answers on stated dimensions and fails the build below the bar. | Product | `SW + LLM` | P0 | MVP |
+| EV3 | Hard dimensions exempt from tolerance | Some dimensions cannot be traded against an overall score — a report whose figures disagree with each other fails outright. | Product | `R` | P0 | MVP |
+| EV4 | The evaluation's own tests | Deliberately dishonest inputs fed to the gate, so it cannot quietly start passing everything. | Platform | `SW` | P0 | MVP |
 
 ## L / V — Alerts and Verification
 
@@ -142,6 +191,9 @@ question S1 is closed.
 | U3 | Technician job pack | Job context, safety, SOP, history, parts, findings. | Technician | `LLM + SW` | P0 | MVP |
 | U4 | Planner queue view | What can be done, when, by whom. | Planner | `SW` | P1 | Phase 2 |
 | U5 | Permission explanation | Why a user cannot see a report. | Administrator | `SW` | P2 | Phase 3 |
+| U6 | Reliability engineer workspace | The fault queue, the residuals behind each one, and the case it opens. | Reliability | `SW + LLM` | P0 | MVP |
+| U7 | Supervisor approval and closure queue | What is waiting on a named human: approvals, blocked cases, closures that verification has not cleared. | Supervisor | `SW` | P0 | MVP |
+| U8 | Administrator scope and policy | Who may see and do what, the approval matrix, and the policy version every decision is stamped with. | Administrator | `SW` | P0 | MVP |
 | S1 | Safety-critical action block | The AI stops; it does not weigh the risk itself. | EHS | `SW` | P0 | MVP |
 | S2 | Permit and isolation gate | Permit, LOTO and isolation checks before work. | EHS | `SW` | P0 | Phase 2 |
 | S3 | Qualification check | Only qualified people are proposed for restricted work. | Supervisor | `SW` | P0 | Phase 2 |
@@ -158,4 +210,16 @@ question S1 is closed.
 
 ---
 
-**Totals:** 101 features, of which 51 are in the proposed MVP cut.
+**Totals:** 128 features, of which 75 are in the proposed MVP cut.
+
+The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
+implementation. Four groups of capability were in daily use there, or required for
+the loop to close, and named nowhere in this register:
+
+- the conversation shell — `C15`–`C19`, plus the skill registry `C20`
+- the case resolution lifecycle — `RC1`–`RC8`
+- energy and cost analytics — `E1`–`E4`
+- the three personas the loop cannot close without — `U6`, `U7`, `U8`
+- honesty discipline and the standing evaluation gates — `C21`, `C22`, `EV1`–`EV4`
+
+Recorded as decision D-002.

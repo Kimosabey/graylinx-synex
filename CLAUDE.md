@@ -50,11 +50,16 @@ See `decisions/OPEN-QUESTIONS.md`.
 6. **NO_DIAGNOSIS is a feature.** Never soften it, never let a document imply
    the platform will produce an answer when gates fail.
 7. **Feature IDs.** Prefixes are `C` Copilot, `R` Reports, `W` Work Orders,
-   `A` Asset, `F` FDD, `K` Knowledge, `PL` Planning, `I` Inventory, `L` Alerts,
-   `V` Verification, `U` Roles, `S` Safety, `G` Control Plane. Planning uses
-   `PL`, not `P`, because `P0`/`P1`/`P2` are priority labels and a single-letter
-   `P` collides with them. Never introduce a prefix that collides with a
-   priority or a phase label.
+   `A` Asset, `F` FDD, `RC` Case Resolution, `K` Knowledge, `PL` Planning,
+   `I` Inventory, `L` Alerts, `V` Verification, `E` Energy and Cost, `EV`
+   Evaluation, `U` Roles, `S` Safety, `G` Control Plane. Planning uses `PL`, not `P`, because
+   `P0`/`P1`/`P2` are priority labels and a single-letter `P` collides with them.
+   Never introduce a prefix that collides with a priority or a phase label.
+
+   **Two-letter prefixes must be listed before the single-letter class** in any
+   pattern that parses IDs, or `RC1` matches as `C1` — a silent mis-count rather
+   than an error. `ID_PREFIX` in `scripts/verify.py` is the single place this is
+   defined. Extend it there and nowhere else.
 8. **One source of truth per fact.** The feature register lives in
    `mvp/FEATURE-REGISTER.md` and nowhere else. If a chapter needs the feature
    list, it references IDs; it does not restate them.
@@ -126,6 +131,9 @@ A change is done when all of these hold:
 Stop and ask a human rather than deciding, when:
 
 - The answer depends on how the equipment actually behaves (that is Vishnu's call)
+- A capability already exists in the Thermynx implementation and you would be
+  specifying it differently — read the decision behind it first. `CONTEXT.md`
+  section 10 lists the inherited constraints and where they came from.
 - The answer changes what gets built in the MVP
 - Naming question N1 (Synex vs Thermynx) would need to be resolved to proceed
 - A source document contradicts `CONTEXT.md`

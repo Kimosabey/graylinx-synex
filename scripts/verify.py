@@ -75,7 +75,9 @@ SEPARATION_VIOLATIONS = [
      "Priority comes from a deterministic formula"),
 ]
 
-ID_PREFIX = r"(?:PL|[CRWAFKILVUSG])"
+# Two-letter prefixes MUST precede the single-letter class, or "RC1" matches
+# "C1" and the register silently mis-counts instead of failing.
+ID_PREFIX = r"(?:PL|RC|EV|[CRWAFKILVUSGE])"
 # A sentence that *denies* the thing is correct, not a violation.
 NEGATION_RE = re.compile(r"(?i)\b(never|not|cannot|can.t|no longer|does ?n.t|do ?n.t)\b")
 
