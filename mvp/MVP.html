@@ -963,7 +963,10 @@ details.case[open]>summary::before{transform:rotate(180deg)}
    anyone reads a table. Both halves are built from the register.
    -------------------------------------------------------------------------- */
 .glance{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:.6rem; margin:0 0 1.25rem}
+/* A <button> does not lay its children out as blocks, so the bar's height was
+   ignored and the caption escaped the card. Make the button an explicit grid. */
 .gcard{
+  display:grid; grid-template-rows:auto auto auto; gap:.3rem; align-content:start;
   background:var(--card); border:1px solid var(--rule); border-left:3px solid var(--accent);
   border-radius:7px; padding:.7rem .85rem; cursor:pointer; text-align:left; font-family:var(--font);
   transition:border-color var(--dur) var(--ease), transform var(--dur) var(--ease),
@@ -972,14 +975,79 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 .gcard:hover{border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow)}
 .gcard.none{border-left-color:var(--p3); opacity:.72}
 .gcard.whole{border-left-color:var(--ok)}
-.gcard .gk{display:flex; align-items:baseline; gap:.4rem; margin-bottom:.3rem}
+.gcard .gk{display:flex; align-items:baseline; gap:.4rem; min-width:0}
+.gcard .gn{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .gcard .gid{font-family:var(--mono); font-size:.7rem; color:var(--accent)}
 .gcard .gn{font-family:var(--font-head); font-weight:600; color:var(--ink); font-size:.88rem}
-.gcard .gbar{height:6px; border-radius:3px; background:var(--sunken); border:1px solid var(--rule); overflow:hidden; margin:.35rem 0}
+.gcard .gbar{display:block; height:7px; border-radius:4px; background:var(--sunken);
+  border:1px solid var(--rule); overflow:hidden}
 .gcard .gbar i{display:block; height:100%; background:var(--accent)}
 .gcard.whole .gbar i{background:var(--ok)}
-.gcard .gc{font-size:.74rem; color:var(--muted); font-variant-numeric:tabular-nums}
+.gcard .gc{display:block; font-size:.74rem; color:var(--muted); font-variant-numeric:tabular-nums;
+  line-height:1.35}
 .gcard .gc b{color:var(--ink); font-family:var(--font-head)}
+
+
+/* --- mock surfaces --------------------------------------------------------
+   Wireframes, not screenshots: enough structure to argue about, not enough
+   polish to be mistaken for a decision already taken. Built from the same
+   tokens as the page, so the shape is right even though the pixels are not.
+   -------------------------------------------------------------------------- */
+.mock{border:1px solid var(--rule-strong); border-radius:9px; overflow:hidden; background:var(--card)}
+.mock-bar{
+  display:flex; align-items:center; gap:.5rem; padding:.5rem .8rem;
+  background:var(--thead); border-bottom:1px solid var(--rule);
+  font-size:.78rem; color:var(--ink);
+}
+.mock-bar .crumbs{font-family:var(--mono); font-size:.72rem; color:var(--muted)}
+.mock-bar .spacer{margin-left:auto}
+.mock-body{padding:.9rem}
+.mock-grid{display:grid; grid-template-columns:1.5fr 1fr; gap:.9rem}
+@media (max-width:760px){ .mock-grid{grid-template-columns:1fr} }
+.mock-panel{border:1px solid var(--rule); border-radius:7px; padding:.7rem .8rem; background:var(--page)}
+.mock-panel h6{
+  font-family:var(--font-head); font-size:.66rem; letter-spacing:.11em; color:var(--accent);
+  margin:0 0 .5rem;
+}
+.mock-row{
+  display:flex; gap:.5rem; align-items:flex-start; padding:.42rem 0;
+  border-bottom:1px solid var(--rule); font-size:.82rem;
+}
+.mock-row:last-child{border-bottom:0}
+.mock-row .who{
+  flex:none; font-family:var(--mono); font-size:.64rem; padding:.1rem .32rem; border-radius:3px;
+  background:var(--sunken); border:1px solid var(--rule); color:var(--muted); min-width:5.4rem;
+  text-align:center;
+}
+.mock-row .txt{flex:1; min-width:0}
+.mock-row .ans{flex:none; font-size:.72rem; font-family:var(--mono)}
+.mock-row.blocked{background:color-mix(in srgb, var(--stop) 7%, transparent)}
+.mock-row.done .ans{color:var(--ok)}
+.mock-row.cant .ans{color:var(--warn)}
+.mock-row.open .ans{color:var(--stop)}
+.mock-kv{display:grid; grid-template-columns:auto 1fr; gap:.25rem .7rem; font-size:.82rem}
+.mock-kv dt{color:var(--muted); white-space:nowrap}
+.mock-kv dd{margin:0; color:var(--body)}
+.mock-kv dd b{font-family:var(--font-head); color:var(--ink)}
+.mock-state{
+  display:inline-flex; align-items:center; gap:.35rem; font-family:var(--mono); font-size:.7rem;
+  padding:.15rem .45rem; border-radius:4px; border:1px solid currentColor;
+}
+.mock-state.ok{color:var(--ok)} .mock-state.stop{color:var(--stop)} .mock-state.warn{color:var(--warn)}
+.mock-note{font-size:.76rem; color:var(--muted); margin:.6rem 0 0}
+.mock-btn{
+  font-family:var(--font); font-size:.76rem; padding:.3rem .6rem; border-radius:6px;
+  border:1px solid var(--rule-strong); background:var(--card); color:var(--muted);
+}
+.mock-btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:600}
+.mock-btn.off{opacity:.5; text-decoration:line-through}
+.mock-pipe{display:flex; gap:.25rem; flex-wrap:wrap; margin:0 0 .7rem}
+.mock-pipe span{
+  font-family:var(--mono); font-size:.64rem; padding:.16rem .4rem; border-radius:99px;
+  border:1px solid var(--rule); color:var(--muted); background:var(--sunken);
+}
+.mock-pipe span.now{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:600}
+.mock-pipe span.past{border-color:var(--ok); color:var(--ok)}
 
 /* --- print ---------------------------------------------------------------- */
 @media print{
@@ -1414,7 +1482,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     badge on each workflow is computed from the register — it is not asserted.</p>
     <div id="wf-host"></div>
 
-    <h3>5.1 Feature &rarr; agent &rarr; control &rarr; outcome</h3>
+    <h3>6.1 Feature &rarr; agent &rarr; control &rarr; outcome</h3>
     <p style="font-size:.88rem">The same idea as a table: nothing reaches an outcome without a
     control and evidence in between.</p>
     <div class="scroll">
@@ -1443,7 +1511,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     <span id="case-split"></span> Every badge is computed from the register rather than claimed.</p>
     <div class="cases" id="case-host"></div>
 
-    <h3>6.1 The complete example — fault to fix to proof to report</h3>
+    <h3>7.1 The complete example — fault to fix to proof to report</h3>
     <p style="font-size:.88rem">Twelve steps, the loop the whole MVP exists to close.</p>
     <ol class="criteria">
       <li>The existing ML / FDD layer detects abnormal equipment behaviour.</li>
@@ -1460,7 +1528,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <li>The verified result becomes part of the report, the history, and future matching.</li>
     </ol>
 
-    <h3>6.2 Five example conversations</h3>
+    <h3>7.2 Five example conversations</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">The user says</th><th>What happens</th><th class="nowrap">Ends in</th></tr></thead>
@@ -1502,7 +1570,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       ALLOW — this is a read.</p>
     </div>
 
-    <h3>7.1 The gates, checked before any rule may fire</h3>
+    <h3>8.1 The gates, checked before any rule may fire</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Gate</th><th>Requirement</th><th class="nowrap">Reading</th><th class="nowrap">Result</th></tr></thead>
@@ -1516,7 +1584,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </table>
     </div>
 
-    <h3>7.2 The six residuals</h3>
+    <h3>8.2 The six residuals</h3>
     <div class="scroll">
       <table>
         <thead><tr><th>Signal</th><th class="nowrap">Residual</th><th class="nowrap">Reading</th><th>What it means</th></tr></thead>
@@ -1531,7 +1599,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </table>
     </div>
 
-    <h3>7.3 Down the isolation path</h3>
+    <h3>8.3 Down the isolation path</h3>
     <p class="chain">rPwr high &rarr; rDP high &rarr; rCWL high &rarr; condenser water-side problem &rarr; steady and worsening over weeks &rarr; condenser fouling</p>
     <p style="font-size:.9rem">The rule path is deterministic and comes from the FDD engine, not from
     the model. Power is high, so an efficiency fault exists. Discharge pressure is high, so the extra
@@ -1542,7 +1610,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     drift with no spikes, so the class is condenser fouling. The model's job here is to explain the
     path in plain English, not to invent it.</p>
 
-    <h3>7.4 The answer — and the same question on bad data</h3>
+    <h3>8.4 The answer — and the same question on bad data</h3>
     <p style="font-size:.88rem">The interesting half of the design is the second button. Same
     question, same equipment, one missing signal.</p>
     <div class="seg" role="group" aria-label="Data quality">
@@ -1586,7 +1654,192 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       deliberately invalidating a signal.</p>
     </div>
 
-    <h3>7.5 Act — "create a work order for this"</h3>
+
+    <h3>8.5 The surfaces, as wireframes</h3>
+    <p style="font-size:.9rem">Four of the eight, at the moment in the loop where each one matters. These
+    are wireframes rather than designs — enough structure to argue about, deliberately not enough polish to
+    look like a decision already taken. Every state shown is one the specification requires.</p>
+    <div class="seg" role="group" aria-label="Surface">
+      <button type="button" data-seg="mock" data-panel="mock-case" aria-pressed="true">Case</button>
+      <button type="button" data-seg="mock" data-panel="mock-wo" aria-pressed="false">Work order</button>
+      <button type="button" data-seg="mock" data-panel="mock-sup" aria-pressed="false">Supervisor queue</button>
+      <button type="button" data-seg="mock" data-panel="mock-tech" aria-pressed="false">Job pack</button>
+    </div>
+
+    <div class="panel" id="mock-case">
+      <div class="mock">
+        <div class="mock-bar">
+          <strong>CS-4412</strong>
+          <span class="crumbs">Plant A / Chiller-03 / condenser fouling</span>
+          <span class="spacer"></span>
+          <span class="mock-state stop">BLOCKED</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-pipe">
+            <span class="past">detected</span><span class="now">awaiting findings</span>
+            <span>escalated</span><span>deferred</span><span>root-caused</span>
+            <span>actioned</span><span>closed</span>
+          </div>
+          <div class="mock-grid">
+            <div class="mock-panel">
+              <h6>RCA CHECKLIST &mdash; CURATED, NOT GENERATED</h6>
+              <div class="mock-row done"><span class="who">operator</span>
+                <span class="txt">Sight glass condition at full load</span>
+                <span class="ans">clear</span></div>
+              <div class="mock-row done"><span class="who">operator</span>
+                <span class="txt">Condenser water entering and leaving vs design</span>
+                <span class="ans">34.9 / 31.2</span></div>
+              <div class="mock-row cant"><span class="who">technician</span>
+                <span class="txt">Temperature drop across the filter-drier
+                  <em style="color:var(--muted)">&mdash; blocking</em></span>
+                <span class="ans">cannot_check</span></div>
+              <div class="mock-row blocked open"><span class="who">technician</span>
+                <span class="txt">Condenser approach temperature
+                  <em style="color:var(--stop)">&mdash; input unavailable, see Q8</em></span>
+                <span class="ans">open</span></div>
+              <div class="mock-row"><span class="who">supervisor</span>
+                <span class="txt">Last tube-cleaning date from the maintenance log</span>
+                <span class="ans">&mdash;</span></div>
+              <p class="mock-note"><strong>The gate is shut.</strong> One blocking item is unanswered, and
+              <code>cannot_check</code> does not satisfy it &mdash; an estimate would not either. Routing
+              this <em>up</em> would land it unassigned; it needs to go <em>sideways</em>, to somebody who
+              can reach the drier.</p>
+            </div>
+            <div class="mock-panel">
+              <h6>EVIDENCE</h6>
+              <dl class="mock-kv">
+                <dt>rPwr</dt><dd><b>high</b> for this asset</dd>
+                <dt>rDP</dt><dd><b>high</b></dd>
+                <dt>rCWL</dt><dd><b>high</b></dd>
+                <dt>rSP</dt><dd>normal</dd>
+                <dt>rAmp</dt><dd>normal</dd>
+                <dt>gates</dt><dd>5 of 5 passed</dd>
+                <dt>held</dt><dd>42 min</dd>
+                <dt>window</dt><dd>3-week drift</dd>
+              </dl>
+              <p class="mock-note">Bands are this asset's own. A healthy baseline here is not zero.</p>
+              <h6 style="margin-top:.9rem">ACTIONS</h6>
+              <button class="mock-btn" type="button">Route sideways</button>
+              <button class="mock-btn" type="button">Defer</button>
+              <button class="mock-btn off" type="button">Record root cause</button>
+              <p class="mock-note">Root cause is unavailable while a blocking item is open.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="mock-wo" hidden>
+      <div class="mock">
+        <div class="mock-bar"><strong>WO-2291</strong>
+          <span class="crumbs">from CS-4412 / Chiller-03 / condenser tube cleaning</span>
+          <span class="spacer"></span><span class="mock-state warn">CANNOT CLOSE</span></div>
+        <div class="mock-body">
+          <div class="mock-grid">
+            <div class="mock-panel">
+              <h6>PRIORITY &mdash; RECALCULABLE BY HAND</h6>
+              <dl class="mock-kv">
+                <dt>asset criticality</dt><dd>from the asset register</dd>
+                <dt>fault risk class</dt><dd>from the fault class, escalated by persistence</dd>
+                <dt>SLA position</dt><dd>from the contract</dd>
+                <dt>production impact</dt><dd>from the served load</dd>
+              </dl>
+              <p class="mock-note">Never from residual magnitude &mdash; non-faults were measured to
+              deviate more than faults. The formula and its inputs are both shown, so a planner can check
+              the arithmetic.</p>
+              <h6 style="margin-top:.9rem">FINDINGS</h6>
+              <div class="mock-row done"><span class="who">technician</span>
+                <span class="txt">Tubes cleaned; heavy scale reported</span><span class="ans">measured</span></div>
+              <div class="mock-row done"><span class="who">technician</span>
+                <span class="txt">Photographs attached</span><span class="ans">2</span></div>
+            </div>
+            <div class="mock-panel">
+              <h6>THE CLOSE GATE</h6>
+              <div class="mock-row done"><span class="who">work</span><span class="txt">performed, findings recorded</span><span class="ans">yes</span></div>
+              <div class="mock-row done"><span class="who">rPwr rDP rCWL</span><span class="txt">back inside band</span><span class="ans">yes</span></div>
+              <div class="mock-row cant"><span class="who">window</span><span class="txt">comparable conditions since the work</span><span class="ans">not yet</span></div>
+              <div class="mock-row"><span class="who">persistence</span><span class="txt">held across the load range</span><span class="ans">&mdash;</span></div>
+              <p class="mock-note"><strong>Verification returns <span class="state">UNKNOWN</span>, not
+              PASS.</strong> The machine has not run under comparable conditions yet. The gate only opens
+              on PASS, so the button stays off &mdash; and UNKNOWN is not a softer PASS.</p>
+              <button class="mock-btn off" type="button">Close work order</button>
+              <button class="mock-btn" type="button">Watch for a valid window</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="mock-sup" hidden>
+      <div class="mock">
+        <div class="mock-bar"><strong>Supervisor queue</strong>
+          <span class="crumbs">what is waiting on a named human</span>
+          <span class="spacer"></span><span class="mock-state warn">4 items</span></div>
+        <div class="mock-body">
+          <div class="mock-panel">
+            <h6>APPROVALS &mdash; THE COPILOT NEVER SELF-APPROVES</h6>
+            <div class="mock-row open"><span class="who">approval</span>
+              <span class="txt">Isolate Chiller-03 for tube cleaning
+                <em style="color:var(--muted)">&mdash; safety-critical, prepared not performed</em></span>
+              <span class="ans">you</span></div>
+            <div class="mock-row cant"><span class="who">held close</span>
+              <span class="txt">WO-2291 &mdash; verification UNKNOWN, no comparable window yet</span>
+              <span class="ans">wait</span></div>
+            <div class="mock-row cant"><span class="who">blocked</span>
+              <span class="txt">CS-4412 &mdash; one blocking item answered cannot_check</span>
+              <span class="ans">route</span></div>
+            <div class="mock-row open"><span class="who">escalated up</span>
+              <span class="txt">CS-4390 &mdash; <strong>unassigned, and says so</strong></span>
+              <span class="ans">claim</span></div>
+            <p class="mock-note">Escalating <em>up</em> lands unassigned deliberately. Pretending somebody
+            already has it is the one dishonesty this queue cannot afford. Sideways, up and defer are
+            three different routes, not one.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="mock-tech" hidden>
+      <div class="mock">
+        <div class="mock-bar"><strong>Job pack</strong>
+          <span class="crumbs">WO-2291 / Chiller-03 / Sunday shutdown</span>
+          <span class="spacer"></span><span class="mock-state ok">ASSIGNED</span></div>
+        <div class="mock-body">
+          <div class="mock-grid">
+            <div class="mock-panel">
+              <h6>BEFORE YOU START</h6>
+              <div class="mock-row open"><span class="who">safety</span>
+                <span class="txt">Isolation required &mdash; awaiting supervisor approval</span>
+                <span class="ans">blocked</span></div>
+              <div class="mock-row done"><span class="who">SOP</span>
+                <span class="txt">Condenser tube cleaning &mdash; SOP-114 rev 3
+                  <em style="color:var(--muted)">&mdash; quoted, with its version</em></span>
+                <span class="ans">open</span></div>
+              <p class="mock-note">Safety answers come from the approved SOP, never from model memory. If
+              the SOP does not cover it, the answer is that it does not cover it.</p>
+              <h6 style="margin-top:.9rem">WHY YOU ARE HERE</h6>
+              <p style="font-size:.82rem;margin:0">Likely condenser fouling. About 9% more power than
+              normal for this load, head pressure high, condenser water leaving high, suction and
+              compressor normal. Steady three-week drift with no spikes.</p>
+            </div>
+            <div class="mock-panel">
+              <h6>RECORD WHAT YOU FIND</h6>
+              <div class="mock-row"><span class="who">measured</span>
+                <span class="txt">Drier &Delta;T</span><span class="ans">&deg;C</span></div>
+              <div class="mock-row"><span class="who">estimated</span>
+                <span class="txt">Scale thickness</span><span class="ans">note</span></div>
+              <div class="mock-row"><span class="who">cannot_check</span>
+                <span class="txt">If access is not possible &mdash; say so</span><span class="ans">reason</span></div>
+              <p class="mock-note"><strong>Three answers, not two.</strong> "Could not check" is recorded
+              separately from "not applicable", and neither opens a blocking gate. Six N/A presses once
+              walked past a safety gate with no evidence behind it.</p>
+              <button class="mock-btn primary" type="button">Submit findings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h3>8.6 Act — "create a work order for this"</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Step</th><th>What the Copilot does</th><th class="nowrap">Control</th></tr></thead>
@@ -1610,7 +1863,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       approver rather than a created work order.</p>
     </div>
 
-    <h3>7.6 Prove — "did the repair work?"</h3>
+    <h3>8.7 Prove — "did the repair work?"</h3>
     <p style="font-size:.9rem">Six days later the crew has closed out the physical work. The Copilot
     does not accept "complete" as proof of "fixed".</p>
     <div class="scroll">
@@ -1741,7 +1994,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       the fault; the Control Plane grants the permission. The Copilot explains both.</p>
     </div>
 
-    <h3>10.1 Where the intelligence actually is</h3>
+    <h3>11.1 Where the intelligence actually is</h3>
     <p style="font-size:.9rem">Counted from the register, over the features in the cut. The shape of this
     chart <em>is</em> the separation law — a platform whose answers are mostly model output cannot explain
     any of them.</p>
@@ -1767,7 +2020,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
         </tbody>
       </table>
     </div>
-    <h3>10.2 The full split</h3>
+    <h3>11.2 The full split</h3>
     <div class="scroll">
       <table>
         <thead><tr><th>Question</th><th>Decided by</th><th>Never decided by</th></tr></thead>
@@ -1795,7 +2048,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     asset, never per fleet.</p>
 
 
-    <h3>11.0 The six models, and what happens to their output</h3>
+    <h3>12.0 The six models, and what happens to their output</h3>
     <p style="font-size:.9rem">Six normal-operation models per chiller, fitted <strong>per asset, never
     per fleet</strong> — two identical machines on one site do not share a model. Each produces a residual
     with a validity flag. Nothing downstream is allowed to run until the gates pass.</p>
@@ -1864,7 +2117,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <figcaption>ML measures, rules decide, the language model explains. The failure path is as
       specified as the success path.</figcaption>
     </div>
-    <h3>11.1 The six models and their inputs</h3>
+    <h3>12.1 The six models and their inputs</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Model</th><th>Predicts</th><th>Inputs</th><th class="nowrap">Residual</th></tr></thead>
@@ -1882,7 +2135,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     condenser &Delta;T, and
     <code>efficiency proxy = (condenser &Delta;T &times; condenser flow) &divide; (evaporator &Delta;T &times; evaporator flow)</code>.</p>
 
-    <h3>11.2 Gates — nothing is diagnosed until all pass</h3>
+    <h3>12.2 Gates — nothing is diagnosed until all pass</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Gate</th><th>Proposed setting</th><th>Confirm with the SME</th></tr></thead>
@@ -1896,7 +2149,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </table>
     </div>
 
-    <h3>11.3 Fault fingerprints — the isolation path</h3>
+    <h3>12.3 Fault fingerprints — the isolation path</h3>
     <div class="scroll">
       <table>
         <thead><tr><th>Fault class</th><th class="nowrap">rPwr</th><th class="nowrap">rDP</th><th class="nowrap">rCWL</th><th class="nowrap">rSP</th><th class="nowrap">rAmp</th><th>Separator</th></tr></thead>
@@ -1923,7 +2176,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       stay a combined label. Nothing here implies the platform separates them.</p>
     </div>
 
-    <h3>11.4 What happens when a signal is missing</h3>
+    <h3>12.4 What happens when a signal is missing</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Missing signal</th><th class="nowrap">Models lost</th><th>Diagnostic capability lost</th><th>Platform behaviour</th></tr></thead>
@@ -1945,7 +2198,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       This is question Q1 and it is the highest-leverage open question in the programme.</p>
     </div>
 
-    <h3>11.5 Instrumentation requirements</h3>
+    <h3>12.5 Instrumentation requirements</h3>
     <p style="font-size:.88rem">A feature cannot be committed to a site until its required signals
     are confirmed available and trustworthy. The right-hand column is for the site survey.</p>
     <div class="scroll">
@@ -1981,7 +2234,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     and an audit trail. Reports and Work Orders keep their own screens — the Copilot is a third
     door to the same capability, not a replacement for the first two.</p>
 
-    <h3>12.1 The fourteen operating modes</h3>
+    <h3>13.1 The fourteen operating modes</h3>
     <p style="font-size:.88rem">A user never chooses a mode. The Copilot works out what kind of
     request it is receiving and behaves accordingly. Each mode carries a different control level,
     because reading data and changing data are not the same act.</p>
@@ -2007,7 +2260,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </table>
     </div>
 
-    <h3>12.2 Anatomy of one turn — fourteen stages</h3>
+    <h3>13.2 Anatomy of one turn — fourteen stages</h3>
     <p style="font-size:.88rem">Every request — from "what is the temperature" to "close this
     critical work order" — travels through the same fourteen stages. Stages are never skipped. If a
     stage cannot complete, the Copilot degrades to a weaker answer state; it does not proceed as if
@@ -2042,7 +2295,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     at p95, with a first token inside 2 seconds. An action turn — one that writes — should complete
     within 12 seconds at p95, excluding the time a human takes to approve.</p>
 
-    <h3>12.3 The answer contract</h3>
+    <h3>13.3 The answer contract</h3>
     <p style="font-size:.88rem">Every turn ends in exactly one of six states. The state is explicit
     in the response, not implied by tone. This is what stops the Copilot from sounding confident
     when it is not.</p>
@@ -2060,7 +2313,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </table>
     </div>
 
-    <h3>12.4 Confidence language — four words, and only four</h3>
+    <h3>13.4 Confidence language — four words, and only four</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Word</th><th>Meaning</th><th>Requirement</th></tr></thead>
@@ -2073,7 +2326,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </table>
     </div>
 
-    <h3>12.5 When the Copilot must refuse to diagnose</h3>
+    <h3>13.5 When the Copilot must refuse to diagnose</h3>
     <ul class="plain">
       <li>The equipment is not in a valid operating state — starting, stopping, below minimum load, or in a setpoint change.</li>
       <li>A required model input is missing or invalid, so the model's residual cannot be trusted.</li>
@@ -2088,7 +2341,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     </div>
 
 
-    <h3>12.6 The conversation</h3>
+    <h3>13.6 The conversation</h3>
     <p style="font-size:.9rem">The Copilot is the product, so this is the product. Every reply is drawn
     from the worked examples in the reference document and the inherited constraints — none of it is
     invented for the mock. Fourteen exchanges in four groups: the happy path end to end, the honest
@@ -2113,7 +2366,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <button class="reset" id="chat-reset" type="button">Start the conversation again</button>
     </p>
 
-    <h3>12.7 Tool calling, and what comes back</h3>
+    <h3>13.7 Tool calling, and what comes back</h3>
     <p style="font-size:.9rem">The brain decides <em>what</em> it needs; it never reaches for it. The
     executor calls tools through a gateway that validates the schema, attaches credentials, retries
     safely and controls side effects. What returns is typed — which is what makes it renderable, and
@@ -2180,7 +2433,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
         </tbody>
       </table>
     </div>
-    <h3>12.8 Every ability — what it can do, and where</h3>
+    <h3>13.8 Every ability — what it can do, and where</h3>
     <p style="font-size:.9rem">All twenty-two Copilot and shell features, with whether the ability
     writes anything. <strong>Click one</strong> to see the build stage that delivers it, the workflow
     steps that name it, the cases that need it, the conversation turns that demonstrate it, and which of
@@ -2208,7 +2461,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </ul>
     </div>
 
-    <h3>12.9 Where the conversation lands</h3>
+    <h3>13.9 Where the conversation lands</h3>
     <p style="font-size:.9rem">Every workflow can be driven from the conversation. That does not make
     the conversation the only surface — an artefact needs somewhere to live, and a supervisor
     approving work at 6am is not going to scroll a chat log to find it. The Copilot is a third door to
@@ -2235,7 +2488,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       Orders surface with its evidence attached and its verification task registered.</p>
     </div>
 
-    <h3>12.10 Agentic, not multi-agent — and why</h3>
+    <h3>13.10 Agentic, not multi-agent — and why</h3>
     <p style="font-size:.9rem">The Copilot plans, calls tools, observes and loops: it is agentic.
     It is not a swarm of agents negotiating, and that is a decision rather than an omission.</p>
     <div class="scroll">
@@ -2378,7 +2631,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       thread memory proven universal across every route first, and one owner per claim in the audit
       record. Both are in the MVP — which is what earns the right to fan out later.</p>
     </div>
-    <h3>12.11 The four models, and the rules between them</h3>
+    <h3>13.11 The four models, and the rules between them</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Model</th><th class="nowrap">Role</th><th>Responsibility</th></tr></thead>
@@ -2397,7 +2650,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       Do not invent a fifth model.</p>
     </div>
 
-    <h3>12.12 Agent families and their hard boundaries</h3>
+    <h3>13.12 Agent families and their hard boundaries</h3>
     <p style="font-size:.88rem">Ten families. A family is a scope and a boundary, not a running
     process — which is what makes them enforceable by plain software rather than by prompt.</p>
     <div class="scroll">
@@ -2424,7 +2677,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       fields, held by <code>C20</code>. An agent that cannot state all eleven does not run.</p>
     </div>
 
-    <h3>12.13 The skills the MVP needs</h3>
+    <h3>13.13 The skills the MVP needs</h3>
     <p style="font-size:.88rem">Seven of ten. A skill is not a feature of its own — it is a named
     entry in the <code>C20</code> registry with a tool scope and a control level.</p>
     <div class="scroll">
@@ -2484,7 +2737,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     <p class="lede">Twenty-three open, none closed. Five of them block work right now.
     <code>decisions/OPEN-QUESTIONS.md</code> is the live list.</p>
 
-    <h3>14.1 Blocking now</h3>
+    <h3>15.1 Blocking now</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="id">ID</th><th>Question</th><th>Blocks</th><th class="nowrap">Owner</th></tr></thead>
@@ -2498,7 +2751,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </table>
     </div>
 
-    <h3>14.2 Everything open</h3>
+    <h3>15.2 Everything open</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="id">ID</th><th>Question</th><th>Proposed starting point / blocks</th><th class="nowrap">Owner</th></tr></thead>
@@ -2537,7 +2790,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
   <div class="wrap">
     <h2><span class="num">16</span>Platform facts</h2>
 
-    <h3>15.1 The four local models</h3>
+    <h3>16.1 The four local models</h3>
     <p style="font-size:.88rem">There is no fifth. Power comes from models + agents + tools +
     existing ML/FDD + data + RAG + Control Plane + workflows + verification.</p>
     <div class="scroll">
@@ -2558,7 +2811,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       site.</p>
     </div>
 
-    <h3>15.2 Known constraints</h3>
+    <h3>16.2 Known constraints</h3>
     <ul class="plain">
       <li>On-premise by default. Embeddings and inference stay local.</li>
       <li>Agents are read-only with respect to hardware control. No tool issues a control command to plant equipment, in any phase.</li>
@@ -2577,7 +2830,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     bugs. The table in 16.2 is computed from the register's own primary-user column, so it cannot drift
     from what is actually being built.</p>
 
-    <h3>16.1 Three systems, not one</h3>
+    <h3>17.1 Three systems, not one</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">System</th><th>Members</th><th>Decides</th><th class="nowrap">Held by</th></tr></thead>
@@ -2602,7 +2855,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       capability. Reconciling the three systems is question Q18.</p>
     </div>
 
-    <h3>16.2 Every role in the cut, and why it is there</h3>
+    <h3>17.2 Every role in the cut, and why it is there</h3>
     <p style="font-size:.88rem">Counted from the register. <strong>Four have a surface of their own</strong>
     because the loop cannot close without a fault being judged, worked, approved and governed. The rest are
     served through the Copilot, through Reports, or through somebody else's screen — none is deferred.
@@ -2615,7 +2868,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </table>
     </div>
 
-    <h3>16.3 Who has to review this, and what only they can settle</h3>
+    <h3>17.3 Who has to review this, and what only they can settle</h3>
     <p style="font-size:.88rem">The scarcest input is the SME hour. Everything below is something no
     one else can answer.</p>
     <div class="scroll">
