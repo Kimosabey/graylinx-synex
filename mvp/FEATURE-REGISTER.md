@@ -111,8 +111,8 @@ Every row here is constrained by an inherited decision; see `CONTEXT.md` §10.
 | ID | Feature | What it does | Primary user | Engine | Pri | Phase |
 |---|---|---|---|---|---|---|
 | RC1 | Fault-case state machine | detected → awaiting findings → escalated → deferred → root-caused → actioned → closed. | Reliability | `SW + R` | P0 | MVP |
-| RC2 | Curated checklist library | Human-written and reviewable per fault class. Never model output. | Reliability | `SW` | P0 | MVP |
-| RC3 | Capability-routed checklist items | Each item names who can answer it — operator, maintenance, technician, supervisor, vendor — by capability, never by rank. | Supervisor | `SW` | P0 | MVP |
+| RC2 | Curated checklist library | Three kinds per fault class — RCA, corrective, preventive — human-written and reviewable. The language model selects and contextualises; it never authors a field instruction. | Reliability | `SW` | P0 | MVP |
+| RC3 | Capability-routed checklist items | Five capabilities — operator, maintenance, technician, supervisor, vendor. **An operator is never blocked by a check they cannot perform.** Untagged defaults to technician, the safe direction. Escalation targets by workload, never by seniority. | Supervisor | `SW` | P0 | MVP |
 | RC4 | Findings capture with an explicit cannot-check | "Could not check" is recorded separately from "not applicable", so an unanswered check can never open a gate. | Technician | `SW` | P0 | MVP |
 | RC5 | Blocking-items gate | A case cannot advance while a blocking item is unanswered. | Supervisor | `R` | P0 | MVP |
 | RC6 | Root cause with corrective and preventive actions | Recording the cause attaches both follow-up checklists. | Reliability | `SW + R` | P0 | MVP |
@@ -120,6 +120,7 @@ Every row here is constrained by an inherited decision; see `CONTEXT.md` §10.
 | RC8 | Idempotent case seeding | A rescan can never open a second case for the same episode. | Data / Reliability | `SW` | P0 | MVP |
 | RC9 | Case ageing and auto-stale | A case whose condition has cleared marks itself stale; one nobody has touched ages visibly rather than sitting silently. | Supervisor | `R` | P0 | MVP |
 | RC10 | Measured or estimated, per finding | Only a measured answer settles a blocking check. An estimate is recorded and does not open the gate. | Technician | `SW` | P0 | MVP |
+| RC11 | Preventive actions become a scheduled obligation | A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns. | Supervisor | `SW` | P0 | MVP |
 
 ## K — Knowledge
 
@@ -217,7 +218,7 @@ evaluation suite that cannot fail is decoration.
 
 ---
 
-**Totals:** 135 features, of which 82 are in the proposed MVP cut.
+**Totals:** 136 features, of which 83 are in the proposed MVP cut.
 
 The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
 implementation. Four groups of capability were in daily use there, or required for

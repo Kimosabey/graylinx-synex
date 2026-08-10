@@ -2924,8 +2924,8 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 
 <script>
 /* BEGIN GENERATED — scripts/sync_mvp_html.py. Do not edit by hand. */
-/* 135 features from mvp/FEATURE-REGISTER.md,
-   82 of them in the proposed MVP cut. */
+/* 136 features from mvp/FEATURE-REGISTER.md,
+   83 of them in the proposed MVP cut. */
 const DOMAINS = {
   C:"Synex Copilot",
   R:"Reports",
@@ -3083,9 +3083,9 @@ const FEATURES = [
   {id:"RC1", d:"RC", n:"Fault-case state machine",
    w:"detected \u2192 awaiting findings \u2192 escalated \u2192 deferred \u2192 root-caused \u2192 actioned \u2192 closed.", u:"Reliability", e:["SW", "R"], p:"P0", ph:"MVP"},
   {id:"RC2", d:"RC", n:"Curated checklist library",
-   w:"Human-written and reviewable per fault class. Never model output.", u:"Reliability", e:["SW"], p:"P0", ph:"MVP"},
+   w:"Three kinds per fault class \u2014 RCA, corrective, preventive \u2014 human-written and reviewable. The language model selects and contextualises; it never authors a field instruction.", u:"Reliability", e:["SW"], p:"P0", ph:"MVP"},
   {id:"RC3", d:"RC", n:"Capability-routed checklist items",
-   w:"Each item names who can answer it \u2014 operator, maintenance, technician, supervisor, vendor \u2014 by capability, never by rank.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
+   w:"Five capabilities \u2014 operator, maintenance, technician, supervisor, vendor. **An operator is never blocked by a check they cannot perform.** Untagged defaults to technician, the safe direction. Escalation targets by workload, never by seniority.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
   {id:"RC4", d:"RC", n:"Findings capture with an explicit cannot-check",
    w:"\"Could not check\" is recorded separately from \"not applicable\", so an unanswered check can never open a gate.", u:"Technician", e:["SW"], p:"P0", ph:"MVP"},
   {id:"RC5", d:"RC", n:"Blocking-items gate",
@@ -3100,6 +3100,8 @@ const FEATURES = [
    w:"A case whose condition has cleared marks itself stale; one nobody has touched ages visibly rather than sitting silently.", u:"Supervisor", e:["R"], p:"P0", ph:"MVP"},
   {id:"RC10", d:"RC", n:"Measured or estimated, per finding",
    w:"Only a measured answer settles a blocking check. An estimate is recorded and does not open the gate.", u:"Technician", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"RC11", d:"RC", n:"Preventive actions become a scheduled obligation",
+   w:"A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
   {id:"K1", d:"K", n:"SOP search",
    w:"Approved procedures, retrieved with the source shown.", u:"Technician", e:["LLM"], p:"P1", ph:"MVP"},
   {id:"K2", d:"K", n:"Manufacturer manual search",
