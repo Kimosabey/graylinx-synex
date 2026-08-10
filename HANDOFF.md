@@ -46,13 +46,17 @@ change anything.
 
 ## 4. Immediate tasks
 
-### T1 — Apply the Synex rename (do this first)
-Rewrite the product identity across `Graylinx_Enterprise_AI_Platform_v4.docx`
-per the naming law in `CLAUDE.md` section 1. The review pack is already done —
-match its wording.
-**Done when:** `python scripts/verify.py` reports zero legacy-name hits, the
-cover and headers read "Graylinx Synex", and every "AI Copilot" has become
-"Synex Copilot". Do not touch the Thermynx relationship.
+### T1 — Apply the Synex rename (still outstanding, and narrower than it looks)
+Measured in the source document today: **"Graylinx Enterprise AI Platform" and
+"GEAP" are already gone — zero occurrences.** What remains is **13 "AI Copilot"
+and 14 "Chatbot"**. So this is a targeted rename of the assistant, not a rewrite
+of the product identity.
+
+`scripts/verify.py` cannot catch these: it scans `*.md` only, and this is a
+`.docx`. That is why the task has survived this long unnoticed.
+**Done when:** every "AI Copilot" reads "Synex Copilot", every "Chatbot" reads
+"the Copilot", the .docx moves to `docs/90-archive/` if T2 has run, and the count
+above is zero. Do not touch the Thermynx relationship.
 
 ### T2 — Split the source documents into per-chapter markdown
 Convert v4 into one markdown file per chapter under `docs/10-product/` and
@@ -72,13 +76,11 @@ From the agreed MVP cut, produce `mvp/BACKLOG.md`: one entry per feature with
 its dependencies, the data it needs, and the open questions that block it.
 **Blocked by:** a human agreeing the MVP cut.
 
-### T5b — Reconcile the two open-question sets (do before the SME session)
-The Thermynx FDD initiative holds 57 open questions at
-`docs/plan-v4.9.1/fdd/04-sme/questions.md`. Ours holds 26. They overlap, and
-several of theirs probably answer Q3–Q13 here.
-**Done when:** every question in this repo is either matched to a Thermynx
-question, answered by one, or confirmed as genuinely new — and the SME session
-agenda contains no duplicate.
+### ~~T5b — Reconcile the two open-question sets~~ — DONE
+Merged into `mvp/SME-REVIEW.md`: 11 of our questions merged into theirs, one of
+theirs adopted whole, their platform questions left with their platform team, and
+one question identified as having no counterpart in their 57 — what proves a repair
+worked. That document is the agenda for the session.
 
 ### T6 — Read the rest of the Thermynx knowledge base
 Covered: `docs/nyx`, the intent router, the route list, Resolve, the fault
@@ -133,6 +135,7 @@ On Windows, use `py scripts\verify.py` if `python` is not on PATH.
 | 2026-08-10 | Feature count corrected 85 → 101; Planning IDs renamed `P1–P5` → `PL1–PL5` to stop colliding with priority labels; review pack rebuilt under the Synex name | Claude |
 | 2026-08-10 | Workspace organised into a git repository and published privately to `Kimosabey/graylinx-synex`; superseded pre-rename review pack editions filed under `docs/90-archive/`; tagged `v0.1.0`, `develop` branch cut from `main` | Claude |
 | 2026-08-10 | `mvp/MVP.html` added — an interactive derived view of the MVP: filterable 101-feature register, the six priority workflows as steppers, the eight cases, the chiller worked example with its `NO_DIAGNOSIS` variant, the FDD engine and the Copilot specification. Domain and case coverage badges are computed from the register, so they cannot drift from it | Claude |
+| 2026-08-10 | `mvp/SME-REVIEW.md` added — the two open-question sets merged into one agenda ordered by what a wrong answer costs (task T5b). Published the explorer to Netlify from `develop` with the publish directory pinned to a built `site/`, so `docs/00-source/` stays off the internet; three layers of noindex. Live and byte-identical to the repository copy | Claude |
 | 2026-08-10 | Thermynx FDD knowledge base read (task T6, partial): the 57-question SME agenda and the discovery findings. Condenser flow has never recorded a non-zero value on the reference plant — the signal four of six models depend on. Recorded in `CONTEXT.md` §10a with three more inherited constraints; `C23`, `RC9`, `RC10`, `S6` added (79 of 132); Q1 and Q2 restated with the evidence; Q21–Q27 raised. Decision D-004 | Claude |
 | 2026-08-10 | MVP cut grown 51 → 69 of 122 after reviewing the flows in the existing Thermynx implementation: conversation shell `C15`–`C20`, case resolution `RC1`–`RC8`, energy and cost `E1`–`E4`, personas `U6`–`U8`. Two new prefixes `RC` and `E`; `verify.py` `ID_PREFIX` extended so `RC1` is not read as `C1`. 13 acceptance criteria, 10 build stages. Recorded as D-002 | Claude |
 | 2026-08-10 | Thirteen Thermynx platform decisions adopted as inherited constraints in `CONTEXT.md` §10, with the graylinx-v2 database, the Jarvis box and the shared stack recorded as what Synex stands on. Three of the thirteen are inherited as unsolved gaps — Q19. Recorded as D-003 | Claude |
