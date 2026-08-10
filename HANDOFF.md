@@ -107,6 +107,9 @@ On Windows, use `py scripts\verify.py` if `python` is not on PATH.
 |---|---|---|
 | 2026-08-10 | Repo initialised; CLAUDE / CONTEXT / HANDOFF written; feature register and open questions extracted from the review pack | Claude |
 | 2026-08-10 | Feature count corrected 85 → 101; Planning IDs renamed `P1–P5` → `PL1–PL5` to stop colliding with priority labels; review pack rebuilt under the Synex name | Claude |
+| 2026-08-10 | Workspace organised into a git repository and published privately to `Kimosabey/graylinx-synex`; superseded pre-rename review pack editions filed under `docs/90-archive/`; tagged `v0.1.0`, `develop` branch cut from `main` | Claude |
+| 2026-08-10 | `mvp/MVP.html` added — an interactive derived view of the MVP: filterable 101-feature register, the six priority workflows as steppers, the eight cases, the chiller worked example with its `NO_DIAGNOSIS` variant, the FDD engine and the Copilot specification. Domain and case coverage badges are computed from the register, so they cannot drift from it | Claude |
+| 2026-08-10 | Brand colour `#0020B0` issued and recorded as D-001; `scripts/palette.py` added to derive and audit the whole colour system from it; `brand/NAMING.md` Visual identity replaced. 72 of 72 rendered pairs pass WCAG 2.2 AA in both themes, body text at AAA | Claude |
 
 _Append a row here for every change. This table is how the next session finds
 out what happened._
