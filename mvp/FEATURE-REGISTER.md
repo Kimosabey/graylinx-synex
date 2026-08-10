@@ -14,12 +14,12 @@ question S1 is closed.
 
 | ID | Feature | What it does | Primary user | Engine | Pri | Phase |
 |---|---|---|---|---|---|---|
-| C1 | Natural-language ask across the platform | One entry point to reports, assets, faults, work orders and documents. | Everyone | `LLM + SW` | P0 | MVP |
-| C2 | Context resolution | Understands "this" and "it" from the screen and the conversation. | Everyone | `LLM + SW` | P0 | MVP |
+| C1 | Natural-language ask across the platform | One entry point to reports, assets, faults, work orders and documents. | Everyone | `SW + LLM` | P0 | MVP |
+| C2 | Context resolution | Understands "this" and "it" from the screen and the conversation. | Everyone | `SW + LLM` | P0 | MVP |
 | C3 | Intent routing | Chooses the right skill and tools for the request. | Everyone | `LLM` | P0 | MVP |
 | C4 | Evidence pack assembly | Collects the readings, versions and records behind every answer. | Everyone | `SW` | P0 | MVP |
 | C5 | Grounded fault explanation | Explains the FDD rule path in plain English, without inventing it. | Reliability | `LLM` | P0 | MVP |
-| C6 | Ranked recommendation | Proposes next actions with reason, confidence and alternatives. | Maintenance | `LLM + R` | P0 | MVP |
+| C6 | Ranked recommendation | Proposes next actions with reason, confidence and alternatives. | Maintenance | `R + LLM` | P0 | MVP |
 | C7 | Honest uncertainty | Returns NO_DIAGNOSIS when gates fail or signals conflict. | Everyone | `R` | P0 | MVP |
 | C8 | Draft before write | Shows the complete action before anything is saved. | Everyone | `SW` | P0 | MVP |
 | C9 | Approval request routing | Prepares the request and names the approver; never self-approves. | Supervisor | `SW` | P0 | MVP |
@@ -30,7 +30,7 @@ question S1 is closed.
 | C14 | Executive briefing | Condenses the week into a short business summary with drill-down. | Executive | `LLM` | P1 | Phase 2 |
 | C15 | Conversation thread and turn memory | Per-session memory on **every** route, with every turn persisted. | Everyone | `SW` | P0 | MVP |
 | C16 | Conversational fast path | Greetings and capability questions answered at once, with starter prompts, without touching telemetry. | Everyone | `SW + LLM` | P1 | MVP |
-| C17 | Read-only data lookup in natural language | Exact numbers, counts and averages from the database. Read-only, always. | Analyst | `LLM + SW` | P0 | MVP |
+| C17 | Read-only data lookup in natural language | Exact numbers, counts and averages from the database. Read-only, always. | Analyst | `SW + LLM` | P0 | MVP |
 | C18 | Route transparency | Names the skill that answered and why it was chosen. | Everyone | `SW` | P1 | MVP |
 | C19 | Thread export with evidence | The conversation and the evidence behind it leave as one record. | All | `SW` | P1 | MVP |
 | C20 | Skill registry | The named set of analysis skills, each with its tool scope and its control level. What `C3` routes to and `C18` reports. | Platform | `SW` | P0 | MVP |
@@ -44,8 +44,8 @@ question S1 is closed.
 | ID | Feature | What it does | Primary user | Engine | Pri | Phase |
 |---|---|---|---|---|---|---|
 | R1 | Ask a question of a report | Conversational follow-up on any report. | All | `LLM` | P0 | MVP |
-| R2 | Create report from natural language | Builds a report from a spoken or typed request. | Manager | `LLM + SW` | P0 | Phase 2 |
-| R3 | Explain a KPI change | Traces a movement to the equipment, faults and work behind it. | Manager | `LLM + SW` | P0 | MVP |
+| R2 | Create report from natural language | Builds a report from a spoken or typed request. | Manager | `SW + LLM` | P0 | Phase 2 |
+| R3 | Explain a KPI change | Traces a movement to the equipment, faults and work behind it. | Manager | `SW + LLM` | P0 | MVP |
 | R4 | Compare sites, assets or periods | Aligns two scopes on identical metric definitions. | Regional Head | `SW` | P0 | Phase 2 |
 | R5 | Drill down to source records | Every number opens to the records that produced it. | Analyst | `SW` | P0 | MVP |
 | R6 | AI narrative | Writes the commentary over verified metrics only. | Executive | `LLM` | P1 | Phase 2 |
@@ -58,8 +58,8 @@ question S1 is closed.
 
 | ID | Feature | What it does | Primary user | Engine | Pri | Phase |
 |---|---|---|---|---|---|---|
-| W1 | Create work order from chat | From a sentence, with the evidence attached. | Maintenance | `LLM + SW` | P0 | MVP |
-| W2 | Create work order from a fault | Direct from an FDD finding, pre-populated. | Reliability | `R + SW` | P0 | MVP |
+| W1 | Create work order from chat | From a sentence, with the evidence attached. | Maintenance | `SW + LLM` | P0 | MVP |
+| W2 | Create work order from a fault | Direct from an FDD finding, pre-populated. | Reliability | `SW + R` | P0 | MVP |
 | W3 | Evidence auto-attached | Residuals, gates, trends and similar cases travel with the job. | Technician | `SW` | P0 | MVP |
 | W4 | Priority calculation | Deterministic formula over criticality, risk, SLA and production impact. | Planner | `R` | P0 | MVP |
 | W5 | Maintenance window planning | Finds a production-compatible slot. | Planner | `SW` | P1 | Phase 2 |
@@ -94,11 +94,11 @@ question S1 is closed.
 | F7 | Honest ambiguity labels | High head ambiguous; undercharge and restriction kept combined. | Reliability | `R` | P0 | MVP |
 | F8 | NO_DIAGNOSIS on failed gates | No softened guess when the inputs are not trustworthy. | Reliability | `R` | P0 | MVP |
 | F9 | Similar verified case matching | Past cases with the same signature and a proven fix. | Maintenance | `SW` | P1 | Phase 2 |
-| F10 | Model health and drift monitoring | Detects a model going quietly stale. | Data / Reliability | `ML + R` | P0 | MVP |
+| F10 | Model health and drift monitoring | Detects a model going quietly stale. | Data / Reliability | `R + ML` | P0 | MVP |
 | F11 | Model quarantine | A failed model stops being used, not merely flagged. | Data / Reliability | `SW` | P0 | MVP |
 | F12 | Re-baseline after verified major work | A repaired machine may have a legitimately new normal. | Reliability | `ML` | P1 | Phase 2 |
-| F13 | Cooling tower assessment | Wet bulb, approach and tower running hours. | Reliability | `ML + R` | P1 | Phase 2 |
-| F15 | Per-asset residual reference band | "High" and "Normal" are measured against that asset's own healthy distribution, never an absolute threshold. | Reliability | `ML + R` | P0 | MVP |
+| F13 | Cooling tower assessment | Wet bulb, approach and tower running hours. | Reliability | `R + ML` | P1 | Phase 2 |
+| F15 | Per-asset residual reference band | "High" and "Normal" are measured against that asset's own healthy distribution, never an absolute threshold. | Reliability | `R + ML` | P0 | MVP |
 | F16 | Cross-signal physical plausibility | Rejects combinations that cannot physically occur — zero flow with a normal &Delta;T and normal power, or a condenser &Delta;T with the wrong sign. | Data / Reliability | `R` | P0 | MVP |
 | F14 | Chilled-water delta-T health check | Flags sustained low delta-T against the design band. | Reliability | `R` | P0 | MVP |
 
@@ -157,10 +157,10 @@ capability is named and traceable rather than assumed.
 
 | ID | Feature | What it does | Primary user | Engine | Pri | Phase |
 |---|---|---|---|---|---|---|
-| E1 | Efficiency baseline and kW/TR tracking | The per-asset baseline the FDD efficiency proxy is measured against. | Reliability | `ML + SW` | P0 | MVP |
+| E1 | Efficiency baseline and kW/TR tracking | The per-asset baseline the FDD efficiency proxy is measured against. | Reliability | `SW + ML` | P0 | MVP |
 | E2 | Energy cost attribution | Consumption and cost split by asset, site and period. | Manager | `SW` | P1 | Phase 2 |
 | E3 | Load forecast | Expected load and consumption ahead of a window. | Planner | `ML` | P1 | Phase 2 |
-| E4 | Setpoint and staging optimisation advice | Advice only. No tool issues a control command, in any phase. | Operations | `LLM + R` | P1 | Phase 2 |
+| E4 | Setpoint and staging optimisation advice | Advice only. No tool issues a control command, in any phase. | Operations | `R + LLM` | P1 | Phase 2 |
 
 ## EV — Evaluation
 
@@ -184,7 +184,7 @@ evaluation suite that cannot fail is decoration.
 | L4 | Routing | To the person who can act on it. | Operations | `SW` | P1 | Phase 2 |
 | L5 | Escalation | When it is not picked up or crosses a threshold. | Manager | `R` | P1 | Phase 2 |
 | L6 | Noise measurement | Alert volume tracked as a product metric. | Product | `SW` | P2 | Phase 3 |
-| V1 | Post-work residual comparison | Are the residuals back inside the band? | Reliability | `ML + R` | P0 | MVP |
+| V1 | Post-work residual comparison | Are the residuals back inside the band? | Reliability | `R + ML` | P0 | MVP |
 | V2 | Valid comparison window | Comparison only under comparable operating conditions. | Reliability | `R` | P0 | MVP |
 | V3 | Persistence across load range | Improvement must hold, not appear once. | Reliability | `R` | P0 | MVP |
 | V4 | Fault-clear check | Does the FDD fault clear under valid conditions? | Reliability | `R` | P0 | MVP |
@@ -198,7 +198,7 @@ evaluation suite that cannot fail is decoration.
 |---|---|---|---|---|---|---|
 | U1 | Customer view | Only their own sites, assets and reports. | Customer | `SW` | P0 | Phase 2 |
 | U2 | Executive brief | The answer, not twenty screens. | Executive | `LLM` | P1 | Phase 2 |
-| U3 | Technician job pack | Job context, safety, SOP, history, parts, findings. | Technician | `LLM + SW` | P0 | MVP |
+| U3 | Technician job pack | Job context, safety, SOP, history, parts, findings. | Technician | `SW + LLM` | P0 | MVP |
 | U4 | Planner queue view | What can be done, when, by whom. | Planner | `SW` | P1 | Phase 2 |
 | U5 | Permission explanation | Why a user cannot see a report. | Administrator | `SW` | P2 | Phase 3 |
 | U6 | Reliability engineer workspace | The fault queue, the residuals behind each one, and the case it opens. | Reliability | `SW + LLM` | P0 | MVP |
