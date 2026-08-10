@@ -28,6 +28,7 @@ the row to the Closed section — do not delete it.
 | Q25 | Should a case age, and into what? Auto-escalation on a timer dispatches people on a clock rather than on evidence | `RC9` | Harshan + Vishnu | Open |
 | Q26 | What should marking a window untrusted actually do to reports, efficiency figures and the models? | `C23`, `C22` | Harshan + platform | Open |
 | Q27 | Who owns model refits, on what trigger, and is there a schedule? | `F10`, `F11`, `F12` | Platform + Vishnu | Open |
+| Q28 | Is the brain's reasoning mode toggled per stage? The turn budget allows 1–3 s to plan and 2–6 s to reason, against a p95 of 8 s for a read-only answer and a first token inside 2 s. Reasoning always on will not hold those budgets; always off costs answer quality on the two stages that need it | Copilot latency and answer quality; `C3`, `C20` | Platform | Open — proposed: on for plan and reason, off for narration and routing |
 | Q19 | Three inherited gaps are adopted as unsolved: no interim holding action for a deferred critical fault, no retraction mechanism (so learning from closed cases stays out), and duplicated checklist work under event grouping. Which, if any, does this programme take on? | `F9`, `V7`, and the deferred-fault risk | Harshan + Vishnu | Open |
 
 ## Instrumentation and data
