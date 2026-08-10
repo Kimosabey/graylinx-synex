@@ -2631,24 +2631,13 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       thread memory proven universal across every route first, and one owner per claim in the audit
       record. Both are in the MVP — which is what earns the right to fan out later.</p>
     </div>
-    <h3>13.11 The four models, and the rules between them</h3>
-    <div class="scroll">
-      <table>
-        <thead><tr><th class="nowrap">Model</th><th class="nowrap">Role</th><th>Responsibility</th></tr></thead>
-        <tbody>
-          <tr><td class="id">gemma4:26b-a4b-it-qat</td><td>Brain</td><td>Reasoning and the final answer</td></tr>
-          <tr><td class="id">devstral:latest</td><td>Tool executor</td><td>ReAct loop and read-only NL&rarr;SQL</td></tr>
-          <tr><td class="id">phi4</td><td>Router · auditor · RAG</td><td>Narration, auditing, routing arbitration, grounding</td></tr>
-          <tr><td class="id">nomic-embed-text</td><td>Embeddings</td><td>Local 768-dimension embeddings</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="callout stop">
-      <span class="k">FOUR RULES THAT KEEP THEM HONEST</span>
-      <p>The brain never calls tools directly. The executor never writes the final user-facing answer.
-      The auditor must not be the model that wrote the answer. Embeddings never leave the site.
-      Do not invent a fifth model.</p>
-    </div>
+    <h3>13.11 Which model does what</h3>
+    <p style="font-size:.9rem">Four local models, and the four rules between them are what keep the
+    separation honest: <strong>the brain never calls a tool itself, the executor never writes the final
+    user-facing answer, the auditor is never the model that wrote the answer, and embeddings never leave
+    the site.</strong> Which model owns which stage is in the turn table at 13.2 and in the flow above;
+    the roster itself &mdash; sizes and environment variables &mdash; is in
+    <a href="#platform">section 16</a>, so it is stated once. There is no fifth.</p>
 
     <h3>13.12 Agent families and their hard boundaries</h3>
     <p style="font-size:.88rem">Ten families. A family is a scope and a boundary, not a running
