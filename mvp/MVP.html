@@ -944,6 +944,19 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 .ask .st{font-family:var(--mono); font-size:.62rem; color:var(--muted)}
 @media (max-width:560px){ .bubble{max-width:100%} }
 
+
+/* --- engine bars ---------------------------------------------------------- */
+.bar{display:grid; grid-template-columns:13rem 1fr 2.2rem; gap:.4rem .7rem; align-items:center; margin-bottom:.55rem}
+.bar-k{font-size:.82rem; color:var(--body)}
+.bar-k b{font-family:var(--mono); color:var(--ink); margin-right:.35rem}
+.bar-t{height:12px; border-radius:6px; background:var(--sunken); border:1px solid var(--rule); overflow:hidden}
+.bar-t i{display:block; height:100%; background:var(--accent)}
+.bar-n{font-family:var(--mono); font-size:.8rem; color:var(--ink); text-align:right; font-variant-numeric:tabular-nums}
+.bar-w{grid-column:2/-1; font-size:.76rem; color:var(--muted); margin-top:-.2rem}
+.bar-foot{grid-column:1/-1; font-size:.84rem; margin:.9rem 0 0; padding-top:.7rem; border-top:1px solid var(--rule)}
+.bar-foot b{color:var(--ink); font-family:var(--font-head)}
+@media (max-width:560px){ .bar{grid-template-columns:1fr 2.2rem} .bar-k{grid-column:1/-1} }
+
 /* --- print ---------------------------------------------------------------- */
 @media print{
   .topbar,.controls,.reset,.seg,.wf-controls,.wf-progress,.skip,.scrim,.chat-ask{display:none !important}
@@ -1213,7 +1226,9 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <section id="register">
   <div class="wrap">
     <h2><span class="num">4</span>Feature register</h2>
-    <p class="lede"><strong>Click any ID</strong> to see everywhere that feature appears — its build
+    <p class="lede"><strong>This opens on the 80 features in the cut.</strong> Clear the view, or pick
+    another from Contents, to see all 133 — what was deferred and why is section 3.
+    <strong>Click any ID</strong> to see everywhere that feature appears — its build
     stage, the workflow steps that name it, the cases that need it, the conversation turns that
     demonstrate it, and which of the four models actually does the work. All 122 features across
     fifteen domains, generated from the register. If a capability is not on this list, it is not being
@@ -1606,6 +1621,34 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <p>The language model never names a fault and never grants a permission. The FDD rules name
       the fault; the Control Plane grants the permission. The Copilot explains both.</p>
     </div>
+
+    <h3>10.1 Where the intelligence actually is</h3>
+    <p style="font-size:.9rem">Counted from the register, over the features in the cut. The shape of this
+    chart <em>is</em> the separation law — a platform whose answers are mostly model output cannot explain
+    any of them.</p>
+    <div class="figure" style="padding:1.2rem 1.1rem">
+      <div id="enginebars"></div>
+      <p style="font-size:.82rem;color:var(--muted);margin:.9rem 0 0">
+      A feature can use more than one engine, so the bars total more than the feature count. What matters
+      is the ratio: the language model appears in a minority, and never on a line where being wrong is
+      expensive.</p>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">The question</th><th class="nowrap">Answered by</th><th>Why not the model</th></tr></thead>
+        <tbody>
+          <tr><td>Is this reading abnormal?</td><td><span class="badge">ML</span></td><td>A residual is a measurement, not an opinion.</td></tr>
+          <tr><td>Is the equipment fit to judge?</td><td><span class="badge">R</span></td><td>A gate must give the same answer twice.</td></tr>
+          <tr><td>Which fault class is this?</td><td><span class="badge">R</span></td><td>The isolation path is testable line by line; a model's reasoning is not.</td></tr>
+          <tr><td>What priority does it get?</td><td><span class="badge">R</span></td><td>A planner has to be able to recalculate it by hand.</td></tr>
+          <tr><td>Is this person allowed?</td><td><span class="badge">SW</span></td><td>Authorization by inference is not authorization.</td></tr>
+          <tr><td>Did the repair work?</td><td><span class="badge">ML</span> <span class="badge">R</span></td><td>Post-work residuals under valid gates. Not the closure note.</td></tr>
+          <tr><td>What does it mean, in plain English?</td><td><span class="badge">LLM</span></td><td class="dash">— this is the part a model is genuinely better at</td></tr>
+          <tr><td>What should we do about it?</td><td><span class="badge">LLM</span> <span class="badge">R</span></td><td>The model proposes, rules rank, a human decides.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>10.2 The full split</h3>
     <div class="scroll">
       <table>
         <thead><tr><th>Question</th><th>Decided by</th><th>Never decided by</th></tr></thead>
@@ -1632,6 +1675,76 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     A residual is <code>rX(t) = X_actual(t) &minus; X_predicted(t)</code>. Models are fitted per
     asset, never per fleet.</p>
 
+
+    <h3>11.0 The six models, and what happens to their output</h3>
+    <p style="font-size:.9rem">Six normal-operation models per chiller, fitted <strong>per asset, never
+    per fleet</strong> — two identical machines on one site do not share a model. Each produces a residual
+    with a validity flag. Nothing downstream is allowed to run until the gates pass.</p>
+    <div class="figure">
+      <svg viewBox="0 0 1100 330" role="img" aria-label="Six per-asset models produce six residuals. A validity flag rides with each. The gates run next: running steady, load above floor, flows valid, no setpoint change, persistence. Only if all pass does the deterministic isolation path name a fault class, which the language model then explains. If any gate fails the output is NO_DIAGNOSIS plus a data-quality work order.">
+        <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+        <g font-family="Inter, Segoe UI, system-ui, sans-serif">
+          <text x="4" y="16" font-size="10.5" font-weight="600" fill="var(--accent)">ML &mdash; SIX MODELS PER CHILLER, FITTED PER ASSET</text>
+          <g font-size="11.5">
+            <rect x="4" y="26" width="150" height="34" rx="6" fill="var(--sunken)" stroke="var(--rule-strong)"/><text x="14" y="47" fill="var(--body)">DP &rarr; rDP</text>
+            <rect x="4" y="66" width="150" height="34" rx="6" fill="var(--sunken)" stroke="var(--rule-strong)"/><text x="14" y="87" fill="var(--body)">SP &rarr; rSP</text>
+            <rect x="4" y="106" width="150" height="34" rx="6" fill="var(--sunken)" stroke="var(--rule-strong)"/><text x="14" y="127" fill="var(--body)">DT &rarr; rDT <tspan fill="var(--muted)">support only</tspan></text>
+            <rect x="4" y="146" width="150" height="34" rx="6" fill="var(--sunken)" stroke="var(--accent)"/><text x="14" y="167" fill="var(--body)">Power &rarr; rPwr</text>
+            <rect x="4" y="186" width="150" height="34" rx="6" fill="var(--sunken)" stroke="var(--rule-strong)"/><text x="14" y="207" fill="var(--body)">Comp Amps &rarr; rAmp</text>
+            <rect x="4" y="226" width="150" height="34" rx="6" fill="var(--sunken)" stroke="var(--rule-strong)"/><text x="14" y="247" fill="var(--body)">Cond Lv &rarr; rCWL</text>
+          </g>
+          <text x="4" y="284" font-size="11" fill="var(--muted)">rPwr is where the isolation path starts.</text>
+          <text x="4" y="300" font-size="11" fill="var(--muted)">Condenser flow feeds four of the six.</text>
+
+          <line x1="160" y1="140" x2="196" y2="140" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah2)"/>
+          <rect x="202" y="26" width="180" height="234" rx="7" fill="var(--card)" stroke="var(--warn)" stroke-width="1.5"/>
+          <text x="292" y="48" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--warn)">GATES &middot; R</text>
+          <g font-size="11.5" fill="var(--body)">
+            <text x="216" y="76">running steady</text>
+            <text x="216" y="100">load above floor</text>
+            <text x="216" y="124">flows valid</text>
+            <text x="216" y="148">no setpoint change</text>
+            <text x="216" y="172">persistence held</text>
+          </g>
+          <text x="292" y="206" text-anchor="middle" font-size="11" fill="var(--muted)">all five, or nothing</text>
+          <text x="292" y="228" text-anchor="middle" font-size="11" fill="var(--muted)">runs downstream</text>
+
+          <line x1="388" y1="90" x2="424" y2="90" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah2)"/>
+          <text x="406" y="82" text-anchor="middle" font-size="9.5" fill="var(--ok)">PASS</text>
+          <rect x="430" y="26" width="200" height="128" rx="7" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="530" y="48" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--accent)">ISOLATION PATH &middot; R</text>
+          <text x="444" y="72" font-size="11.5" fill="var(--body)">rPwr high &rarr; rDP high</text>
+          <text x="444" y="92" font-size="11.5" fill="var(--body)">&rarr; rCWL separates water</text>
+          <text x="444" y="112" font-size="11.5" fill="var(--body)">side from refrigerant side</text>
+          <text x="444" y="136" font-size="11" fill="var(--muted)">one class, or an honest pair</text>
+
+          <line x1="636" y1="90" x2="672" y2="90" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah2)"/>
+          <rect x="678" y="26" width="200" height="128" rx="7" fill="var(--sunken)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="778" y="48" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--accent)">EXPLAIN &middot; LLM</text>
+          <text x="692" y="76" font-size="11.5" fill="var(--body)">Puts the rule path into</text>
+          <text x="692" y="96" font-size="11.5" fill="var(--body)">plain English. It does not</text>
+          <text x="692" y="116" font-size="11.5" fill="var(--body)">choose the class, and it</text>
+          <text x="692" y="136" font-size="11.5" fill="var(--body)">cannot add a number.</text>
+
+          <line x1="884" y1="90" x2="920" y2="90" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah2)"/>
+          <rect x="926" y="26" width="170" height="128" rx="7" fill="var(--sunken)" stroke="var(--ok)" stroke-width="1.5"/>
+          <text x="1011" y="48" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ok)">ANSWERED</text>
+          <text x="940" y="76" font-size="11.5" fill="var(--body)">with residuals, gates,</text>
+          <text x="940" y="96" font-size="11.5" fill="var(--body)">the rule path, and one</text>
+          <text x="940" y="116" font-size="11.5" fill="var(--body)">of four confidence words</text>
+
+          <line x1="388" y1="196" x2="424" y2="196" stroke="var(--stop)" stroke-width="1.5" marker-end="url(#ah2)"/>
+          <text x="406" y="188" text-anchor="middle" font-size="9.5" fill="var(--stop)">FAIL</text>
+          <rect x="430" y="168" width="666" height="92" rx="7" fill="var(--sunken)" stroke="var(--stop)" stroke-width="1.5"/>
+          <text x="444" y="190" font-size="10.5" font-weight="600" fill="var(--stop)">NO_DIAGNOSIS &mdash; AND THIS IS THE FEATURE</text>
+          <text x="444" y="212" font-size="11.5" fill="var(--body)">Any gate failing stops the path here. The Copilot names the failed check and raises a data-quality work order.</text>
+          <text x="444" y="232" font-size="11.5" fill="var(--body)">It does not fall back to a softer version of the conclusion it would have reached. On the reference plant,</text>
+          <text x="444" y="252" font-size="11.5" fill="var(--body)">condenser flow has never reported &mdash; so this branch is the expected day-one output, not an edge case.</text>
+        </g>
+      </svg>
+      <figcaption>ML measures, rules decide, the language model explains. The failure path is as
+      specified as the success path.</figcaption>
+    </div>
     <h3>11.1 The six models and their inputs</h3>
     <div class="scroll">
       <table>
@@ -1880,7 +1993,75 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <span id="chat-tally"></span>
       <button class="reset" id="chat-reset" type="button">Start the conversation again</button>
     </p>
-    <h3>12.7 Every ability — what it can do, and where</h3>
+
+    <h3>12.7 Tool calling, and what comes back</h3>
+    <p style="font-size:.9rem">The brain decides <em>what</em> it needs; it never reaches for it. The
+    executor calls tools through a gateway that validates the schema, attaches credentials, retries
+    safely and controls side effects. What returns is typed — which is what makes it renderable, and
+    what makes a fabricated number impossible to smuggle into an answer.</p>
+    <div class="figure">
+      <svg viewBox="0 0 1100 250" role="img" aria-label="The brain plans and requests evidence. The executor calls tools through the gateway. Read tools return typed results. Write tools require a policy decision first, and carry an idempotency key. Results become an evidence pack, from which the answer is rendered as prose, a table or a trend. Nothing can be rendered that is not in the pack.">
+        <defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+        <g font-family="Inter, Segoe UI, system-ui, sans-serif">
+          <rect x="4" y="86" width="140" height="58" rx="7" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="74" y="108" text-anchor="middle" font-size="10" font-weight="600" fill="var(--accent)">BRAIN</text>
+          <text x="74" y="127" text-anchor="middle" font-size="11.5" fill="var(--body)">what do I need?</text>
+          <line x1="150" y1="115" x2="176" y2="115" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah3)"/>
+          <rect x="182" y="86" width="140" height="58" rx="7" fill="var(--card)" stroke="var(--rule-strong)"/>
+          <text x="252" y="108" text-anchor="middle" font-size="10" font-weight="600" fill="var(--muted)">EXECUTOR</text>
+          <text x="252" y="127" text-anchor="middle" font-size="11.5" fill="var(--body)">calls it</text>
+          <line x1="328" y1="115" x2="354" y2="115" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah3)"/>
+
+          <rect x="360" y="60" width="150" height="110" rx="7" fill="var(--sunken)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="435" y="82" text-anchor="middle" font-size="10" font-weight="600" fill="var(--ink)">TOOL GATEWAY</text>
+          <text x="374" y="104" font-size="11" fill="var(--body)">schema validated</text>
+          <text x="374" y="122" font-size="11" fill="var(--body)">credentials attached</text>
+          <text x="374" y="140" font-size="11" fill="var(--body)">safe retry</text>
+          <text x="374" y="158" font-size="11" fill="var(--body)">side effects controlled</text>
+
+          <path d="M516,90 L552,50" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah3)"/>
+          <rect x="558" y="20" width="230" height="58" rx="7" fill="var(--sunken)" stroke="var(--ok)" stroke-width="1.5"/>
+          <text x="572" y="42" font-size="10" font-weight="600" fill="var(--ok)">READ &mdash; most of the belt</text>
+          <text x="572" y="62" font-size="11.5" fill="var(--body)">typed result &middot; no policy decision needed</text>
+
+          <path d="M516,140 L552,180" fill="none" stroke="var(--stop)" stroke-width="1.5" marker-end="url(#ah3)"/>
+          <rect x="558" y="150" width="230" height="78" rx="7" fill="var(--sunken)" stroke="var(--stop)" stroke-width="1.5"/>
+          <text x="572" y="172" font-size="10" font-weight="600" fill="var(--stop)">WRITE</text>
+          <text x="572" y="192" font-size="11.5" fill="var(--body)">policy decision first &middot; named</text>
+          <text x="572" y="210" font-size="11.5" fill="var(--body)">approver if required &middot; idempotency key</text>
+
+          <path d="M794,49 L830,110" fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ah3)"/>
+          <path d="M794,189 L830,130" fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ah3)"/>
+          <rect x="836" y="86" width="130" height="58" rx="7" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="901" y="108" text-anchor="middle" font-size="10" font-weight="600" fill="var(--accent)">EVIDENCE PACK</text>
+          <text x="901" y="127" text-anchor="middle" font-size="11.5" fill="var(--body)">typed, cited</text>
+          <line x1="972" y1="115" x2="996" y2="115" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ah3)"/>
+          <rect x="1002" y="76" width="94" height="78" rx="7" fill="var(--sunken)" stroke="var(--rule-strong)"/>
+          <text x="1049" y="96" text-anchor="middle" font-size="10" font-weight="600" fill="var(--muted)">RENDER</text>
+          <text x="1049" y="114" text-anchor="middle" font-size="11" fill="var(--body)">prose</text>
+          <text x="1049" y="130" text-anchor="middle" font-size="11" fill="var(--body)">table</text>
+          <text x="1049" y="146" text-anchor="middle" font-size="11" fill="var(--body)">trend</text>
+          <text x="4" y="240" font-size="11.5" fill="var(--muted)">Nothing can be drawn that is not in the pack. A chart is a view of the evidence, never a new claim &mdash; and a figure is a value or a stated absence, never both.</text>
+        </g>
+      </svg>
+      <figcaption>Seven tool families, 38 tools. The gateway is the only way through, which is what makes
+      the audit trail complete.</figcaption>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Tool family</th><th>Returns</th><th class="nowrap">Rendered as</th><th class="nowrap">Governed by</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap">Report</td><td>KPI values with lineage</td><td>table, trend</td><td data-ids="R5,C24"></td></tr>
+          <tr><td class="nowrap">Asset</td><td>Health, status, documents</td><td>prose, table</td><td data-ids="A1"></td></tr>
+          <tr><td class="nowrap">FDD and ML</td><td>Residuals, gate results, the rule path</td><td>trend, table</td><td data-ids="F2,F3,C24"></td></tr>
+          <tr><td class="nowrap">Work order</td><td class="hi">Writes — a created job</td><td>the record itself</td><td data-ids="W1,G4,G5"></td></tr>
+          <tr><td class="nowrap">Knowledge</td><td>SOP passages with document and version</td><td>quoted prose</td><td data-ids="K1,K5"></td></tr>
+          <tr><td class="nowrap">Planning and inventory</td><td class="dash">deferred with the domains</td><td class="dash">—</td><td data-ids="PL1,I1"></td></tr>
+          <tr><td class="nowrap">Platform</td><td>Scope, policy, audit</td><td>prose</td><td data-ids="G1,G2,G6"></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>12.8 Every ability — what it can do, and where</h3>
     <p style="font-size:.9rem">All twenty-two Copilot and shell features, with whether the ability
     writes anything. <strong>Click one</strong> to see the build stage that delivers it, the workflow
     steps that name it, the cases that need it, the conversation turns that demonstrate it, and which of
@@ -1908,7 +2089,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       </ul>
     </div>
 
-    <h3>12.8 Where the conversation lands</h3>
+    <h3>12.9 Where the conversation lands</h3>
     <p style="font-size:.9rem">Every workflow can be driven from the conversation. That does not make
     the conversation the only surface — an artefact needs somewhere to live, and a supervisor
     approving work at 6am is not going to scroll a chat log to find it. The Copilot is a third door to
@@ -1935,7 +2116,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       Orders surface with its evidence attached and its verification task registered.</p>
     </div>
 
-    <h3>12.9 Agentic, not multi-agent — and why</h3>
+    <h3>12.10 Agentic, not multi-agent — and why</h3>
     <p style="font-size:.9rem">The Copilot plans, calls tools, observes and loops: it is agentic.
     It is not a swarm of agents negotiating, and that is a decision rather than an omission.</p>
     <div class="scroll">
@@ -2078,7 +2259,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       thread memory proven universal across every route first, and one owner per claim in the audit
       record. Both are in the MVP — which is what earns the right to fan out later.</p>
     </div>
-    <h3>12.10 The four models, and the rules between them</h3>
+    <h3>12.11 The four models, and the rules between them</h3>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Model</th><th class="nowrap">Role</th><th>Responsibility</th></tr></thead>
@@ -2097,7 +2278,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       Do not invent a fifth model.</p>
     </div>
 
-    <h3>12.11 Agent families and their hard boundaries</h3>
+    <h3>12.12 Agent families and their hard boundaries</h3>
     <p style="font-size:.88rem">Ten families. A family is a scope and a boundary, not a running
     process — which is what makes them enforceable by plain software rather than by prompt.</p>
     <div class="scroll">
@@ -2124,7 +2305,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       fields, held by <code>C20</code>. An agent that cannot state all eleven does not run.</p>
     </div>
 
-    <h3>12.12 The skills the MVP needs</h3>
+    <h3>12.13 The skills the MVP needs</h3>
     <p style="font-size:.88rem">Seven of ten. A skill is not a feature of its own — it is a named
     entry in the <code>C20</code> registry with a tool scope and a control level.</p>
     <div class="scroll">
@@ -2265,6 +2446,86 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <li>Models are fitted per asset, not per fleet. Two identical chillers on one site do not share a model.</li>
       <li>The platform must state when it is in degraded mode rather than silently substituting a weaker capability.</li>
     </ul>
+  </div>
+</section>
+
+
+<!-- ===================== 16. ROLES AND PERSONAS ===================== -->
+<section id="roles">
+  <div class="wrap">
+    <h2><span class="num">16</span>Roles, personas and who reviews what</h2>
+    <p class="lede">Three different things get called roles, and conflating them causes real routing
+    bugs. The table in 16.2 is computed from the register's own primary-user column, so it cannot drift
+    from what is actually being built.</p>
+
+    <h3>16.1 Three systems, not one</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">System</th><th>Members</th><th>Decides</th><th class="nowrap">Held by</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><strong>User personas</strong></td>
+              <td>Reliability Engineer · Technician · Supervisor · Administrator · Analyst · Maintenance · Manager · Finance · Planner · EHS · Audit · Product · Data · Platform</td>
+              <td>Scope, and how deep an answer goes</td><td data-ids="C11,U3,U6,U7,U8"></td></tr>
+          <tr><td class="nowrap"><strong>Capability roles</strong></td>
+              <td>operator · maintenance · technician · supervisor · vendor</td>
+              <td>Who can answer a given checklist item</td><td data-ids="RC3,RC4"></td></tr>
+          <tr><td class="nowrap"><strong>Agent skills</strong></td>
+              <td>converse · look up · explain · investigate · prepare work · resolve · verify <span class="dash">(+ optimise, brief, orchestrate deferred)</span></td>
+              <td>Which skill the Copilot routes to</td><td data-ids="C3,C18,C20"></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout stop">
+      <span class="k">WHY THIS SEPARATION IS NOT PEDANTRY</span>
+      <p>Capability roles are <strong>capabilities, not ranks</strong>. Ranking them by seniority once
+      sent a filter-drier restriction to a supervisor, because one incidental records question outranked
+      three refrigeration measurements. A supervisor is not a better technician — they are a different
+      capability. Reconciling the three systems is question Q18.</p>
+    </div>
+
+    <h3>16.2 Every role in the cut, and why it is there</h3>
+    <p style="font-size:.88rem">Counted from the register. <strong>Four have a surface of their own</strong>
+    because the loop cannot close without a fault being judged, worked, approved and governed. The rest are
+    served through the Copilot, through Reports, or through somebody else's screen — none is deferred.
+    Click any feature ID to see where it appears.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Role</th><th class="nowrap">Own surface?</th><th>Why the MVP needs them</th>
+        <th class="nowrap">Example</th><th class="nowrap">Primary user of</th></tr></thead>
+        <tbody id="rolebody"></tbody>
+      </table>
+    </div>
+
+    <h3>16.3 Who has to review this, and what only they can settle</h3>
+    <p style="font-size:.88rem">The scarcest input is the SME hour. Everything below is something no
+    one else can answer.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Reviewer</th><th>Only they can settle</th><th class="nowrap">Blocks</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><strong>Vishnu — SME</strong></td>
+              <td>Thresholds Q3–Q13 · what proves a cleaning worked (Q15) · missing fault classes (Q20) · the efficiency baseline (Q21) · which faults mean stop the machine (Q22) · <strong>and signing off the curated checklist library</strong></td>
+              <td class="hi">stages 1, 2 and 9</td></tr>
+          <tr><td class="nowrap"><strong>Harshan — product</strong></td>
+              <td>Is the cut agreed (S1) · naming N1, N2 · the stage gaps (Q17) · the three role systems (Q18) · which inherited gaps we take on (Q19)</td>
+              <td class="hi">the backlog, and all sequencing</td></tr>
+          <tr><td class="nowrap">Site / instrumentation</td>
+              <td>Is condenser flow measurable and trustworthy (Q1) · how evaporator flow is derived (Q2) · lead/lag availability (Q14)</td>
+              <td class="hi">four of the six models</td></tr>
+          <tr><td class="nowrap">Operations</td><td>Weighting of criticality, SLA and production impact in the priority formula (S4)</td><td><code>W4</code></td></tr>
+          <tr><td class="nowrap">EHS</td><td>The escalation matrix, and what a stop-the-machine response requires (Q22)</td><td data-ids="S1,S6"></td></tr>
+          <tr><td class="nowrap">Security / platform</td><td>Scope model, approval matrix authorship, the audit record, case-seeding trigger (Q24)</td><td data-ids="G1,G3,G6"></td></tr>
+          <tr><td class="nowrap">Data engineering</td><td>graylinx-v2 integration, tag normalisation, who owns model refits (Q27)</td><td class="hi">stage 0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <span class="k">BEFORE THE SME SESSION</span>
+      <p>The Thermynx FDD initiative holds 57 open questions of its own, none answered. Its section 1 is
+      nine safety-critical questions about whether the system may <em>eliminate</em> a candidate cause on
+      unreviewed judgement — two of them bear directly on <code>F7</code>. Reconcile the two agendas
+      first (task T5b): asking the same threshold twice spends an hour that cannot be bought back.</p>
+    </div>
   </div>
 </section>
 
@@ -3067,13 +3328,26 @@ const SECTIONS = [...document.querySelectorAll('main > section[id]')].map(s => {
 
 // Grouped by the question a reader is actually asking.
 const GROUPS = [
-  {label: 'WHAT THE MVP IS',   ids: ['test', 'in', 'out', 'register']},
-  {label: 'HOW IT WORKS',      ids: ['workflows', 'cases', 'worked']},
-  {label: 'HOW IT IS BUILT',   ids: ['separation', 'fdd', 'copilot', 'platform']},
-  {label: 'WHAT HAPPENS NEXT', ids: ['criteria', 'stages', 'roadmap', 'questions']},
+  {label: 'WHAT THE MVP IS',    ids: ['test', 'in', 'out', 'register']},
+  {label: 'THE COPILOT — THE CORE', ids: ['copilot', 'roles']},
+  {label: 'HOW IT WORKS',       ids: ['workflows', 'cases', 'worked']},
+  {label: 'HOW IT IS BUILT',    ids: ['separation', 'fdd', 'platform']},
+  {label: 'WHAT HAPPENS NEXT',  ids: ['criteria', 'stages', 'roadmap', 'questions']},
 ];
 const SEC = new Map(SECTIONS.map(s => [s.id, s]));
 
+
+/* Every section must appear in exactly one group. A section that falls out of the
+   drawer is unreachable from the menu, which is how section 16 was missed once. */
+{
+  const grouped = GROUPS.flatMap(g => g.ids);
+  const missing = SECTIONS.map(s => s.id).filter(id => !grouped.includes(id));
+  const unknown = grouped.filter(id => !SEC.has(id));
+  if (missing.length || unknown.length){
+    console.error('Contents drawer is incomplete.',
+                  {notInAnyGroup: missing, groupedButNoSuchSection: unknown});
+  }
+}
 document.getElementById('toc-count').textContent = SECTIONS.length;
 document.getElementById('toc-sections').innerHTML = GROUPS.map(g => `
   <h5>${g.label}</h5>
@@ -3698,8 +3972,94 @@ document.getElementById('chat-reset').addEventListener('click', resetChat);
 say(0);
 tally();
 
+
+/* --- roles, counted from the register ------------------------------------
+   The primary-user column is the only place that records who a feature is for,
+   so this table reads it rather than restating it. An earlier draft of CONTEXT.md
+   claimed the MVP needed four personas; the register named fourteen, including an
+   Analyst nobody had listed. Computing it is how that stayed found.
+   -------------------------------------------------------------------------- */
+const ROLE_NOTES = {
+  'Reliability':        ['U6', 'Judges the fault, opens the case, records the root cause. The heaviest role in the cut by a wide margin.', '"Why is Chiller-03 unhealthy?"'],
+  'Supervisor':         ['U7', 'Approves what the Copilot may not, unblocks a held case, and owns the close gate.', 'the isolation request, held for a named approver'],
+  'Technician':         ['U3', 'Does the work, records findings, needs the SOP at the machine.', '"could not reach the sight glass"'],
+  'Administrator':      ['U8', 'Authors scope, the approval matrix, and the policy version every decision is stamped with.', 'an access request after a BLOCKED answer'],
+  'Analyst':            [null, 'Exact numbers with their lineage. Served through the Copilot and Reports.', '"How many hours did Chiller-03 run last week?"'],
+  'Maintenance':        [null, 'Ranked recommendations, and raising work from a sentence.', '"Create the work order for the tube cleaning."'],
+  'Data / Reliability': [null, 'Model health, quarantine, untrusted windows and case seeding — the trust layer under everything else.', 'a stale model quarantined, its window marked untrusted'],
+  'Platform':           [null, 'The skill registry, the gates and the Control Plane. Configuration, not a screen.', 'scope recomputed on every single turn'],
+  'Product':            [null, 'Owns the honesty bar the build is held to, including which dimensions cannot be traded away.', 'a report failed for figures that disagree'],
+  'Manager':            [null, 'Why a number moved, traced to the equipment and work behind it.', '"Give me this week\u2019s reliability summary."'],
+  'Finance':            [null, 'Reported numbers reconciled against the source calculation.', 'a KPI checked against its own source'],
+  'Planner':            [null, 'The deterministic priority formula. Their queue view is Phase 2, so they are served without a surface.', 'a priority you can recalculate by hand'],
+  'EHS':                [null, 'Policy owner rather than a daily user. The block is enforced without a screen.', '"There is a refrigerant smell near Chiller-03."'],
+  'Audit':              [null, 'The trail, permanently, with the policy version attached.', 'every refusal recorded as a material decision'],
+  'Everyone':           [null, 'Not a role \u2014 a feature every role uses.', 'asking a question in your own words'],
+  'All':                [null, 'Not a role \u2014 a feature every role uses.', 'a data window printed on the artefact'],
+};
+
+{
+  const byUser = new Map();
+  FEATURES.filter(f => f.ph === 'MVP').forEach(f => {
+    if (!byUser.has(f.u)) byUser.set(f.u, []);
+    byUser.get(f.u).push(f.id);
+  });
+  const rows = [...byUser.entries()]
+    .filter(([u]) => !['Everyone', 'All'].includes(u))
+    .sort((a, b) => b[1].length - a[1].length);
+  document.getElementById('rolebody').innerHTML = rows.map(([u, ids]) => {
+    const [surface, why, eg] = ROLE_NOTES[u] || [null, '', ''];
+    return `<tr>
+      <td class="nowrap"><strong>${esc(u)}</strong></td>
+      <td class="nowrap">${surface
+        ? `<span class="badge mvp">yes &middot; ${surface}</span>`
+        : '<span class="badge">served, no screen</span>'}</td>
+      <td>${esc(why)}</td>
+      <td class="quote">${eg}</td>
+      <td data-ids="${ids.join(',')}"></td>
+    </tr>`;
+  }).join('');
+  renderIdChips(document.getElementById('rolebody'));
+}
+
+
+/* --- where the intelligence is, drawn from the register -------------------- */
+{
+  const mvp = FEATURES.filter(f => f.ph === 'MVP');
+  const order = ['SW', 'R', 'LLM', 'ML'];
+  const label = {SW:'Plain software', R:'Deterministic rule', LLM:'Language model', ML:'Equipment model'};
+  const note = {
+    SW:'No model runs at all.', R:'Same inputs, same answer, every time.',
+    LLM:'Explains, proposes and converses \u2014 never decides.',
+    ML:'Measures a residual against a per-asset baseline.',
+  };
+  const counts = order.map(e => [e, mvp.filter(f => f.e.includes(e)).length]);
+  const max = Math.max(...counts.map(c => c[1]));
+  const det = mvp.filter(f => f.e.every(e => e === 'SW' || e === 'R')).length;
+  document.getElementById('enginebars').innerHTML = counts.map(([e, n]) => `
+    <div class="bar">
+      <span class="bar-k"><b>${e}</b> ${esc(label[e])}</span>
+      <span class="bar-t"><i style="width:${(n / max) * 100}%"></i></span>
+      <span class="bar-n">${n}</span>
+      <span class="bar-w">${esc(note[e])}</span>
+    </div>`).join('') + `
+    <p class="bar-foot"><b>${det} of ${mvp.length}</b> features in the cut are fully deterministic \u2014
+    plain software or a rule, with no model anywhere in the path.</p>`;
+}
+
 WORKFLOWS.forEach((_, i) => showStep(i, 0));
-apply();
+
+/* The register opens on the cut, not on all 133 rows. A scope review should see
+   what is being built; what was deferred, and why, is section 3 and one click in
+   Contents. Set here rather than in the markup so the count still comes from the
+   register. */
+(function openOnTheCut(){
+  const chip = document.querySelector('#f-phase .chip[data-val="MVP"]');
+  if (!chip) { apply(); return; }
+  chip.click();                                    // runs apply() itself
+  document.getElementById('viewname').textContent = 'the MVP cut';
+  document.getElementById('viewpill').hidden = false;
+})();
 </script>
 </body>
 </html>

@@ -231,8 +231,13 @@ entry in the `C20` registry with a tool scope and a control level.
 
 ### The personas the MVP needs
 
-Four of eight. The loop cannot close without all four — a fault has to be judged,
-worked, approved and governed.
+An earlier draft of this section said "four of eight". That was wrong, and the
+register says so: **fourteen distinct roles are the primary user of at least one
+feature in the cut.** The useful distinction is not who is present but who needs a
+screen of their own.
+
+**Four get their own surface** — the loop cannot close without a fault being
+judged, worked, approved and governed:
 
 | Persona | Why the MVP needs them | Delivered by |
 |---|---|---|
@@ -243,7 +248,29 @@ worked, approved and governed.
 | Planner | — deferred with planning | `U4`, Phase 2 |
 | Manager · Executive | — needs an outcome history that will not exist yet | `U2`, Phase 2 |
 | Customer | — multi-tenant surface for little MVP learning | `U1`, Phase 2 |
-| EHS | policy owner in the MVP rather than a daily user; the block is enforced without a screen | `S1`, `S4` |
+| EHS | policy owner rather than a daily user; the block is enforced without a screen | `S1`, `S4`, `S6` |
+
+**Ten more are served without a surface of their own** — through the Copilot,
+through Reports, or through somebody else's screen. Each is the primary user of a
+feature in the cut, so none of them is deferred; they simply do not need a page
+built for them yet.
+
+| Role | Serves | Reached through |
+|---|---|---|
+| Data / Reliability | model health, quarantine, untrusted windows, case seeding | `C23`, `F10`, `F11`, `RC8` — alerts and the case queue |
+| Maintenance | ranked recommendations and raising work from a sentence | `C6`, `W1` — the Copilot |
+| **Analyst** | exact numbers with their lineage, and drilling to source | `C17`, `R5` — the Copilot and Reports |
+| Platform | the skill registry, the gates, the Control Plane itself | `C20`, `EV1`, `EV4`, `G1`–`G5` — configuration, not a screen |
+| Product | the honesty bar the build is held to | `EV2`, `EV3` — the evaluation gate |
+| Manager | why a number moved | `R3` — Reports |
+| Finance | reported numbers reconciled against source | `R10` — Reports |
+| Planner | the deterministic priority formula | `W4` — their own queue view `U4` is Phase 2 |
+| Audit | the trail, permanently | `G6` — the audit record |
+| EHS | see above | `S1`, `S4`, `S6` |
+
+The Analyst is worth calling out because the earlier draft omitted them entirely
+while two MVP features name them as the primary user. That is exactly the kind of
+omission the register is supposed to catch, and did.
 
 ## 12. Scale, and what that rules out
 
