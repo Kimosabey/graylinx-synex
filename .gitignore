@@ -13,3 +13,6 @@ __pycache__/
 ~$*
 Thumbs.db
 desktop.ini
+
+# Netlify publish directory, built by scripts/build_site.sh
+site/

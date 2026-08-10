@@ -1,0 +1,26 @@
+# Netlify configuration.
+#
+# The publish directory MUST stay `site`. Publishing the repository root would
+# serve everything in it — including docs/00-source/, which holds the 78-page
+# product and architecture document and the water-cooled chiller FDD
+# specification. Those are read-only source inputs, not web assets.
+#
+# `site` is built by scripts/build_site.sh and is gitignored, so mvp/MVP.html
+# stays the single copy of the page.
+
+[build]
+  command = "bash scripts/build_site.sh"
+  publish = "site"
+
+# Nothing here is meant to be found by search. The page is shared by link.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+
+[[redirects]]
+  from = "/MVP.html"
+  to = "/"
+  status = 301
