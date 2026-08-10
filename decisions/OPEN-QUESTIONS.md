@@ -19,6 +19,9 @@ the row to the Closed section — do not delete it.
 | S2 | Is the cooling tower in scope for phase one? | F13 | Vishnu + Harshan | Open |
 | S3 | Which actions require SME sign-off rather than supervisor approval? | Approval matrix, G3 | Vishnu | Open |
 | S4 | Relative weighting of criticality, SLA and production impact in the priority formula | W4 | Operations | Open |
+| Q17 | Which build stage delivers `A1`, `U3`, `S1` and `S4`? Four MVP features are named by no stage, two of them safety features | Sequencing, and the stage-9 estimate | Harshan | Open |
+| Q18 | Three different things are called roles — user personas, capability roles and agent skills. Which system governs which decision? | `C11`, `C20`, `RC3`, `U1`–`U8` | Harshan + Vishnu | Open |
+| Q19 | Three inherited gaps are adopted as unsolved: no interim holding action for a deferred critical fault, no retraction mechanism (so learning from closed cases stays out), and duplicated checklist work under event grouping. Which, if any, does this programme take on? | `F9`, `V7`, and the deferred-fault risk | Harshan + Vishnu | Open |
 
 ## Instrumentation and data
 
@@ -51,6 +54,18 @@ the row to the Closed section — do not delete it.
 |---|---|---|---|
 | Q15 | What proves a condenser cleaning worked? | `rPwr`, `rDP`, `rCWL` back inside band, held several days across a representative load range | Open |
 | Q16 | Re-baseline policy after an overhaul — who authorises, how long must the machine run first? | SME authorises; minimum steady running period to be agreed | Open |
+
+## To reconcile
+
+The Thermynx FDD initiative holds **57 open questions** of its own at
+`docs/plan-v4.9.1/fdd/04-sme/questions.md`, and its 14 pre-existing decisions are
+already adopted here (`CONTEXT.md` §10, decision D-003). The two question sets
+have not been reconciled. Several of their questions almost certainly answer
+Q3–Q13 below, and asking Vishnu the same threshold twice would be a waste of the
+one review session that matters.
+
+**Owner:** Harshan. **Blocks:** nothing today, because every affected threshold is
+already marked open here — but it should be done before the SME session, not after.
 
 ## Closed
 
