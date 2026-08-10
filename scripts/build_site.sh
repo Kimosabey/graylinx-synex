@@ -16,8 +16,8 @@ OUT="$ROOT/site"
 rm -rf "$OUT"
 mkdir -p "$OUT"
 cp "$ROOT/mvp/MVP.html"     "$OUT/index.html"   # the specification, at the root
-cp "$ROOT/mvp/MVP.html"     "$OUT/MVP.html"     # same page under the name the mock links to
-cp "$ROOT/mvp/MOCK-UI.html" "$OUT/mock.html"    # the clickable product mock
+cp "$ROOT/mvp/MVP.html"     "$OUT/MVP.html"     # the name the mock links back to
+cp "$ROOT/mvp/mock.html"    "$OUT/mock.html"    # the clickable product mock
 
 # Two source pages, three URLs. Both are self-contained, so publishing is a copy —
 # which means what a reviewer opens is byte-identical to what is in the repository.
