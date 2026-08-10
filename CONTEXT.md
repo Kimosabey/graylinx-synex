@@ -203,6 +203,13 @@ is wrong.
 | 30 | **"Can't tell" must have no effect at all** | Every discriminating question carries an explicit *can't tell* option with empty effects, or uncertainty would silently eliminate something. |
 | 31 | **Every elimination records the check and the answer that caused it** | *"Why did nobody look at the tower?"* needs a better answer than *"the software decided"* — especially while the discriminators are unreviewed engineering judgement. Constrains `RC13`. |
 | 32 | **Exhausted is not the same as settled** | A differential that runs out of questions has established *"we cannot separate these with the checks we have"*, which is a different statement from a conclusion. Constrains `RC14`. |
+| 33 | **Pause for a person exactly when the data cannot answer the question — and never otherwise** | Which faults those are is fixed per fault class, because the trained model already declares which ones it cannot resolve. The language model decides *what* to ask; it never decides *whether* to ask. |
+| 34 | **Never re-detect** | Where the trained model has a verdict, consume it. It is higher-confidence than any heuristic we would write, and re-deriving it invents a second opinion nobody asked for. |
+| 35 | **One case per equipment, fault and day** | A single real fault spans hundreds of consecutive readings — up to 412 observed. Per-slot cases would bury one afternoon under five hundred rows. |
+| 36 | **Event grouping must not pick the longest-running label as primary** | The ambiguous class is usually both the longest-running and the least informative — it appeared on 12 of 12 fault days. Picking "the biggest" would title every event with the label that says least. A determinate class present alongside it leads. |
+| 37 | **Every fault class must carry at least one check the operator can do** | Otherwise somebody starts stuck rather than getting stuck partway. A test fails if a future edit walls a class off. |
+| 38 | **A check the reader cannot perform collapses; it does not grey out** | A greyed-out *"oil analysis — acid, moisture, metals"* still reads as a demand on whoever is standing there. |
+| 39 | **The next question is the one that could move the most live candidates** | Tie-broken toward whoever is already at the machine, so cheap eliminations come first. On the weakest class the opener is *"is the machine actually running harder?"* — read off a panel, and it can settle the whole class alone. |
 
 ## 10a. What the reference plant's data actually says
 
@@ -265,6 +272,36 @@ condenser-water-side differential **cannot be answered from telemetry**, and
 `REFRIGERANT_SIDE_HIGH_HEAD` names a region, probes five mechanisms, and has no
 differential and no blocking items — so a case can conclude there with no evidence.
 That is Q37.
+
+## 10c. Four journeys, not one
+
+`RC1`'s state machine is one object with several routes through it, and the pause
+points differ by fault class. Measured on the reference queue:
+
+| Journey | Cases | Where it pauses |
+|---|---|---|
+| **Straight through** | 13 | nowhere — the data is conclusive |
+| **Needs a technician** | 26 | at the checks, and it refuses to proceed |
+| **Broken sensor** | 2 | arrives already explained; waits for someone at the panel |
+| **Model blind** | 2 | the same, except the detector itself is the problem |
+
+**Two thirds of all detected faults are cases the sensors genuinely cannot decide.**
+Four of the seven fault names say so in the name: *ambiguous*, *undercharge **or**
+restriction*, *unspecified*, *unexplained*. A product built only for the
+straight-through journey is a model viewer.
+
+### What happens when the person who opened it cannot answer
+
+The system offers the handoff rather than waiting to be asked, because a worker
+often does not know they are out of their depth, that a handoff exists, or which one
+is right. Each route produces a different artefact — this is `RC7` and `RC15`:
+
+| Blocker | Goes to | Case state | Artefact |
+|---|---|---|---|
+| No tool | a technician, matched by skill against the fault | `escalated` | an **inspection** work order — the open checks are its task list |
+| No authority, or cannot interpret | a supervisor | `escalated` | an **authorisation** work order — the task is the *question*, not a measurement |
+| Wrong moment | nobody — parked with a reason and a date | `deferred` | none; nobody was called |
+| Not sure | stays with you, offered for confirmation | unchanged | none; it eliminates nothing |
 
 ## 11. The three role systems
 

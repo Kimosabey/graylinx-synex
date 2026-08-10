@@ -37,6 +37,7 @@ question S1 is closed.
 | C21 | Figure discipline | Every number is either a value or a stated absence — never both, never neither. | Everyone | `SW` | P0 | MVP |
 | C22 | Data window on every artefact | Every answer, report and export states the period it was computed over. | All | `SW` | P0 | MVP |
 | C23 | Untrusted-window marking | A period can be marked untrusted, and reports, efficiency figures and models all honour it. | Data / Reliability | `SW` | P0 | MVP |
+| C25 | Evidence-graded response mode | Four modes by how much the data can settle: explain a definitive verdict, hypothesise the right question when it is ambiguous, interrogate what can and cannot be proven, or interview when nothing is usable. | Everyone | `LLM + R` | P0 | MVP |
 | C24 | Inline evidence rendering | Trends, comparisons and result tables drawn in the answer from the evidence pack — never decoration, and never a figure the pack does not contain. | Everyone | `SW` | P0 | MVP |
 
 ## R — Reports
@@ -123,6 +124,8 @@ Every row here is constrained by an inherited decision; see `CONTEXT.md` §10.
 | RC12 | Differential narrowing | Candidate causes per ambiguous class, narrowed by asking the single most discriminating question at a time rather than presenting a flat list. | Reliability | `R` | P0 | MVP |
 | RC13 | Elimination audit | Every ruled-out cause records the check and the answer that ruled it out. "The software decided" is not an answer. | Reliability | `SW` | P0 | MVP |
 | RC14 | Honestly exhausted, distinct from settled | A differential that runs out of questions says so, rather than concluding on whichever cause is left. | Reliability | `R` | P0 | MVP |
+| RC15 | Escalation produces a work order | No tool raises an **inspection** work order with the open checks as its task list; no authority raises an **authorisation** work order whose task is the question, not a measurement. | Supervisor | `SW + R` | P0 | MVP |
+| RC16 | Deterministic assignee | Matched by skill against the fault label, never chosen by a model — so it works with the GPU off and "why this person" is answerable without replaying a prompt. | Supervisor | `SW` | P0 | MVP |
 | RC11 | Preventive actions become a scheduled obligation | A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns. | Supervisor | `SW` | P0 | MVP |
 
 ## K — Knowledge
@@ -221,7 +224,7 @@ evaluation suite that cannot fail is decoration.
 
 ---
 
-**Totals:** 139 features, of which 86 are in the proposed MVP cut.
+**Totals:** 142 features, of which 89 are in the proposed MVP cut.
 
 The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
 implementation. Four groups of capability were in daily use there, or required for
