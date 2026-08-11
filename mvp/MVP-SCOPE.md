@@ -43,6 +43,62 @@ not demonstrated the product.
 | Safety | S1, S4, S6 | Block safety-critical actions; safety answers only from the SOP; and a response class for faults answered by stopping the machine rather than by raising a work order |
 | Control Plane | G1–G6 | Identity and scope per turn, risk class, approvals, tool gateway, idempotency, audit |
 
+## The shape of the cut, and why it stopped growing
+
+The table below is generated from the register, so it cannot drift from what is
+actually being built. Read the *shape* of it rather than the totals.
+
+<!-- BEGIN GENERATED — scripts/sync_mvp_html.py. Do not edit by hand. -->
+
+| Domain | In | Out | In the cut |
+|---|--:|--:|---|
+| Synex Copilot | 24 | 2 | C1–C12, C15–C26 |
+| Case Resolution | 18 | 0 | RC1–RC18 |
+| Reliability & FDD | 14 | 3 | F1–F8, F10–F11, F14–F17 |
+| Work Orders | 7 | 5 | W1–W4, W8–W10 |
+| Control Plane | 6 | 2 | G1–G6 |
+| Verification | 5 | 2 | V1–V4, V6 |
+| Reports | 4 | 6 | R1, R3, R5, R10 |
+| Evaluation | 4 | 0 | EV1–EV4 |
+| Roles | 4 | 4 | U3, U6–U8 |
+| Safety | 3 | 3 | S1, S4, S6 |
+| Knowledge | 2 | 4 | K1, K5 |
+| Asset Intelligence | 1 | 4 | A1 |
+| Energy & Cost | 1 | 3 | E1 |
+| **Planning** | 0 | 5 | — deferred whole |
+| **Inventory** | 0 | 4 | — deferred whole |
+| **Alerts** | 0 | 6 | — deferred whole |
+| **Total** | **93** | **53** | of 146 registered |
+
+**88 of the 93 are `P0`.** Almost nothing in the cut is optional; the 5 that are not are there because the loop reads badly without them, not because they are nice to have. Deferred work splits 45 to Phase 2 and 8 to Phase 3.
+
+**2 domains are in whole** — Case Resolution, Evaluation — and **3 are out whole** — Planning, Inventory, Alerts. That is the shape of the decision, not an accident of counting. A demonstrator has to close the loop *completely* and does not have to be *broad*, so the middle of the loop is taken entire while domains that are genuinely valuable, but not on it, are taken not at all.
+
+<!-- END GENERATED -->
+
+### The cut has grown four times, and each time for the same reason
+
+| Cut | When | What was found |
+|---|---|---|
+| 51 of 101 | the first proposal | — |
+| 69 of 122 | after reviewing the Thermynx flows | The loop went from a named fault straight to a work order. That hop does not exist: somebody answers questions first, and some answers come back "could not check" (D-002) |
+| 79 of 132 | after the FDD discovery pass | Four gaps that had each already produced a real incident there — `C23`, `RC9`, `RC10`, `S6` (D-004) |
+| 90 of 143 | after the sequencing brainstorm | 22 detected episodes, including the only two `critical`, never reached the queue — `RC17` (D-007) |
+| 93 of 146 | after reading our own data | Evidence sitting unread in the row the model had just read, two severity scales disagreeing, and a signal the simulation invented — `RC18`, `F17`, `C26` (D-008, D-009) |
+
+Every increase came from finding a defect in a system that had already been built and
+run, never from imagining a feature. That is the useful pattern, and it is also the
+reason to believe the growth has stopped: the last four additions were **rules** —
+each a paragraph of behaviour attached to a component already in the cut — rather than
+new subsystems. Running out of subsystems and finding only rules is what the end of a
+gap hunt looks like.
+
+**This is what question `S1` asks.** Not "is 93 the right number", but "are we done
+adding?" Agreeing the cut is the decision to stop looking and start sequencing, and it
+is what unblocks `mvp/BACKLOG.md` — one entry per feature with its dependencies, the
+data it needs, and the open questions that block it. Until then there is a
+specification and no build plan.
+
 ## What is out, and why
 
 | Deferred | Reason |
