@@ -262,6 +262,28 @@ branch this product leads with. That is an argument for `NO_DIAGNOSIS` being a
 first-class output rather than a fallback, and against any roadmap that assumes
 the FDD half is nearly done.
 
+### Our own database fabricates the signal that matters most
+
+Measured on `graylinx_synex`, 2026-08-11. Every numeric column on
+`chiller_1_normalized` was compared across the real and the simulated window. Of 32
+columns, exactly one differs in kind:
+
+| Signal | Real window (31,884 slots) | Simulated window (12,529 slots) |
+|---|--:|--:|
+| `cond_flow` | **0 non-zero, max 0.0** | 3,354 non-zero, **max 893.7** |
+| `dpt` | 8,089 non-zero | **0** |
+
+`chiller_2_normalized` matches, with 3,592 synthetic values reaching 1,099.6.
+
+This **confirms** the Thermynx finding above — condenser flow has never been
+measured on the reference plant — and adds a constraint of its own. The natural
+demonstration window is the most recent data, and it is entirely synthetic. Marking
+it *simulated* is not sufficient, because the problem is not that the numbers are
+generated: it is that they imply an **instrumentation capability the site does not
+have.** Every other synthetic signal continues something the plant genuinely
+measures. Full analysis in `docs/20-architecture/01-data-model.md`; the constraint is
+D-009 and the feature is `C26`.
+
 ## 10b. The differential — how a cause is ruled out
 
 A flat checklist says *go and do all six of these*. A differential says *three

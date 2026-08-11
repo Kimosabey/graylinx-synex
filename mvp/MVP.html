@@ -2808,6 +2808,172 @@ details.case[open]>summary::before{transform:rotate(180deg)}
   <div class="wrap">
     <h2><span class="num">16</span>Platform facts</h2>
 
+    <h3>16.0 The system, and where Synex plugs in</h3>
+    <p style="font-size:.9rem">Synex is an <strong>AI layer on the existing Graylinx platform</strong>,
+    not a replacement for it. The band in the middle is what this MVP builds. Everything below the
+    dashed line already exists and is used as it is. <strong>Every arrow crossing into the data and
+    model band passes the Control Plane</strong> &mdash; that gate is not a diagram convenience, it is
+    where <code>G1</code>&ndash;<code>G6</code> live, and it is why the separation law can be enforced
+    rather than merely intended.</p>
+
+    <div class="figure">
+      <svg viewBox="0 0 1120 560" role="img" aria-label="A three-band architecture. The top band holds the React surfaces: the Copilot chat, the reliability, supervisor and technician workspaces, and the read surfaces for reports and asset. All of them speak to one FastAPI back end. The middle band is the Synex AI layer that this MVP builds: the Copilot turn engine on LangGraph, the FDD engine of rules and ML, the case lifecycle, the verification layer and the evaluation gates. Every call from that band into data or models passes through the Control Plane. The bottom band, below a dashed line, already exists: the graylinx_synex MySQL database holding the plant snapshot, assets and work orders; PostgreSQL with pgvector holding Synex's own state of threads, cases, evidence packs and embeddings; and the rented Jarvis GPU box running Ollama with the four-model roster. The language model never reaches a database directly; it asks for a tool, the Control Plane authorises it, and deterministic code executes it.">
+        <defs>
+          <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
+        </defs>
+
+        <!-- band 1 : surfaces -->
+        <text x="16" y="20" font-size="10" font-weight="700" fill="var(--muted)" letter-spacing="1.2">SURFACES &middot; REACT + TYPESCRIPT</text>
+        <rect x="16" y="30" width="196" height="54" rx="8" fill="var(--accent)" stroke="var(--accent)"/>
+        <text x="114" y="52" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--on-accent)">SYNEX COPILOT</text>
+        <text x="114" y="70" text-anchor="middle" font-size="10" fill="var(--on-accent)">the front door</text>
+
+        <rect x="228" y="30" width="150" height="54" rx="8" fill="var(--sunken)" stroke="var(--rule-strong)"/>
+        <text x="303" y="52" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink)">Reliability</text>
+        <text x="303" y="69" text-anchor="middle" font-size="9.5" fill="var(--muted)">fault queue &middot; cases</text>
+
+        <rect x="392" y="30" width="150" height="54" rx="8" fill="var(--sunken)" stroke="var(--rule-strong)"/>
+        <text x="467" y="52" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink)">Supervisor</text>
+        <text x="467" y="69" text-anchor="middle" font-size="9.5" fill="var(--muted)">approvals &middot; closure</text>
+
+        <rect x="556" y="30" width="150" height="54" rx="8" fill="var(--sunken)" stroke="var(--rule-strong)"/>
+        <text x="631" y="52" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink)">Technician</text>
+        <text x="631" y="69" text-anchor="middle" font-size="9.5" fill="var(--muted)">job pack &middot; findings</text>
+
+        <rect x="720" y="30" width="176" height="54" rx="8" fill="var(--sunken)" stroke="var(--rule-strong)"/>
+        <text x="808" y="52" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink)">Reports &middot; Asset</text>
+        <text x="808" y="69" text-anchor="middle" font-size="9.5" fill="var(--muted)">read surfaces</text>
+
+        <rect x="910" y="30" width="194" height="54" rx="8" fill="var(--sunken)" stroke="var(--rule-strong)"/>
+        <text x="1007" y="52" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink)">Administrator</text>
+        <text x="1007" y="69" text-anchor="middle" font-size="9.5" fill="var(--muted)">scope &middot; policy</text>
+
+        <!-- one back end -->
+        <line x1="114" y1="84" x2="114" y2="112" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#ar1)"/>
+        <line x1="303" y1="84" x2="360" y2="112" stroke="var(--muted)" stroke-width="1" marker-end="url(#ar2)"/>
+        <line x1="467" y1="84" x2="470" y2="112" stroke="var(--muted)" stroke-width="1" marker-end="url(#ar2)"/>
+        <line x1="631" y1="84" x2="600" y2="112" stroke="var(--muted)" stroke-width="1" marker-end="url(#ar2)"/>
+        <line x1="808" y1="84" x2="720" y2="112" stroke="var(--muted)" stroke-width="1" marker-end="url(#ar2)"/>
+        <line x1="1007" y1="84" x2="850" y2="112" stroke="var(--muted)" stroke-width="1" marker-end="url(#ar2)"/>
+
+        <rect x="16" y="114" width="1088" height="34" rx="7" fill="var(--card)" stroke="var(--rule-strong)"/>
+        <text x="560" y="136" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">ONE BACK END &mdash; PYTHON + FASTAPI</text>
+
+        <!-- band 2 : the AI layer -->
+        <rect x="16" y="164" width="1088" height="182" rx="9" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="0"/>
+        <text x="30" y="184" font-size="10" font-weight="700" fill="var(--accent)" letter-spacing="1.2">THE SYNEX AI LAYER &mdash; WHAT THIS MVP BUILDS</text>
+
+        <rect x="32" y="196" width="200" height="66" rx="7" fill="var(--sunken)" stroke="var(--accent)"/>
+        <text x="132" y="217" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">Copilot turn engine</text>
+        <text x="132" y="233" text-anchor="middle" font-size="9.5" fill="var(--muted)">LangGraph &middot; 14 stages</text>
+        <text x="132" y="249" text-anchor="middle" font-size="9.5" fill="var(--muted)">agentic, not multi-agent</text>
+
+        <rect x="248" y="196" width="188" height="66" rx="7" fill="var(--sunken)" stroke="var(--accent)"/>
+        <text x="342" y="217" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">FDD engine</text>
+        <text x="342" y="233" text-anchor="middle" font-size="9.5" fill="var(--muted)">6 models &middot; residuals</text>
+        <text x="342" y="249" text-anchor="middle" font-size="9.5" fill="var(--muted)">rules name the fault</text>
+
+        <rect x="452" y="196" width="188" height="66" rx="7" fill="var(--sunken)" stroke="var(--accent)"/>
+        <text x="546" y="217" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">Case lifecycle</text>
+        <text x="546" y="233" text-anchor="middle" font-size="9.5" fill="var(--muted)">checklists &middot; differential</text>
+        <text x="546" y="249" text-anchor="middle" font-size="9.5" fill="var(--muted)">escalation &middot; work order</text>
+
+        <rect x="656" y="196" width="188" height="66" rx="7" fill="var(--sunken)" stroke="var(--accent)"/>
+        <text x="750" y="217" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">Verification</text>
+        <text x="750" y="233" text-anchor="middle" font-size="9.5" fill="var(--muted)">post-work residuals</text>
+        <text x="750" y="249" text-anchor="middle" font-size="9.5" fill="var(--muted)">PASS / FAIL / UNKNOWN</text>
+
+        <rect x="860" y="196" width="228" height="66" rx="7" fill="var(--sunken)" stroke="var(--accent)"/>
+        <text x="974" y="217" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">Evaluation gates</text>
+        <text x="974" y="233" text-anchor="middle" font-size="9.5" fill="var(--muted)">golden set &middot; honesty gate</text>
+        <text x="974" y="249" text-anchor="middle" font-size="9.5" fill="var(--muted)">fails the build, not the user</text>
+
+        <!-- the control plane, in the path -->
+        <rect x="32" y="286" width="1056" height="44" rx="7" fill="var(--accent)" stroke="var(--accent)"/>
+        <text x="560" y="304" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--on-accent)">THE CONTROL PLANE &mdash; EVERY TOOL CALL PASSES HERE</text>
+        <text x="560" y="321" text-anchor="middle" font-size="9.5" fill="var(--on-accent)">identity and scope per turn &middot; risk class &middot; approval &middot; tool gateway &middot; idempotency &middot; audit trail</text>
+
+        <line x1="132" y1="262" x2="132" y2="284" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#ar1)"/>
+        <line x1="342" y1="262" x2="342" y2="284" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#ar1)"/>
+        <line x1="546" y1="262" x2="546" y2="284" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#ar1)"/>
+        <line x1="750" y1="262" x2="750" y2="284" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#ar1)"/>
+        <line x1="974" y1="262" x2="974" y2="284" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#ar1)"/>
+
+        <!-- the boundary -->
+        <line x1="16" y1="362" x2="1104" y2="362" stroke="var(--rule-strong)" stroke-width="1.4" stroke-dasharray="7 5"/>
+        <text x="1104" y="356" text-anchor="end" font-size="9.5" font-style="italic" fill="var(--muted)">everything below already exists &mdash; Synex uses it as it is</text>
+
+        <!-- band 3 : data and models -->
+        <line x1="300" y1="330" x2="220" y2="392" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#ar1)"/>
+        <line x1="560" y1="330" x2="560" y2="392" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#ar1)"/>
+        <line x1="820" y1="330" x2="900" y2="392" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#ar1)"/>
+
+        <rect x="16" y="394" width="340" height="94" rx="8" fill="var(--card)" stroke="var(--rule-strong)"/>
+        <text x="186" y="416" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">graylinx_synex &mdash; MySQL</text>
+        <text x="186" y="434" text-anchor="middle" font-size="9.5" fill="var(--muted)">the plant only: telemetry, alarms, residuals</text>
+        <text x="186" y="450" text-anchor="middle" font-size="9.5" fill="var(--muted)">193 tables &middot; 3,879 MB &middot; ours alone</text>
+        <text x="186" y="470" text-anchor="middle" font-size="9.5" font-weight="600" fill="var(--ink)">156,129 slots simulated &middot; cond_flow invented</text>
+
+        <rect x="372" y="394" width="376" height="94" rx="8" fill="var(--card)" stroke="var(--rule-strong)"/>
+        <text x="560" y="416" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">PostgreSQL + pgvector</text>
+        <text x="560" y="434" text-anchor="middle" font-size="9.5" fill="var(--muted)">Synex's own state, not the plant's</text>
+        <text x="560" y="450" text-anchor="middle" font-size="9.5" fill="var(--muted)">threads &middot; cases &middot; work orders &middot; evidence</text>
+        <text x="560" y="470" text-anchor="middle" font-size="9.5" fill="var(--muted)">768-dim embeddings, always local</text>
+
+        <rect x="764" y="394" width="340" height="94" rx="8" fill="var(--card)" stroke="var(--rule-strong)"/>
+        <text x="934" y="416" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">Jarvis box &mdash; Ollama</text>
+        <text x="934" y="434" text-anchor="middle" font-size="9.5" fill="var(--muted)">RTX PRO 6000 Blackwell &middot; 96 GB</text>
+        <text x="934" y="450" text-anchor="middle" font-size="9.5" fill="var(--muted)">four models on one card</text>
+        <text x="934" y="470" text-anchor="middle" font-size="9.5" fill="var(--muted)">rented, bursted, never a hosted API</text>
+
+        <!-- the rule that matters -->
+        <rect x="16" y="504" width="1088" height="44" rx="7" fill="var(--sunken)" stroke="var(--rule-strong)"/>
+        <text x="560" y="522" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)">The language model never reaches a database.</text>
+        <text x="560" y="539" text-anchor="middle" font-size="9.5" fill="var(--muted)">It asks for a tool &middot; the Control Plane authorises it &middot; deterministic code executes it &middot; the result comes back as evidence</text>
+      </svg>
+    </div>
+
+    <p style="font-size:.88rem"><strong>Two things in that picture are load-bearing.</strong>
+    The Control Plane sits <em>in</em> the path rather than beside it, so a model cannot reach data by
+    going around it &mdash; which is what makes <code>G1</code>&ndash;<code>G6</code> a guarantee rather
+    than a policy. And the four models run on a box we rent rather than behind a hosted API, which is
+    what keeps embeddings and inference on infrastructure we control. Both are inherited from the
+    Thermynx implementation rather than invented here.</p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Layer</th><th class="nowrap">What it is</th><th>What it owns, and what it must never do</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><strong>Surfaces</strong></td><td class="nowrap">React + TypeScript</td>
+              <td>Eight surfaces, one of which is the front door. No surface computes a figure of its own &mdash; if a number appears, the back end produced it and it carries its data window (<code>C22</code>)</td></tr>
+          <tr><td class="nowrap"><strong>Back end</strong></td><td class="nowrap">Python + FastAPI</td>
+              <td>One service. Holds the turn engine, the rules, the case machine and the tool registry. Every write is idempotent (<code>G5</code>) because a retry must not raise a second work order</td></tr>
+          <tr><td class="nowrap"><strong>Turn engine</strong></td><td class="nowrap">LangGraph</td>
+              <td>Fourteen stages per turn, four of which sit outside the language models entirely. Agentic rather than multi-agent &mdash; one loop with tools, because a second autonomous agent adds coordination failure modes the MVP has no way to debug</td></tr>
+          <tr><td class="nowrap"><strong>Control Plane</strong></td><td class="nowrap">Deterministic code</td>
+              <td>Grants or refuses every tool call. It is the only component that may authorise a write. It never asks a model whether something is permitted</td></tr>
+          <tr><td class="nowrap"><strong>Plant data</strong></td><td class="nowrap">MySQL &mdash; <code>graylinx_synex</code></td>
+              <td><strong>The plant only</strong> &mdash; telemetry, alarms, FDD residuals and the location and subsystem masters. It holds no cases and no work orders: those are Synex's, and they live in PostgreSQL. <code>shiva</code> stays the read-only customer snapshot</td></tr>
+          <tr><td class="nowrap"><strong>Platform state</strong></td><td class="nowrap">PostgreSQL + pgvector</td>
+              <td>Threads, cases, work orders, evidence packs, audit trail and embeddings &mdash; Synex's own memory, kept apart from the plant's records so a demo cannot corrupt either</td></tr>
+          <tr><td class="nowrap"><strong>Inference</strong></td><td class="nowrap">Ollama on the Jarvis box</td>
+              <td>The four-model roster on one card. Nothing touching a model ships without a green run on the box, because a model that passes on a laptop and fails at Q4 has not passed</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <span class="k">WHAT THE ARCHITECTURE DELIBERATELY DOES NOT HAVE</span>
+      <p style="margin-bottom:0">No message bus, no streaming pipeline, no second autonomous agent, and no
+      fifth model. The scale does not call for any of them &mdash; and each one would add a failure mode
+      that a demonstrator has no way to explain when it fires in front of an audience. The leverage is in
+      the Control Plane, the verification layer and the case lifecycle, none of which the stack gives us
+      for free.</p>
+    </div>
+
     <h3>16.1 The four local models</h3>
     <p style="font-size:.88rem">There is no fifth. Power comes from models + agents + tools +
     existing ML/FDD + data + RAG + Control Plane + workflows + verification.</p>
@@ -2840,6 +3006,35 @@ details.case[open]>summary::before{transform:rotate(180deg)}
         </tbody>
       </table>
     </div>
+    <div class="callout stop">
+      <span class="k">THE SIMULATION INVENTED THE SIGNAL THAT MATTERS MOST</span>
+      <p style="margin-bottom:.5rem">Every numeric column on <code>chiller_1_normalized</code> was
+      compared across the measured and the simulated window. Of 32 columns, exactly one differs
+      <em>in kind</em>:</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="nowrap">Signal</th><th class="nowrap">Measured window<br>31,884 slots</th><th class="nowrap">Simulated window<br>12,529 slots</th><th>Reading</th></tr></thead>
+          <tbody>
+            <tr><td class="id">cond_flow</td><td><strong>0 non-zero, max 0.0</strong></td><td>3,354 non-zero, <strong>max 893.7</strong></td><td><strong>Invented.</strong> The plant has never measured it</td></tr>
+            <tr><td class="id">dpt</td><td>8,089 non-zero</td><td><strong>0</strong></td><td>Dropped by the simulation</td></tr>
+            <tr><td class="id">the other 30</td><td>populated</td><td>populated proportionally</td><td>Continued, not invented</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-bottom:.5rem">Condenser flow is the highest-leverage single measurement in
+      section 12 &mdash; <strong>four of the six models depend on it</strong>, and
+      <em>&ldquo;flow is at design&rdquo;</em> eliminates three of five causes in the condenser
+      differential. The one signal that decides the most is the one signal this database fabricated.</p>
+      <p style="margin-bottom:0"><strong>Marking the window simulated does not fix it.</strong> The
+      problem is not that the numbers are generated &mdash; it is that they imply an instrumentation
+      capability the site does not have. So a demonstration runs on the <strong>measured</strong>
+      window and the high-head branch returns <span class="state">NO_DIAGNOSIS</span> where condenser
+      flow is needed. That is the honest result, and <code>C26</code> makes it a rule: a signal is
+      labelled <em>measured</em>, <em>simulated</em> or <em>not instrumented here</em>, because
+      <code>C23</code> marks a window and that is one level too coarse. Full analysis in
+      <code>docs/20-architecture/01-data-model.md</code>; the decision is D-009.</p>
+    </div>
+
     <div class="callout stop">
       <span class="k">156,129 SLOTS IN IT ARE SIMULATED</span>
       <p style="margin-bottom:.5rem">The real snapshot ends <strong>2026-06-23</strong>. A simulation
@@ -2966,8 +3161,8 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 
 <script>
 /* BEGIN GENERATED — scripts/sync_mvp_html.py. Do not edit by hand. */
-/* 145 features from mvp/FEATURE-REGISTER.md,
-   92 of them in the proposed MVP cut. */
+/* 146 features from mvp/FEATURE-REGISTER.md,
+   93 of them in the proposed MVP cut. */
 const DOMAINS = {
   C:"Synex Copilot",
   R:"Reports",
@@ -3034,6 +3229,8 @@ const FEATURES = [
    w:"Every answer, report and export states the period it was computed over.", u:"All", e:["SW"], p:"P0", ph:"MVP"},
   {id:"C23", d:"C", n:"Untrusted-window marking",
    w:"A period can be marked untrusted, and reports, efficiency figures and models all honour it.", u:"Data / Reliability", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"C26", d:"C", n:"Per-signal provenance, not just per-window",
+   w:"A signal is labelled **measured**, **simulated** or **not instrumented here**. `C23` marks a window; this marks the signal inside it, because a synthetic window that continues a real measurement and one that fabricates an absent one are not the same claim. A signal the site cannot measure is never presented as a reading.", u:"Everyone", e:["SW"], p:"P0", ph:"MVP"},
   {id:"C25", d:"C", n:"Evidence-graded response mode",
    w:"Four modes by how much the data can settle: explain a definitive verdict, hypothesise the right question when it is ambiguous, interrogate what can and cannot be proven, or interview when nothing is usable.", u:"Everyone", e:["LLM", "R"], p:"P0", ph:"MVP"},
   {id:"C24", d:"C", n:"Inline evidence rendering",

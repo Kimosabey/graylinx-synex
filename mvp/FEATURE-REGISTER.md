@@ -37,6 +37,7 @@ question S1 is closed.
 | C21 | Figure discipline | Every number is either a value or a stated absence — never both, never neither. | Everyone | `SW` | P0 | MVP |
 | C22 | Data window on every artefact | Every answer, report and export states the period it was computed over. | All | `SW` | P0 | MVP |
 | C23 | Untrusted-window marking | A period can be marked untrusted, and reports, efficiency figures and models all honour it. | Data / Reliability | `SW` | P0 | MVP |
+| C26 | Per-signal provenance, not just per-window | A signal is labelled **measured**, **simulated** or **not instrumented here**. `C23` marks a window; this marks the signal inside it, because a synthetic window that continues a real measurement and one that fabricates an absent one are not the same claim. A signal the site cannot measure is never presented as a reading. | Everyone | `SW` | P0 | MVP |
 | C25 | Evidence-graded response mode | Four modes by how much the data can settle: explain a definitive verdict, hypothesise the right question when it is ambiguous, interrogate what can and cannot be proven, or interview when nothing is usable. | Everyone | `LLM + R` | P0 | MVP |
 | C24 | Inline evidence rendering | Trends, comparisons and result tables drawn in the answer from the evidence pack — never decoration, and never a figure the pack does not contain. | Everyone | `SW` | P0 | MVP |
 
@@ -227,7 +228,7 @@ evaluation suite that cannot fail is decoration.
 
 ---
 
-**Totals:** 145 features, of which 92 are in the proposed MVP cut.
+**Totals:** 146 features, of which 93 are in the proposed MVP cut.
 
 The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
 implementation. Four groups of capability were in daily use there, or required for
@@ -247,6 +248,11 @@ episodes covering 612 slots — including the only two of `critical` class — s
 the detector and never reached the queue, because the seeding call is idempotent by
 construction and nothing scheduled it. The queue was silently wrong on screen, which
 is a worse failure than an empty queue.
+
+Analysing our own database added `C26`: `cond_flow` is fabricated by the
+simulation and never measured on the reference plant, so marking the window
+simulated is not enough — the signal itself has to carry what kind of claim it is.
+See `docs/20-architecture/01-data-model.md` and D-009.
 
 The same pass added `RC18` and `F17`. There, four readings a checklist told a
 technician to go and take were sitting in the same table the model had just read,

@@ -123,6 +123,46 @@ chapters. If it is not in this file, it did not happen.
 - **Affects:** `CONTEXT.md` §9a. No feature IDs.
 - **Reflected in docs:** yes.
 
+### D-009 — The demonstration window is the real one, because our database invented condenser flow
+- **Date:** 2026-08-11
+- **Decided by:** Harshan
+- **Closes:** nothing. It sharpens `Q1` considerably
+- **Decision:** Three parts.
+  1. **A demonstration runs on the measured window**, 2026-03-04 to 2026-06-23, unless
+     a specific reason says otherwise and the synthetic signals in the chosen window
+     have been checked one by one.
+  2. **`C26` per-signal provenance joins the cut.** A signal is labelled *measured*,
+     *simulated*, or *not instrumented here*. `C23` marks a window; `C26` marks the
+     signal inside it.
+  3. **A signal the site cannot measure is never presented as a reading**, in any mode,
+     regardless of what the database contains.
+- **Reason:** measured on `graylinx_synex`, every numeric column on
+  `chiller_1_normalized` compared across the real and simulated windows. Of 32
+  columns, exactly one differs *in kind*: `cond_flow` has **zero** non-zero values in
+  31,884 real slots, and **3,354** synthetic values reaching 893.7 in the simulated
+  window. `chiller_2_normalized` matches, with 3,592 reaching 1,099.6.
+- **Why this one signal matters more than the rest:** condenser flow is what
+  `CONTEXT.md` §6 calls the highest-leverage single measurement. Four of the six models
+  depend on it, and *"flow is at design"* eliminates three of five causes in the
+  `CONDENSER_WATER_SIDE_UNSPECIFIED` differential. The one signal that decides the most
+  is the one our database fabricated.
+- **Why disclosure alone does not fix it:** the natural demonstration window is the most
+  recent data, which runs to five days ago and is entirely synthetic. Labelling it
+  *simulated* would still leave the audience watching condenser flow read healthily,
+  the models resolve cleanly and the differential narrow with confidence — on a
+  measurement the plant **cannot take at all**. Every other synthetic signal continues
+  something the plant genuinely measures. This one implies an instrumentation
+  capability that is not there, and that is a different and worse claim.
+- **Side effect worth reporting upstream:** Thermynx's `Q-A11` asks what feeds
+  `chiller_flow` now that `dpt` is NULL, recorded as verified finding VF4. In the
+  simulated window `dpt` is absent and `chiller_flow` is synthesised directly, so the
+  documented derivation is not broken — it is not being applied, because that window
+  was generated. Their observation was made on data running through August, inside the
+  simulated span. A candidate explanation, not a confirmed one, and cheap to check.
+- **Affects:** `mvp/FEATURE-REGISTER.md` (`C26`), `mvp/MVP-SCOPE.md`, `CONTEXT.md` §10a,
+  `docs/20-architecture/01-data-model.md` (new), `mvp/MVP.html`.
+- **Reflected in docs:** yes.
+
 ### D-007 — A detected fault that never reaches the queue is registered as `RC17`
 - **Date:** 2026-08-11
 - **Decided by:** Harshan

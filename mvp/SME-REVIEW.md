@@ -239,6 +239,26 @@ plainly?
 
 > **Answer:**
 
+### 2.6 What you will and will not see in the demonstration, and why
+
+Not a question — a disclosure, so that nothing in the demonstration surprises you.
+
+Our copy of the plant data runs to 2026-08-05, but the **measured** data stops at
+**2026-06-23**. The six weeks after that are a simulation. Comparing the two windows
+column by column, 31 of 32 signals are a continuation of something the plant really
+measures. One is not: `cond_flow` has **zero** readings in 31,884 real slots and
+**3,354 fabricated ones** in the simulated window, reaching 893.7.
+
+So the demonstration runs on the **measured** window, and the high-head branch will
+return `NO_DIAGNOSIS` where condenser flow is needed. **That is deliberate, and it is
+the honest result** — we would rather show you the platform refusing than show it
+confident on a measurement your plants cannot take.
+
+If you would rather see the branch resolve, that needs an answer to 2.5 first, not a
+different window.
+
+> **Anything you want shown differently:**
+
 ---
 
 ## §3 · Thresholds — the numbers we refuse to invent
@@ -357,7 +377,7 @@ cross-check.
 
 | # | Question | Blocks |
 |---|---|---|
-| 5.1 | **Is the MVP cut agreed?** 92 of 145 features | `mvp/BACKLOG.md` and all build sequencing |
+| 5.1 | **Is the MVP cut agreed?** 93 of 146 features | `mvp/BACKLOG.md` and all build sequencing |
 | 5.2 | How do Synex and Thermynx relate? | every line of positioning copy |
 | 5.3 | Which of the three inherited gaps do we take on — no holding action, no retraction mechanism, duplicated checklist work under event grouping? | `F9`, `V7`, deferred-fault risk |
 | 5.4 | Four MVP features are named by no build stage, two of them safety | the stage-9 estimate |
