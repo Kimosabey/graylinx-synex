@@ -221,6 +221,80 @@ critical fault runs with nothing protecting it.
 
 ---
 
+### 1.8 When five faults appear on one machine, how many problems is that?
+
+**This is the newest question and possibly the easiest one to answer.** It comes from
+counting our own data rather than from a document, and the proposal we have written is
+**our inference, reviewed by nobody.**
+
+**What the data shows.** In the measured window, twelve equipment-days carried a fault.
+Naming a case for each *(machine, day, fault label)* gives **thirty-nine**. And on
+**15 April, chiller 1 carried five labels at the same time:**
+
+| Label |
+|---|
+| `CONDENSER_LOW_FLOW` — the only class rated critical |
+| `HIGH_HEAD_AMBIGUOUS` |
+| `POWER_HIGH_UNEXPLAINED` |
+| `REFRIGERANT_SIDE_HIGH_HEAD` |
+| `STARVED_EVAP_UNDERCHARGE_OR_RESTRICTION` |
+
+17 April is another five, and **ten of chiller 1's twelve fault days carry more than one
+label.**
+
+**Why it matters more than it sounds.** If each label opens its own case and each case
+raises its own work order, that is five work orders, five visits and five checklist runs.
+The technician fixes the real problem on visit one, so visits two to five find nothing and
+close as *no fault found* — which teaches the crew that the system cries wolf.
+
+**Our proposal, which we would like you to break:** where several labels share a plausible
+common cause, group them into **one** investigation with **one** work order, and show the
+grouping to a human who can split it.
+
+**1.8a Can one cause really produce four of those at once?** Our reasoning is that a
+**fouled condenser** raises head pressure, makes the compressor work harder, drops
+efficiency and shifts refrigerant-side pressures — so `HIGH_HEAD_AMBIGUOUS`,
+`POWER_HIGH_UNEXPLAINED`, `COMPRESSOR_INEFFICIENCY` and `REFRIGERANT_SIDE_HIGH_HEAD` would
+be four symptoms of one problem. **Is that right, and are the groups you would draw the
+same as ours?**
+
+> **Answer / the groups you would draw:**
+
+**1.8b Which pairs must never be grouped?** The opposite mistake is the dangerous one. If a
+fouled condenser and a genuinely low refrigerant charge are both present and we group them,
+the second one is hidden — and a missed undercharge costs a compressor, where a duplicate
+visit costs a morning. **Which label pairs are independent enough that they must always stay
+separate cases, even when they appear together?**
+
+> **Answer:**
+
+**1.8c Two of the five contradict each other. What does that mean on the plant?**
+`CONDENSER_LOW_FLOW` is one of only two classes whose signature has a **positive**
+discharge-pressure residual, which is how the water side gets implicated.
+`HIGH_HEAD_AMBIGUOUS` has a **negative** one, and that negative value is precisely the
+evidence used to argue the water side is *not* involved. Both were present on the same
+machine on the same day.
+
+- Is that **two real faults** at different times of day, **one fault in transition**, or a
+  sign the **data is not trustworthy** in that window?
+- And which of the three should the platform assume when it cannot tell?
+
+> **Answer:**
+
+**1.8d If an instrument is faulty, can a real fault hide behind it?** Our plan is that when
+an instrument fault appears in a group, the instrument case leads and the others wait for
+the sensor to be fixed. **Is that safe, or can a genuine fault sit underneath a bad sensor
+and be missed while we wait?**
+
+> **Answer:**
+
+**1.8e Is five labels on one machine-day normal?** Or does it tell you the detector is too
+sensitive, and the real number of problems on 15 April was one?
+
+> **Answer:**
+
+---
+
 ## §2 · The data that does not exist — not your questions to answer, but yours to interpret
 
 Four defects. Three of our checks ask for numbers that are not there. These need the
