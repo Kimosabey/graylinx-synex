@@ -156,9 +156,12 @@ exist and are used as they are:
 
 | Piece | What it means for the build |
 |---|---|
-| **The graylinx-v2 database** | The shared platform database. Telemetry, assets, work orders, cases and threads live here. Stage 0 of the sequencing is integration, not construction. |
+| **`graylinx_synex` — our own database** | Cloned from `graylinx_v2` on 2026-08-11: 193 tables, 3,879 MB, row counts verified table by table. Synex writes here and nowhere else. |
+| **What it was cloned from** | `shiva` is the customer's snapshot and is **read-only**. `graylinx_v2` is a writable working copy of it. `graylinx_synex` is a third generation, so staging demo data for a pitch cannot disturb the copy that is in active use. Same reasoning, applied once more. |
+| **156,129 slots in it are simulated** | The snapshot's real data ends 2026-06-23; a simulation extends it to 2026-08-05. `snapshot_simulated_slots` names every synthetic `(equipment, slot_time)` pair, so real and generated can always be told apart. Treat a simulated window exactly as `C23` treats an untrusted one — anything shown over it says so. |
 | **The Jarvis box** | A rented Jarvislabs.ai GPU, used exactly as it is for Thermynx: **RTX PRO 6000 Blackwell, 96 GB, India region**, on demand, about ₹179/hr plus ₹2.84/hr for 250 GB. Chosen because the four-model roster must fit on **one** card — Ollama does not pool GPUs cleanly — and the resident set is roughly 41 GB at Q4 and 53 GB at Q8. Worked in one contiguous burst per session and then terminated; a fresh box wipes `/home`, so the roster re-pulls in about ten minutes. Nothing touching a model ships without a green run on it, and the acceptance run is a box run. Source: `docs/operations/hardware/JARVISLABS_GPU_SELECTION.md` and `JARVIS_BOX_BURST.md` in the Thermynx repository. |
-| **The same stack** | Python and FastAPI on the service side, React and TypeScript on the front end, PostgreSQL, Ollama for local inference, LangGraph for the agent loop. Chosen because it is proven here, not because it is novel — the leverage is in the Control Plane, the verification layer and the case lifecycle, none of which the stack gives us for free. |
+| **The same stack** | **Python and FastAPI on the back end**, React and TypeScript on the front end, MySQL for the plant snapshot and PostgreSQL with pgvector for the platform's own state, Ollama for local inference, LangGraph for the agent loop. Chosen because it is proven here, not because it is novel — the leverage is in the Control Plane, the verification layer and the case lifecycle, none of which the stack gives us for free. |
+| **The Jarvis connection** | The back end talks to the model roster over Ollama on the rented box, not to a hosted API. That is what keeps embeddings and inference on infrastructure we control, and it is why the roster has to fit one card. |
 
 A working FDD and agent implementation also exists. Its decisions are inherited,
 not re-litigated — see section 10.
@@ -210,6 +213,24 @@ is wrong.
 | 37 | **Every fault class must carry at least one check the operator can do** | Otherwise somebody starts stuck rather than getting stuck partway. A test fails if a future edit walls a class off. |
 | 38 | **A check the reader cannot perform collapses; it does not grey out** | A greyed-out *"oil analysis — acid, moisture, metals"* still reads as a demand on whoever is standing there. |
 | 39 | **The next question is the one that could move the most live candidates** | Tie-broken toward whoever is already at the machine, so cheap eliminations come first. On the weakest class the opener is *"is the machine actually running harder?"* — read off a panel, and it can settle the whole class alone. |
+
+## 9a. What Synex is, and what it is not
+
+**Synex is an AI layer on the existing Graylinx platform, not a replacement for it.**
+It plugs into what is already there: the plant database, the equipment models, the
+work-order records. What it adds is the Copilot, the case lifecycle between a fault
+and a work order, and the verification that proves a repair worked.
+
+**This MVP exists to be shown.** Its job is to demonstrate the AI layer's abilities
+convincingly enough to be worth building out — the pitch, the differentiation, and
+the argument for the approach. That is a real constraint on scope, and it explains
+some of the cut: the loop must be *complete* end to end, and it does not have to be
+*broad*. One asset class on one site, closing the loop, beats ten domains that
+cannot prove anything.
+
+It does not change the honesty rules. A demonstration that overstates what the data
+supports is worth less than one that shows the platform refusing — which is why
+`NO_DIAGNOSIS` is in the walkthrough rather than hidden from it.
 
 ## 10a. What the reference plant's data actually says
 

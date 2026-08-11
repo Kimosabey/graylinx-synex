@@ -84,6 +84,45 @@ chapters. If it is not in this file, it did not happen.
   design — no interim holding action, no retraction mechanism, and duplicated
   checklist work under event grouping. They are inherited as unsolved. See Q19.
 
+### D-005 — Synex gets its own database, cloned from graylinx_v2
+- **Date:** 2026-08-11
+- **Decided by:** Harshan
+- **Closes:** nothing
+- **Decision:** `graylinx_synex` is cloned from `graylinx_v2` and is the only
+  database Synex writes to. 193 tables, 3,879 MB, verified table by table and by
+  exact row count on the largest eight. `CONTEXT.md` §9 previously said Synex used
+  the shared platform database; it does not.
+- **Reason:** the lineage already has this shape. `shiva` is the customer snapshot
+  and stays read-only; `graylinx_v2` exists as a writable copy so nothing done to
+  the data can corrupt the original. Staging demo scenarios for a pitch is exactly
+  the kind of work that argument was made for, and doing it in `graylinx_v2` would
+  disturb a copy that is in active use. A third generation costs 4 GB of disk.
+- **Note on what came with it:** 156,129 slots in the copy are **simulated** — the
+  real snapshot ends 2026-06-23 and a simulation extends it to 2026-08-05.
+  `snapshot_simulated_slots` names every synthetic pair, so the two can always be
+  told apart. Anything shown over a simulated window must say so, on the same
+  principle as `C23`. A pitch that quietly presents generated data as measured is
+  the exact failure this product argues against.
+- **Affects:** `CONTEXT.md` §9. No feature IDs.
+- **Reflected in docs:** yes.
+
+### D-006 — Synex is an AI layer on the existing Graylinx platform, and this MVP is built to be shown
+- **Date:** 2026-08-11
+- **Decided by:** Harshan
+- **Closes:** nothing. N1 remains open — this is about the Graylinx platform, not
+  about Thermynx
+- **Decision:** Synex plugs into the existing platform rather than replacing it, and
+  this MVP's purpose is demonstration: the pitch, the differentiation, and the
+  argument for the approach.
+- **Reason:** it explains the shape of the cut, and it is better written down than
+  inferred. A demonstrator has to close the loop *completely* and does not have to
+  be broad — which is why one asset class on one site with verification beats ten
+  domains that cannot prove anything. It also sets a bar the honesty rules already
+  meet: a demonstration that overstates what the data supports is worth less than
+  one that shows the platform refusing.
+- **Affects:** `CONTEXT.md` §9a. No feature IDs.
+- **Reflected in docs:** yes.
+
 ### D-004 — The FDD instrumentation reality is recorded, and four gaps are closed
 - **Date:** 2026-08-10
 - **Decided by:** Harshan
