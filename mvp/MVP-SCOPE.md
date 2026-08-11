@@ -17,28 +17,30 @@ a fault is detected → a case opens → it is explained with evidence
 The case is the step the first draft of this document missed. A fault does not
 become a work order in one hop: somebody has to answer questions, and some of
 those answers come back "could not check". That middle is where the work actually
-happens, and it is `RC1`–`RC8`.
+happens, and it is `RC1`–`RC17`.
 
 Anything that does not sit on that path is deferred, however attractive it is.
 A demo that answers questions beautifully but cannot prove a repair worked has
 not demonstrated the product.
 
-## What is in — 69 of 122 features
+## What is in — 90 of 143 features
 
 | Domain | In MVP | Why |
 |---|---|---|
 | Synex Copilot | C1–C12 | The whole point. Ask, resolve context, route, gather evidence, explain, recommend, refuse honestly, draft, route approval, hold task state, respect scope, cite sources |
 | Conversation shell | C15–C20 | The Copilot is the product, so the shell is not optional: thread memory on every route, a conversational front door, read-only data lookup, route transparency, export, and the skill registry all of it routes through |
-| Case Resolution | RC1–RC8 | The lifecycle between a named fault and a closed work order: state machine, curated checklists, capability routing, findings with an explicit cannot-check, the blocking gate, root cause with corrective and preventive actions, three escalation routes, idempotent seeding |
-| FDD | F1–F8, F10, F11, F14 | The six models, residuals, gates, isolation path, sensor-bias detection, honest ambiguity, NO_DIAGNOSIS, model health, quarantine, ΔT check |
+| Honesty discipline | C21–C25 | What stops a fluent answer from being a confident wrong one: every number a value or a stated absence, every artefact carrying its data window, untrusted periods marked and honoured, figures drawn only from the evidence pack, and four response modes graded by how much the evidence can actually settle |
+| Case Resolution | RC1–RC17 | The lifecycle between a named fault and a closed work order: state machine, curated checklists, capability routing, findings with an explicit cannot-check, the blocking gate, root cause with corrective and preventive actions, three escalation routes, seeding that is both safe to re-run and actually run, ageing, measured-versus-estimated, differential narrowing with an elimination audit, honest exhaustion, the work order escalation produces, and a deterministic assignee |
+| FDD | F1–F8, F10–F11, F14–F16 | The six models, residuals, gates, isolation path, sensor-bias detection, honest ambiguity, NO_DIAGNOSIS, model health, quarantine, ΔT check, per-asset reference bands, and cross-signal physical plausibility |
 | Work Orders | W1–W4, W8–W10 | Create from chat or fault, carry the evidence, deterministic priority, capture findings, cannot close unproven, reopen on failure |
 | Verification | V1–V4, V6 | Post-work residuals under valid gates, persistence, fault clear, PASS/FAIL/UNKNOWN |
 | Reports | R1, R3, R5, R10 | Ask, explain a change, drill to source, reconcile against source |
 | Knowledge | K1, K5 | SOP retrieval with the source shown |
 | Asset | A1 | One equipment story |
-| Roles | U3, U6, U7, U8 | Four personas, because the loop needs a fault judged, worked, approved and governed |
+| Roles | U3, U6–U8 | Four personas, because the loop needs a fault judged, worked, approved and governed |
 | Energy | E1 | The efficiency baseline the FDD proxy is measured against |
-| Safety | S1, S4 | Block safety-critical actions; safety answers only from the SOP |
+| Evaluation | EV1–EV4 | A demonstrator that cannot be shown to be honest is worth little: a golden case set, a gate that fails the build on dishonest answers, dimensions no overall score can trade away, and tests of the gate itself |
+| Safety | S1, S4, S6 | Block safety-critical actions; safety answers only from the SOP; and a response class for faults answered by stopping the machine rather than by raising a work order |
 | Control Plane | G1–G6 | Identity and scope per turn, risk class, approvals, tool gateway, idempotency, audit |
 
 ## What is out, and why
@@ -50,12 +52,23 @@ not demonstrated the product.
 | Customer portal (R9, U1) | Multi-tenant surface area is a large security burden for little MVP learning |
 | Executive briefing (C14, U2, R6) | Needs a history of outcomes to summarise; there will not be one yet |
 | Watches (C13) | Depends on alerting |
+| Report authoring and distribution (R2, R4, R7, R8) | `R1` already answers a question and `R5` already drills to source. Building reports, comparing scopes and scheduling delivery are reporting-product work, not proof that the loop closes |
+| Work order logistics (W5–W7, W11, W12) | Scheduling, assignment, parts and SLA routing all need CMMS and stores depth. `RC16` already puts a named person on the job deterministically, which is what the loop requires |
+| Asset analytics (A2–A5) | Health scores, dependencies, like-for-like comparison and repeat-failure detection need a history of closed cases. There will not be one until the MVP has run |
+| Knowledge beyond the SOP (K2, K3, K4, K6) | Manuals, work order history and verified cases are all corpora we do not yet have indexed. `K1` and `K5` prove retrieval with the source shown, which is the mechanism being demonstrated |
 | Cooling tower (F13) | Blocked on S2, and the tower changes condenser water behaviour in ways that complicate early model validation |
 | Re-baselining (F12) | Not needed until the first verified major repair completes |
 | Break-glass, policy simulation (G7, G8) | Governance maturity, not product proof |
-| Energy cost, forecasting, optimisation advice (E2–E4) | The analytics exist on the shared platform; the MVP needs the baseline `E1`, not the advice layer |
+| Energy cost, forecasting, optimisation advice (E2–E4) | The analytics exist on the platform already; the MVP needs the baseline `E1`, not the advice layer |
+| Business outcome check (V5) | Needs a measured energy or downtime improvement to appear, which takes longer than the MVP runs. `V1`–`V4` prove the repair worked; `V5` proves it was worth doing |
+| Planner queue and permission explanation (U4, U5) | Both are surfaces for personas the MVP does not include |
+| Permit, qualification, EHS routing (S2, S3, S5) | All three are `P0` and none is deferred on value — they need a permit system, a qualification record and an escalation matrix that are the customer's, not ours. `S1` still blocks the unsafe action; what is deferred is the paperwork around it |
 | Learning from closed cases (F9, V7) | Deliberately withheld: without a retraction mechanism one wrong confirmed root cause becomes permanent precedent. See `CONTEXT.md` §10 |
 | Multi-skill orchestration | `C10` carries a job across steps without a planner running skills in parallel |
+
+Every one of the 143 registered features appears in exactly one of the two tables
+above. `scripts/verify.py` checks that against `mvp/FEATURE-REGISTER.md` and fails
+if a feature is in neither or in both.
 
 ## MVP acceptance criteria
 
