@@ -1189,7 +1189,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <p style="margin-bottom:.5rem"><strong>The Synex Copilot is not a feature of the platform. It is
       how the platform is used</strong> — and it is what Graylinx has that the alternatives do not. Every
       other capability here is a skill it reaches, through the Control Plane, with evidence and an audit
-      trail. Twenty-two of the features in the cut are the Copilot and its shell.</p>
+      trail. <span data-count="cut:C" data-word="1"></span> of the features in the cut are the Copilot and its shell.</p>
       <p style="margin-bottom:0"><a href="#copilot">Section 12</a> is the whole specification: the
       conversation itself, every ability, all fourteen modes, the fourteen-stage turn, the six answer
       states, where each action lands, the agentic decision, and what it will never do.</p>
@@ -1286,11 +1286,11 @@ details.case[open]>summary::before{transform:rotate(180deg)}
           <rect x="386" y="176" width="200" height="72" rx="9" fill="var(--accent)" stroke="var(--accent)"/>
           <text x="486" y="204" text-anchor="middle" font-size="12" font-weight="600" fill="var(--on-accent)">SYNEX COPILOT</text>
           <text x="486" y="224" text-anchor="middle" font-size="11" fill="var(--on-accent)">every door leads here</text>
-          <text x="486" y="240" text-anchor="middle" font-size="10.5" fill="var(--on-accent)">22 features</text>
+          <text x="486" y="240" text-anchor="middle" font-size="10.5" fill="var(--on-accent)"><tspan data-count="cut:C"></tspan> features</text>
 
           <rect x="44" y="60" width="180" height="62" rx="8" fill="var(--sunken)" stroke="var(--rule-strong)"/>
           <text x="134" y="84" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">FDD DETECTION</text>
-          <text x="134" y="104" text-anchor="middle" font-size="10.5" fill="var(--muted)">13 features &middot; no screen</text>
+          <text x="134" y="104" text-anchor="middle" font-size="10.5" fill="var(--muted)"><tspan data-count="cut:F"></tspan> features &middot; no screen</text>
 
           <rect x="44" y="176" width="180" height="72" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
           <text x="134" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">CASES</text>
@@ -1441,12 +1441,13 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <section id="register">
   <div class="wrap">
     <h2><span class="num">5</span>Feature register</h2>
-    <p class="lede"><strong>This opens on the 80 features in the cut.</strong> Clear the view, or pick
-    another from Contents, to see all 133 — what was deferred and why is section 3.
+    <p class="lede"><strong>This opens on the <span data-count="cut"></span> features in the cut.</strong> Clear the
+    view, or pick another from Contents, to see all <span data-count="all"></span> — what was deferred
+    and why is section 3.
     <strong>Click any ID</strong> to see everywhere that feature appears — its build
     stage, the workflow steps that name it, the cases that need it, the conversation turns that
-    demonstrate it, and which of the four models actually does the work. All 122 features across
-    fifteen domains, generated from the register. If a capability is not on this list, it is not being
+    demonstrate it, and which of the four models actually does the work. All <span data-count="all"></span> features across
+    <span data-count="domains" data-word="1"></span> domains, generated from the register. If a capability is not on this list, it is not being
     built. <strong>Engine:</strong> <code>SW</code> plain deterministic software ·
     <code>R</code> deterministic rule · <code>ML</code> equipment model ·
     <code>LLM</code> language model / agentic layer.</p>
@@ -2965,8 +2966,8 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 
 <script>
 /* BEGIN GENERATED — scripts/sync_mvp_html.py. Do not edit by hand. */
-/* 142 features from mvp/FEATURE-REGISTER.md,
-   89 of them in the proposed MVP cut. */
+/* 143 features from mvp/FEATURE-REGISTER.md,
+   90 of them in the proposed MVP cut. */
 const DOMAINS = {
   C:"Synex Copilot",
   R:"Reports",
@@ -3155,6 +3156,8 @@ const FEATURES = [
    w:"Matched by skill against the fault label, never chosen by a model \u2014 so it works with the GPU off and \"why this person\" is answerable without replaying a prompt.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
   {id:"RC11", d:"RC", n:"Preventive actions become a scheduled obligation",
    w:"A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"RC17", d:"RC", n:"Detection-to-queue reconciliation",
+   w:"A detected episode reaches the queue on a schedule, and the count of detected-but-not-queued is shown rather than assumed to be zero. `RC8` makes the seed safe to re-run; it does not make it run.", u:"Data / Reliability", e:["SW"], p:"P0", ph:"MVP"},
   {id:"K1", d:"K", n:"SOP search",
    w:"Approved procedures, retrieved with the source shown.", u:"Technician", e:["LLM"], p:"P1", ph:"MVP"},
   {id:"K2", d:"K", n:"Manufacturer manual search",
@@ -3282,6 +3285,44 @@ const PHASE_CLASS = {'MVP':'mvp', 'Phase 2':'ph2', 'Phase 3':'ph3'};
 function esc(s){
   return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
+
+/* --- numbers quoted in prose ---------------------------------------------
+   Written into the page from FEATURES rather than typed. Every one of these had
+   drifted from the register at least once: the lede claimed 80 of 133 and 122 in
+   the same paragraph, three cuts out of date and disagreeing with itself. A number
+   a human has to remember to update is a number that will be wrong on the day it
+   matters most. */
+(function fillCounts(){
+  const ONES = ['zero','one','two','three','four','five','six','seven','eight','nine',
+                'ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen',
+                'seventeen','eighteen','nineteen'];
+  const TENS = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+  const word = n => n < 20 ? ONES[n]
+              : n < 100 ? TENS[(n / 10) | 0] + (n % 10 ? '-' + ONES[n % 10] : '')
+              : String(n);
+  const inCut = FEATURES.filter(f => f.ph === 'MVP');
+  const value = key => {
+    const [what, dom] = key.split(':');
+    if (what === 'all')     return dom ? FEATURES.filter(f => f.d === dom).length : FEATURES.length;
+    if (what === 'cut')     return dom ? inCut.filter(f => f.d === dom).length : inCut.length;
+    if (what === 'domains') return new Set(FEATURES.map(f => f.d)).size;
+    return NaN;
+  };
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const n = value(el.getAttribute('data-count'));
+    if (Number.isNaN(n)) return;
+    let s = String(n);
+    if (el.hasAttribute('data-word')) {
+      s = word(n);
+      // A spelled-out number opening a sentence needs the capital the digits did not.
+      // Test for a sentence actually ending before it, not merely for preceding text —
+      // mid-sentence there is preceding text too.
+      const before = (el.previousSibling && el.previousSibling.textContent) || '';
+      if (!before.trim() || /[.!?][)"'”]?\s+$/.test(before)) s = s[0].toUpperCase() + s.slice(1);
+    }
+    el.textContent = s;
+  });
+})();
 
 /* --- build the table ----------------------------------------------------- */
 const body = document.getElementById('regbody');
