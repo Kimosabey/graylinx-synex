@@ -21,8 +21,46 @@ The reason for a third generation is the reason there was a second: staging demo
 scenarios is exactly the kind of work that must not disturb a copy somebody else is
 using. It costs about 4 GB of disk.
 
-The size differences are index statistics rather than content — the clone was
-verified table by table, and by exact row count on the largest eight.
+The size differences are index statistics rather than content.
+
+### The clone is exact — every table, not a sample
+
+Re-verified on 2026-08-11 by counting every row in every table of all three
+databases, rather than the largest eight:
+
+| Comparison | Result |
+|---|---|
+| Tables in `graylinx_v2` but not in `graylinx_synex` | **0** |
+| Tables in `graylinx_synex` but not in `graylinx_v2` | **0** |
+| Per-table row counts, `graylinx_v2` vs `graylinx_synex` | **identical on all 193** |
+| Total rows | **14,271,741 in both** |
+| Views, routines, triggers | none in any of the three, so nothing to miss |
+
+So `graylinx_synex` holds everything `graylinx_v2` holds, exactly.
+
+### Against `shiva`, it is a superset — and nothing real was disturbed
+
+| | |
+|---|--:|
+| Tables in `shiva` but not in `graylinx_synex` | **0** |
+| Tables `graylinx_synex` adds | 2 — `snapshot_simulated_slots`, `snapshot_simulation_log` |
+| Rows `graylinx_synex` adds | **313,424** |
+
+Every added row is accounted for: 12 equipment tables gained 12,529 slots each
+(150,348), `gla_model_residuals_wc` gained 6,946 scored rows, and the two registry
+tables hold 156,129 and 1.
+
+The important check is the boundary. **Zero registry entries fall at or before
+2026-06-23 11:50**, and the simulation log records `gaps_filled=False`. The
+simulation appended; it did not overwrite or backfill a single measured slot. That is
+what makes the measured window trustworthy as a demonstration window.
+
+`snapshot_simulation_log` also records the choices made:
+`condenser labels=stored-convention · dpt=NULL · tr=flow*dt*0.33 · gaps_filled=False`.
+Note what is *not* in that line: it discloses setting `dpt` to NULL and says nothing
+about supplying `cond_flow`, which is the one signal the plant has never measured.
+A simulation's own log being silent about its most consequential choice is the reason
+§4 was measured rather than read.
 
 ---
 
@@ -93,8 +131,11 @@ from it.
 ## 4. The simulated window — and the one signal that was invented
 
 The registry `snapshot_simulated_slots` has two columns, `equipment varchar(64)` and
-`slot_time datetime`, and names **156,129** synthetic pairs — 12,529 slots each
-across the chillers, condenser pumps and cooling towers.
+`slot_time datetime`, and names **156,129** synthetic pairs: 12,529 slots each for
+twelve equipment tables — both chillers, three condenser pumps, three cooling towers,
+three primary pumps and `plant_normalized` — plus 5,781 distinct slots on
+`gla_model_residuals_wc`, which carries several rows per slot and so contributes 6,946
+rows from those 5,781 marks.
 
 | | |
 |---|---|

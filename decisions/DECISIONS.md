@@ -89,9 +89,16 @@ chapters. If it is not in this file, it did not happen.
 - **Decided by:** Harshan
 - **Closes:** nothing
 - **Decision:** `graylinx_synex` is cloned from `graylinx_v2` and is the only
-  database Synex writes to. 193 tables, 3,879 MB, verified table by table and by
-  exact row count on the largest eight. `CONTEXT.md` §9 previously said Synex used
-  the shared platform database; it does not.
+  database Synex writes to. 193 tables, 3,879 MB. `CONTEXT.md` §9 previously said
+  Synex used the shared platform database; it does not.
+- **Verification, completed 2026-08-11:** every row in every table of all three
+  databases counted, not a sample. `graylinx_v2` and `graylinx_synex` are identical on
+  all 193 tables and on 14,271,741 rows, with no table present in one and absent from
+  the other, and no views, routines or triggers anywhere to be missed. Against `shiva`
+  the copy is a strict superset: two extra tables and 313,424 extra rows, all
+  attributable to the simulation. Zero registry entries fall at or before the measured
+  boundary and the simulation log records `gaps_filled=False`, so not one measured slot
+  was overwritten. See `docs/20-architecture/01-data-model.md`.
 - **Reason:** the lineage already has this shape. `shiva` is the customer snapshot
   and stays read-only; `graylinx_v2` exists as a writable copy so nothing done to
   the data can corrupt the original. Staging demo scenarios for a pitch is exactly
