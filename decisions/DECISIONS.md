@@ -144,6 +144,33 @@ chapters. If it is not in this file, it did not happen.
 - **Affects:** `mvp/FEATURE-REGISTER.md`, `mvp/MVP-SCOPE.md`, `mvp/MVP.html`.
 - **Reflected in docs:** yes.
 
+### D-008 — Two more gaps from the FDD register: stored evidence, and a single severity scale
+- **Date:** 2026-08-11
+- **Decided by:** Harshan
+- **Closes:** nothing
+- **Decision:** `RC18` and `F17` join the cut. Cut goes from 90 to 92 of 145.
+- **Reason for `RC18` (Thermynx gap register, item 18):** four readings the checklist sent a technician to
+  take were columns on the same normalised table the model had just read — oil
+  pressure, compressor balance, condenser approach, ambient. The operator is asked to
+  go and fetch a number the system already holds, and the model reasons about a fault
+  while blind to a signal in the same row. It is the same defect that produced the
+  `MODEL_BLIND` incident, diagnosed there as *"the library knew; the evidence pack did
+  not carry it"* — and fixed for that one fact rather than generalised.
+- **Reason it is not a pure win:** a number in the snapshot is not a gauge reading
+  now, and on a plant whose instruments are demonstrably unreliable, showing a stored
+  value as though it were a measurement is its own hazard. So `RC18` fixes the wording
+  as well as the behaviour — *confirm at the panel*, never *this is* — and a stored
+  reading never settles a blocking check on its own. That keeps it consistent with
+  `RC10`, which already says only a measured answer opens a gate.
+- **Reason for `F17` (Thermynx gap register, item 13):** two functions with the same name returned different
+  severity scales and disagreed on four of seven fault classes, all four rated
+  `critical` by one and `high` by the other. The impact was latent only because the
+  second path defaulted to off; enabling it would have shown the same fault at two
+  severities on two screens. Severity is how bad the fault is and `W4` decides when
+  the work happens — one number, read from one place, by everything.
+- **Affects:** `mvp/FEATURE-REGISTER.md`, `mvp/MVP-SCOPE.md`, `mvp/MVP.html`.
+- **Reflected in docs:** yes.
+
 ### D-004 — The FDD instrumentation reality is recorded, and four gaps are closed
 - **Date:** 2026-08-10
 - **Decided by:** Harshan

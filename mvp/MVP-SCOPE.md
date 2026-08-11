@@ -17,21 +17,21 @@ a fault is detected → a case opens → it is explained with evidence
 The case is the step the first draft of this document missed. A fault does not
 become a work order in one hop: somebody has to answer questions, and some of
 those answers come back "could not check". That middle is where the work actually
-happens, and it is `RC1`–`RC17`.
+happens, and it is `RC1`–`RC18`.
 
 Anything that does not sit on that path is deferred, however attractive it is.
 A demo that answers questions beautifully but cannot prove a repair worked has
 not demonstrated the product.
 
-## What is in — 90 of 143 features
+## What is in — 92 of 145 features
 
 | Domain | In MVP | Why |
 |---|---|---|
 | Synex Copilot | C1–C12 | The whole point. Ask, resolve context, route, gather evidence, explain, recommend, refuse honestly, draft, route approval, hold task state, respect scope, cite sources |
 | Conversation shell | C15–C20 | The Copilot is the product, so the shell is not optional: thread memory on every route, a conversational front door, read-only data lookup, route transparency, export, and the skill registry all of it routes through |
 | Honesty discipline | C21–C25 | What stops a fluent answer from being a confident wrong one: every number a value or a stated absence, every artefact carrying its data window, untrusted periods marked and honoured, figures drawn only from the evidence pack, and four response modes graded by how much the evidence can actually settle |
-| Case Resolution | RC1–RC17 | The lifecycle between a named fault and a closed work order: state machine, curated checklists, capability routing, findings with an explicit cannot-check, the blocking gate, root cause with corrective and preventive actions, three escalation routes, seeding that is both safe to re-run and actually run, ageing, measured-versus-estimated, differential narrowing with an elimination audit, honest exhaustion, the work order escalation produces, and a deterministic assignee |
-| FDD | F1–F8, F10–F11, F14–F16 | The six models, residuals, gates, isolation path, sensor-bias detection, honest ambiguity, NO_DIAGNOSIS, model health, quarantine, ΔT check, per-asset reference bands, and cross-signal physical plausibility |
+| Case Resolution | RC1–RC18 | The lifecycle between a named fault and a closed work order: state machine, curated checklists, capability routing, findings with an explicit cannot-check, the blocking gate, root cause with corrective and preventive actions, three escalation routes, seeding that is both safe to re-run and actually run, ageing, measured-versus-estimated, stored readings offered only as a confirmation, differential narrowing with an elimination audit, honest exhaustion, the work order escalation produces, and a deterministic assignee |
+| FDD | F1–F8, F10–F11, F14–F17 | The six models, residuals, gates, isolation path, sensor-bias detection, honest ambiguity, NO_DIAGNOSIS, model health, quarantine, ΔT check, per-asset reference bands, cross-signal physical plausibility, and one severity scale |
 | Work Orders | W1–W4, W8–W10 | Create from chat or fault, carry the evidence, deterministic priority, capture findings, cannot close unproven, reopen on failure |
 | Verification | V1–V4, V6 | Post-work residuals under valid gates, persistence, fault clear, PASS/FAIL/UNKNOWN |
 | Reports | R1, R3, R5, R10 | Ask, explain a change, drill to source, reconcile against source |
@@ -66,7 +66,7 @@ not demonstrated the product.
 | Learning from closed cases (F9, V7) | Deliberately withheld: without a retraction mechanism one wrong confirmed root cause becomes permanent precedent. See `CONTEXT.md` §10 |
 | Multi-skill orchestration | `C10` carries a job across steps without a planner running skills in parallel |
 
-Every one of the 143 registered features appears in exactly one of the two tables
+Every one of the 145 registered features appears in exactly one of the two tables
 above. `scripts/verify.py` checks that against `mvp/FEATURE-REGISTER.md` and fails
 if a feature is in neither or in both.
 

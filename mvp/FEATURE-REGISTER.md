@@ -100,6 +100,7 @@ question S1 is closed.
 | F12 | Re-baseline after verified major work | A repaired machine may have a legitimately new normal. | Reliability | `ML` | P1 | Phase 2 |
 | F13 | Cooling tower assessment | Wet bulb, approach and tower running hours. | Reliability | `R + ML` | P1 | Phase 2 |
 | F15 | Per-asset residual reference band | "High" and "Normal" are measured against that asset's own healthy distribution, never an absolute threshold. | Reliability | `R + ML` | P0 | MVP |
+| F17 | One severity scale | A fault class has exactly one severity, and every surface reads it from the same place. Severity says how bad the fault is; `W4` decides when the work happens. | Reliability | `R` | P0 | MVP |
 | F16 | Cross-signal physical plausibility | Rejects combinations that cannot physically occur — zero flow with a normal &Delta;T and normal power, or a condenser &Delta;T with the wrong sign. | Data / Reliability | `R` | P0 | MVP |
 | F14 | Chilled-water delta-T health check | Flags sustained low delta-T against the design band. | Reliability | `R` | P0 | MVP |
 
@@ -127,6 +128,7 @@ Every row here is constrained by an inherited decision; see `CONTEXT.md` §10.
 | RC15 | Escalation produces a work order | No tool raises an **inspection** work order with the open checks as its task list; no authority raises an **authorisation** work order whose task is the question, not a measurement. | Supervisor | `SW + R` | P0 | MVP |
 | RC16 | Deterministic assignee | Matched by skill against the fault label, never chosen by a model — so it works with the GPU off and "why this person" is answerable without replaying a prompt. | Supervisor | `SW` | P0 | MVP |
 | RC11 | Preventive actions become a scheduled obligation | A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns. | Supervisor | `SW` | P0 | MVP |
+| RC18 | Stored readings offered as a confirmation, never as the answer | Where the database already holds a value a checklist item asks for, the case shows it as *"the stored reading was X — confirm at the panel"*. A stored value is not a gauge reading now, so it never settles a blocking check on its own (`RC10`). | Technician | `SW` | P0 | MVP |
 | RC17 | Detection-to-queue reconciliation | A detected episode reaches the queue on a schedule, and the count of detected-but-not-queued is shown rather than assumed to be zero. `RC8` makes the seed safe to re-run; it does not make it run. | Data / Reliability | `SW` | P0 | MVP |
 
 ## K — Knowledge
@@ -225,7 +227,7 @@ evaluation suite that cannot fail is decoration.
 
 ---
 
-**Totals:** 143 features, of which 90 are in the proposed MVP cut.
+**Totals:** 145 features, of which 92 are in the proposed MVP cut.
 
 The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
 implementation. Four groups of capability were in daily use there, or required for
@@ -245,6 +247,11 @@ episodes covering 612 slots — including the only two of `critical` class — s
 the detector and never reached the queue, because the seeding call is idempotent by
 construction and nothing scheduled it. The queue was silently wrong on screen, which
 is a worse failure than an empty queue.
+
+The same pass added `RC18` and `F17`. There, four readings a checklist told a
+technician to go and take were sitting in the same table the model had just read,
+and two functions with the same name returned severities that disagreed on four of
+seven fault classes — latent only because one of the two paths was switched off.
 See `CONTEXT.md` §10 constraints 20–22 and decision D-004.
 
 Recorded as decision D-002.

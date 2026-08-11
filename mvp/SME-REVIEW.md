@@ -357,7 +357,7 @@ cross-check.
 
 | # | Question | Blocks |
 |---|---|---|
-| 5.1 | **Is the MVP cut agreed?** 90 of 143 features | `mvp/BACKLOG.md` and all build sequencing |
+| 5.1 | **Is the MVP cut agreed?** 92 of 145 features | `mvp/BACKLOG.md` and all build sequencing |
 | 5.2 | How do Synex and Thermynx relate? | every line of positioning copy |
 | 5.3 | Which of the three inherited gaps do we take on — no holding action, no retraction mechanism, duplicated checklist work under event grouping? | `F9`, `V7`, deferred-fault risk |
 | 5.4 | Four MVP features are named by no build stage, two of them safety | the stage-9 estimate |

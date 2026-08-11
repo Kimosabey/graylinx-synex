@@ -2966,8 +2966,8 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 
 <script>
 /* BEGIN GENERATED — scripts/sync_mvp_html.py. Do not edit by hand. */
-/* 143 features from mvp/FEATURE-REGISTER.md,
-   90 of them in the proposed MVP cut. */
+/* 145 features from mvp/FEATURE-REGISTER.md,
+   92 of them in the proposed MVP cut. */
 const DOMAINS = {
   C:"Synex Copilot",
   R:"Reports",
@@ -3120,6 +3120,8 @@ const FEATURES = [
    w:"Wet bulb, approach and tower running hours.", u:"Reliability", e:["R", "ML"], p:"P1", ph:"Phase 2"},
   {id:"F15", d:"F", n:"Per-asset residual reference band",
    w:"\"High\" and \"Normal\" are measured against that asset's own healthy distribution, never an absolute threshold.", u:"Reliability", e:["R", "ML"], p:"P0", ph:"MVP"},
+  {id:"F17", d:"F", n:"One severity scale",
+   w:"A fault class has exactly one severity, and every surface reads it from the same place. Severity says how bad the fault is; `W4` decides when the work happens.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
   {id:"F16", d:"F", n:"Cross-signal physical plausibility",
    w:"Rejects combinations that cannot physically occur \u2014 zero flow with a normal &Delta;T and normal power, or a condenser &Delta;T with the wrong sign.", u:"Data / Reliability", e:["R"], p:"P0", ph:"MVP"},
   {id:"F14", d:"F", n:"Chilled-water delta-T health check",
@@ -3156,6 +3158,8 @@ const FEATURES = [
    w:"Matched by skill against the fault label, never chosen by a model \u2014 so it works with the GPU off and \"why this person\" is answerable without replaying a prompt.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
   {id:"RC11", d:"RC", n:"Preventive actions become a scheduled obligation",
    w:"A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"RC18", d:"RC", n:"Stored readings offered as a confirmation, never as the answer",
+   w:"Where the database already holds a value a checklist item asks for, the case shows it as *\"the stored reading was X \u2014 confirm at the panel\"*. A stored value is not a gauge reading now, so it never settles a blocking check on its own (`RC10`).", u:"Technician", e:["SW"], p:"P0", ph:"MVP"},
   {id:"RC17", d:"RC", n:"Detection-to-queue reconciliation",
    w:"A detected episode reaches the queue on a schedule, and the count of detected-but-not-queued is shown rather than assumed to be zero. `RC8` makes the seed safe to re-run; it does not make it run.", u:"Data / Reliability", e:["SW"], p:"P0", ph:"MVP"},
   {id:"K1", d:"K", n:"SOP search",
