@@ -300,6 +300,32 @@ FEATURE_COUNT_RE = re.compile(r"\b(\d{2,3})\s+of\s+(?:the\s+)?(\d{2,3})\s+featur
 BARE_COUNT_RE = re.compile(r"\b(?:is|are|holds)\s+(\d{2,3})\s+features\b")
 
 
+def check_counts_html(total: int, rep: Report) -> None:
+    """The pages quote the arithmetic too, and markdown-only scanning missed it.
+
+    Section 3's heading read "What is in — 69 of 122" on the live site for three
+    cuts, because check_counts walks *.md and a heading in HTML is neither markdown
+    nor generated. Any "N of M" is checked here where M is plausibly a feature total;
+    the pages also legitimately say "5 of 5" gates and "72 of 72" contrast pairs, so
+    a small M is left alone.
+    """
+    if not total:
+        return
+    pat = re.compile(r"(\d{1,3})\s+of\s+(\d{2,3})\b")
+    for name in ("mvp/MVP.html", "mvp/mock.html"):
+        path = ROOT / name
+        if not path.exists():
+            continue
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if line.lstrip().startswith(("*", "/*")):
+                continue  # a comment may quote a number it is explaining
+            for m in pat.finditer(line):
+                num, denom = int(m.group(1)), int(m.group(2))
+                if denom >= 100 and denom != total and num <= denom:
+                    rep.error(path, n, f"{m.group(0)!r} — the register holds {total}. "
+                                       f"Compute it from FEATURES instead of typing it")
+
+
 def check_counts(files: list[Path], total: int, rep: Report) -> None:
     """Feature arithmetic is quoted in prose all over the repo; the register owns it.
 
@@ -443,6 +469,7 @@ def main() -> int:
         check_file(path, path.read_text(encoding="utf-8"), rep, args.strict)
     check_id_references(files, known, rep)
     check_counts(files, count, rep)
+    check_counts_html(count, rep)
 
     print(f"Scanned {len(files)} markdown file(s) and {docx} source document(s). "
           f"Register holds {count} feature(s).\n")

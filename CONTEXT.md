@@ -166,6 +166,24 @@ exist and are used as they are:
 A working FDD and agent implementation also exists. Its decisions are inherited,
 not re-litigated — see section 10.
 
+## 9a. What Synex is, and what it is not
+
+**Synex is an AI layer on the existing Graylinx platform, not a replacement for it.**
+It plugs into what is already there: the plant database, the equipment models, the
+work-order records. What it adds is the Copilot, the case lifecycle between a fault
+and a work order, and the verification that proves a repair worked.
+
+**This MVP exists to be shown.** Its job is to demonstrate the AI layer's abilities
+convincingly enough to be worth building out — the pitch, the differentiation, and
+the argument for the approach. That is a real constraint on scope, and it explains
+some of the cut: the loop must be *complete* end to end, and it does not have to be
+*broad*. One asset class on one site, closing the loop, beats ten domains that
+cannot prove anything.
+
+It does not change the honesty rules. A demonstration that overstates what the data
+supports is worth less than one that shows the platform refusing — which is why
+`NO_DIAGNOSIS` is in the walkthrough rather than hidden from it.
+
 ## 10. Inherited constraints
 
 These were decided before this programme, with reasoning recorded against source.
@@ -213,24 +231,6 @@ is wrong.
 | 37 | **Every fault class must carry at least one check the operator can do** | Otherwise somebody starts stuck rather than getting stuck partway. A test fails if a future edit walls a class off. |
 | 38 | **A check the reader cannot perform collapses; it does not grey out** | A greyed-out *"oil analysis — acid, moisture, metals"* still reads as a demand on whoever is standing there. |
 | 39 | **The next question is the one that could move the most live candidates** | Tie-broken toward whoever is already at the machine, so cheap eliminations come first. On the weakest class the opener is *"is the machine actually running harder?"* — read off a panel, and it can settle the whole class alone. |
-
-## 9a. What Synex is, and what it is not
-
-**Synex is an AI layer on the existing Graylinx platform, not a replacement for it.**
-It plugs into what is already there: the plant database, the equipment models, the
-work-order records. What it adds is the Copilot, the case lifecycle between a fault
-and a work order, and the verification that proves a repair worked.
-
-**This MVP exists to be shown.** Its job is to demonstrate the AI layer's abilities
-convincingly enough to be worth building out — the pitch, the differentiation, and
-the argument for the approach. That is a real constraint on scope, and it explains
-some of the cut: the loop must be *complete* end to end, and it does not have to be
-*broad*. One asset class on one site, closing the loop, beats ten domains that
-cannot prove anything.
-
-It does not change the honesty rules. A demonstration that overstates what the data
-supports is worth less than one that shows the platform refusing — which is why
-`NO_DIAGNOSIS` is in the walkthrough rather than hidden from it.
 
 ## 10a. What the reference plant's data actually says
 

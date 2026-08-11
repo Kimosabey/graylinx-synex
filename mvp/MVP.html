@@ -1358,7 +1358,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 3. WHAT IS IN ===================== -->
 <section id="in">
   <div class="wrap">
-    <h2><span class="num">3</span>What is in — 69 of 122</h2>
+    <h2><span class="num">3</span>What is in — <span data-count="cut"></span> of <span data-count="all"></span></h2>
     <p class="lede">By domain, with the reason each group earns its place on the loop. Feature IDs are
     references — click one to find it in the register.</p>
     <div class="scroll">
@@ -3292,10 +3292,11 @@ function esc(s){
 
 /* --- numbers quoted in prose ---------------------------------------------
    Written into the page from FEATURES rather than typed. Every one of these had
-   drifted from the register at least once: the lede claimed 80 of 133 and 122 in
-   the same paragraph, three cuts out of date and disagreeing with itself. A number
-   a human has to remember to update is a number that will be wrong on the day it
-   matters most. */
+   drifted from the register at least once — the register lede quoted three totals
+   in a single paragraph, three cuts out of date and disagreeing with each other,
+   and section 3's own heading was staler still. A number a human has to remember
+   to update is a number that will be wrong on the day it matters most.
+   verify.py fails the build on any "N of M" typed into these pages. */
 (function fillCounts(){
   const ONES = ['zero','one','two','three','four','five','six','seven','eight','nine',
                 'ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen',
