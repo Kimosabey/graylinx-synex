@@ -30,7 +30,7 @@ The parts worth pausing on:
   unhealthy? (condenser flow missing)" is the one that matters
 
 **2. The plan — https://graylinx-synex-mvp.netlify.app**
-93 of 146 features proposed for the MVP, with what is deferred and why. Worth ten
+94 of 147 features proposed for the MVP, with what is deferred and why. Worth ten
 minutes if you want the full picture, but it is not what I need from you.
 
 **What I actually need is one hour, on section 1 of the attached agenda.**
@@ -67,7 +67,7 @@ Harshan
 
 ## Notes for us — do not send
 
-- **Order matters.** The mock first. The specification is 146 features and will
+- **Order matters.** The mock first. The specification is 147 features and will
   swamp the ask if he opens it first.
 - **Do not defend section 1.** Every correction is one line in the library; that is
   why it was built that way. Agreeing quickly costs nothing and disagreeing is the

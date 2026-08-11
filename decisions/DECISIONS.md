@@ -130,6 +130,45 @@ chapters. If it is not in this file, it did not happen.
 - **Affects:** `CONTEXT.md` §9a. No feature IDs.
 - **Reflected in docs:** yes.
 
+### D-011 — One problem must not become five work orders: `RC19`
+- **Date:** 2026-08-11
+- **Decided by:** Harshan
+- **Closes:** nothing. It takes on one of the three gaps inherited as unsolved under Q19
+- **Decision:** `RC19` case correlation before escalation joins the cut. Cut goes from 93
+  to 94 of 147. A case may not raise a work order until it has been checked against open
+  cases on the same equipment within a window:
+  - **same label** → reopen the existing case rather than open a second;
+  - **different labels sharing a candidate cause** → group under one investigation, with
+    **one** work order;
+  - **an instrument fault in the group** → the instrument case leads and the others hold,
+    because a dead sensor can produce several fault labels at once.
+- **Reason, measured on our own window:** twelve equipment-days carried a fault, and a
+  naive case per (equipment, day, label) yields **39** — a 3.25× inflation. On 2026-04-15
+  chiller 1 carried **five labels simultaneously**: `CONDENSER_LOW_FLOW`,
+  `HIGH_HEAD_AMBIGUOUS`, `POWER_HIGH_UNEXPLAINED`, `REFRIGERANT_SIDE_HIGH_HEAD` and
+  `STARVED_EVAP_UNDERCHARGE_OR_RESTRICTION`. 2026-04-17 is another five, and ten of
+  chiller 1's twelve fault days carry more than one label. A fouled condenser plausibly
+  explains four of those five at once, so the honest case count is one and the naive one
+  is five — five work orders, five visits, five checklist runs.
+- **Why it is not an Alerts feature:** the case that describes it, case 12, is currently
+  outside the cut because it needs `L1`–`L4`. But four of its sub-cases occur with two
+  chillers and the features already in the cut, so deferring the Alerts domain does not
+  defer the duplicate-work-order risk. `G5` prevents a **retry** creating a second work
+  order; nothing prevents two genuinely distinct cases about one physical problem each
+  raising one.
+- **Why grouping is proposed and never silent:** a wrong grouping hides a real second
+  fault, which is worse than a duplicate visit. This is `RC12`'s rule one level up — a
+  confirmation never eliminates its siblings, and by the same argument a grouping never
+  closes its members. A human sees what was grouped, and can split it.
+- **What is deliberately not claimed:** correlation across *equipment* — a cooling tower
+  starving both chillers — is a real production risk and **cannot be demonstrated on our
+  data**: there are zero slots where both chillers carried a fault simultaneously. `RC19`
+  scopes to one equipment for that reason, and the cross-equipment case stays with the
+  Alerts domain.
+- **Affects:** `mvp/FEATURE-REGISTER.md`, `mvp/MVP-SCOPE.md`,
+  `docs/20-architecture/00-data-model.md`, `mvp/MVP.html`.
+- **Reflected in docs:** yes.
+
 ### D-010 — The Thermynx stack is inherited whole, including two refusals
 - **Date:** 2026-08-11
 - **Decided by:** Harshan

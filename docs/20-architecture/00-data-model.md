@@ -287,6 +287,46 @@ Severity, for its own part, is **not stored anywhere** — `gla_model_residuals_
 `equipment`, `slot_time`, six residuals and `fault_label`, and no severity column. So
 `F17` (one severity scale) is a code-discipline rule, not a data fix.
 
+## 4d. One problem, many labels — the case-inflation measurement
+
+Counted over the measured window, excluding `NO_DIAGNOSIS` and `NO_EFFICIENCY_FAULT`:
+
+| | |
+|---|--:|
+| Fault days | **12** |
+| Equipment-days carrying a fault | **12** |
+| **Naive cases** — one per (equipment, day, label) | **39** |
+| Faulted slots | 674 |
+
+**A 3.25× inflation**, and the concentration is worse than the ratio suggests:
+
+| Date | Equipment | Labels held **at once** |
+|---|---|--:|
+| 2026-04-15 | chiller 1 | **5** — `CONDENSER_LOW_FLOW`, `HIGH_HEAD_AMBIGUOUS`, `POWER_HIGH_UNEXPLAINED`, `REFRIGERANT_SIDE_HIGH_HEAD`, `STARVED_EVAP_UNDERCHARGE_OR_RESTRICTION` |
+| 2026-04-17 | chiller 1 | **5** |
+| 2026-04-18 · 04-19 | chiller 1 | 4 each |
+| 2026-04-12 | chiller 2 | 4 |
+
+**Ten of chiller 1's twelve fault days carry more than one label.** A fouled condenser
+plausibly explains four of the five on 15 April simultaneously, so the honest case count
+for that day is one and the naive count is five — five work orders, five visits, five
+checklist runs against one repair.
+
+### What the same data says about the other grouping cases
+
+**Intermittency is real.** `HIGH_HEAD_AMBIGUOUS` on chiller 1 spans 2026-04-09 to
+2026-04-22 across ten days and 412 slots — it clears and returns rather than persisting.
+So "is this one case reopened or a new case?" is not hypothetical.
+
+**Cross-equipment correlation is not demonstrable here.** There are **zero** slots where
+both chillers carried a fault simultaneously. A cooling tower starving both machines is a
+genuine production risk and this window cannot show it, which is why `RC19` scopes to a
+single equipment and the cross-equipment case stays with the Alerts domain.
+
+Recorded as D-011. `RC19` is the feature; `G5` does **not** cover it — `G5` stops a retry
+creating a second work order, not two genuinely distinct cases about one physical problem
+each raising one.
+
 ---
 
 ## 5. What Synex writes, and where

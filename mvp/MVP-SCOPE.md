@@ -17,20 +17,20 @@ a fault is detected → a case opens → it is explained with evidence
 The case is the step the first draft of this document missed. A fault does not
 become a work order in one hop: somebody has to answer questions, and some of
 those answers come back "could not check". That middle is where the work actually
-happens, and it is `RC1`–`RC18`.
+happens, and it is `RC1`–`RC19`.
 
 Anything that does not sit on that path is deferred, however attractive it is.
 A demo that answers questions beautifully but cannot prove a repair worked has
 not demonstrated the product.
 
-## What is in — 93 of 146 features
+## What is in — 94 of 147 features
 
 | Domain | In MVP | Why |
 |---|---|---|
 | Synex Copilot | C1–C12 | The whole point. Ask, resolve context, route, gather evidence, explain, recommend, refuse honestly, draft, route approval, hold task state, respect scope, cite sources |
 | Conversation shell | C15–C20 | The Copilot is the product, so the shell is not optional: thread memory on every route, a conversational front door, read-only data lookup, route transparency, export, and the skill registry all of it routes through |
 | Honesty discipline | C21–C26 | What stops a fluent answer from being a confident wrong one: every number a value or a stated absence, every artefact carrying its data window, untrusted periods marked and honoured, figures drawn only from the evidence pack, four response modes graded by how much the evidence can actually settle, and per-signal provenance so a fabricated measurement can never read as a real one |
-| Case Resolution | RC1–RC18 | The lifecycle between a named fault and a closed work order: state machine, curated checklists, capability routing, findings with an explicit cannot-check, the blocking gate, root cause with corrective and preventive actions, three escalation routes, seeding that is both safe to re-run and actually run, ageing, measured-versus-estimated, stored readings offered only as a confirmation, differential narrowing with an elimination audit, honest exhaustion, the work order escalation produces, and a deterministic assignee |
+| Case Resolution | RC1–RC19 | The lifecycle between a named fault and a closed work order: state machine, curated checklists, capability routing, findings with an explicit cannot-check, the blocking gate, root cause with corrective and preventive actions, three escalation routes, seeding that is both safe to re-run and actually run, ageing, measured-versus-estimated, stored readings offered only as a confirmation, correlation before escalation so one problem does not become five work orders, differential narrowing with an elimination audit, honest exhaustion, the work order escalation produces, and a deterministic assignee |
 | FDD | F1–F8, F10–F11, F14–F17 | The six models, residuals, gates, isolation path, sensor-bias detection, honest ambiguity, NO_DIAGNOSIS, model health, quarantine, ΔT check, per-asset reference bands, cross-signal physical plausibility, and one severity scale |
 | Work Orders | W1–W4, W8–W10 | Create from chat or fault, carry the evidence, deterministic priority, capture findings, cannot close unproven, reopen on failure |
 | Verification | V1–V4, V6 | Post-work residuals under valid gates, persistence, fault clear, PASS/FAIL/UNKNOWN |
@@ -53,7 +53,7 @@ actually being built. Read the *shape* of it rather than the totals.
 | Domain | In | Out | In the cut |
 |---|--:|--:|---|
 | Synex Copilot | 24 | 2 | C1–C12, C15–C26 |
-| Case Resolution | 18 | 0 | RC1–RC18 |
+| Case Resolution | 19 | 0 | RC1–RC19 |
 | Reliability & FDD | 14 | 3 | F1–F8, F10–F11, F14–F17 |
 | Work Orders | 7 | 5 | W1–W4, W8–W10 |
 | Control Plane | 6 | 2 | G1–G6 |
@@ -68,9 +68,9 @@ actually being built. Read the *shape* of it rather than the totals.
 | **Planning** | 0 | 5 | — deferred whole |
 | **Inventory** | 0 | 4 | — deferred whole |
 | **Alerts** | 0 | 6 | — deferred whole |
-| **Total** | **93** | **53** | of 146 registered |
+| **Total** | **94** | **53** | of 147 registered |
 
-**88 of the 93 are `P0`.** Almost nothing in the cut is optional; the 5 that are not are there because the loop reads badly without them, not because they are nice to have. Deferred work splits 45 to Phase 2 and 8 to Phase 3.
+**89 of the 94 are `P0`.** Almost nothing in the cut is optional; the 5 that are not are there because the loop reads badly without them, not because they are nice to have. Deferred work splits 45 to Phase 2 and 8 to Phase 3.
 
 **2 domains are in whole** — Case Resolution, Evaluation — and **3 are out whole** — Planning, Inventory, Alerts. That is the shape of the decision, not an accident of counting. A demonstrator has to close the loop *completely* and does not have to be *broad*, so the middle of the loop is taken entire while domains that are genuinely valuable, but not on it, are taken not at all.
 
@@ -122,7 +122,7 @@ specification and no build plan.
 | Learning from closed cases (F9, V7) | Deliberately withheld: without a retraction mechanism one wrong confirmed root cause becomes permanent precedent. See `CONTEXT.md` §10 |
 | Multi-skill orchestration | `C10` carries a job across steps without a planner running skills in parallel |
 
-Every one of the 146 registered features appears in exactly one of the two tables
+Every one of the 147 registered features appears in exactly one of the two tables
 above. `scripts/verify.py` checks that against `mvp/FEATURE-REGISTER.md` and fails
 if a feature is in neither or in both.
 

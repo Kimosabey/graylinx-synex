@@ -3415,8 +3415,8 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 
 <script>
 /* BEGIN GENERATED — scripts/sync_mvp_html.py. Do not edit by hand. */
-/* 146 features from mvp/FEATURE-REGISTER.md,
-   93 of them in the proposed MVP cut. */
+/* 147 features from mvp/FEATURE-REGISTER.md,
+   94 of them in the proposed MVP cut. */
 const DOMAINS = {
   C:"Synex Copilot",
   R:"Reports",
@@ -3611,6 +3611,8 @@ const FEATURES = [
    w:"A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns.", u:"Supervisor", e:["SW"], p:"P0", ph:"MVP"},
   {id:"RC18", d:"RC", n:"Stored readings offered as a confirmation, never as the answer",
    w:"Where the database already holds a value a checklist item asks for, the case shows it as *\"the stored reading was X \u2014 confirm at the panel\"*. A stored value is not a gauge reading now, so it never settles a blocking check on its own (`RC10`).", u:"Technician", e:["SW"], p:"P0", ph:"MVP"},
+  {id:"RC19", d:"RC", n:"Case correlation before escalation",
+   w:"Before a case may raise a work order it is checked against open cases on the same equipment in a window: the same label reopens rather than opening a second; different labels sharing a candidate cause are grouped under one investigation with one work order; an instrument fault in the group leads and the others hold. **Grouping is proposed, never silent** \u2014 a human sees what was grouped and can split it, because a wrong grouping hides a real second fault.", u:"Reliability", e:["R"], p:"P0", ph:"MVP"},
   {id:"RC17", d:"RC", n:"Detection-to-queue reconciliation",
    w:"A detected episode reaches the queue on a schedule, and the count of detected-but-not-queued is shown rather than assumed to be zero. `RC8` makes the seed safe to re-run; it does not make it run.", u:"Data / Reliability", e:["SW"], p:"P0", ph:"MVP"},
   {id:"K1", d:"K", n:"SOP search",
@@ -4011,10 +4013,20 @@ const CASES = [
   flow:'The signal was unavailable for part of the window \u2192 the period is marked untrusted, and reports, efficiency figures and models honour it \u2192 figures are a value or a stated absence, never both \u2192 the data window is printed on the artefact \u2192 the honesty gate fails a report whose figures disagree, whatever else it scored.',
   res:'A reassuring headline over a blind window is replaced, and the record says it was corrected.',
   ids:['C23','C22','C21','EV2','EV3','EV1','EV4','E1','R10','F15','F16']},
- {t:'Many alerts are really one problem', ask:'Why am I getting so many alerts?',
-  flow:'Related alerts are grouped → the common equipment or event is found → the real issue is explained → one appropriate alert is sent instead of the same message repeated.',
-  res:'Less noise, and faster attention to the actual issue.',
-  ids:['L1','L2','L3','L4']}
+ {t:'Many alerts are really one problem \u2014 and one problem must not become five work orders',
+  ask:'Why am I getting so many alerts?',
+  flow:'A case is checked against open cases on the same machine before it may raise a work order \u2192 the same label reopens rather than opening a second \u2192 different labels sharing a candidate cause are grouped under one investigation with one work order \u2192 an instrument fault in the group leads and the others hold \u2192 the grouping is shown to a human, who can split it.',
+  res:'Measured on our own window: twelve equipment-days carried a fault, and a naive case per equipment-day-label gives 39 \u2014 a 3.25\u00d7 inflation. On 15 April chiller 1 held five labels at once. One repair, one work order.',
+  ids:['RC19','RC8','RC9','F6','F16','W10','G5','L1','L2','L3','L4'],
+  sub:[
+   ['S1','Same label, same machine, many slots','412 slots of HIGH_HEAD_AMBIGUOUS on chiller 1','covered','RC8'],
+   ['S2','Same label, intermittent across days','HIGH_HEAD_AMBIGUOUS spans 09\u201322 April, clearing and returning','was a gap','RC19'],
+   ['S3','Different labels, one machine, one physical cause','chiller 1, 15 April: five labels at once. A fouled condenser plausibly explains four','was the worst gap','RC19'],
+   ['S4','Same label, different machines, shared upstream cause','A tower starving both chillers \u2014 zero co-faulted slots in our window, so not demonstrable here','deferred, honestly','L1'],
+   ['S5','One dead instrument, many faults','cond_flow feeds four of six models; our \u2212273.2 on cond_leaving_temp is this shape','detected, now grouped','F6'],
+   ['S6','A plant event, not an equipment fault','A setpoint change or load shift','covered','F2'],
+   ['S7','The fault already has an open work order','An alert today for work started yesterday','was a gap','RC19'],
+   ['S8','Verification failed and the fault returned','The repair did not hold','covered','W10']]}
 ];
 
 /* --- coverage, computed from the register --------------------------------- */
@@ -4116,8 +4128,33 @@ document.getElementById('case-host').innerHTML = CASES.map((c, i) => `
         <dt>RESULT</dt><dd>${esc(c.res)}</dd>
         <dt>NEEDS</dt><dd>${idChips(c.ids)}</dd>
       </dl>
+      ${c.sub ? `
+      <p style="font-size:.86rem;margin:.9rem 0 .4rem"><strong>The sub-cases.</strong>
+      Four of these occur with two chillers and the features already in the cut, so
+      deferring the Alerts domain does not defer the duplicate-work-order risk.
+      <code>G5</code> stops a <em>retry</em> creating a second work order &mdash; not two
+      genuinely distinct cases about one physical problem each raising one.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th></th><th>Sub-case</th><th>Example from our own data</th><th class="nowrap">Status</th><th class="nowrap">By</th></tr></thead>
+          <tbody>${c.sub.map(([k, name, ex, st, by]) => `
+            <tr><td class="id">${esc(k)}</td><td><strong>${esc(name)}</strong></td>
+                <td style="font-size:.88rem">${esc(ex)}</td>
+                <td class="nowrap" style="font-size:.85rem">${st.includes('gap')
+                    ? `<strong style="color:var(--stop)">${esc(st)}</strong>` : esc(st)}</td>
+                <td data-ids="${by}"></td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.86rem;margin:.6rem 0 0"><strong>Grouping is proposed, never
+      silent.</strong> A wrong grouping hides a real second fault, which is worse than a
+      duplicate visit &mdash; so a human sees what was grouped and can split it. That is
+      <code>RC12</code>'s rule one level up: a confirmation never eliminates its siblings,
+      and a grouping never closes its members.</p>` : ''}
     </div>
   </details>`).join('');
+/* the global renderIdChips() below walks the whole document and reaches these cells;
+   calling it here would hit `known` before its const initialiser has run. */
 
 /* --- feature ID chips, wherever they appear ------------------------------- */
 const known = new Set(FEATURES.map(f => f.id));

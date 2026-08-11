@@ -100,6 +100,8 @@ switcher with no real authentication, labelled as a demonstration affordance** �
 any of the three routes. That keeps the question genuinely open instead of answering it by
 default, which is how these get decided badly.
 
+| Q46 | **What is the target turn time for the demonstration?** No document states one, and the purpose of this MVP is to be shown. Fourteen stages, a brain call with a generous budget, a 1–3 s critique layer and a 150 s graph ceiling can compose into an answer nobody wants to watch arrive. A number is needed — it is not ours to invent, and once set it constrains whether the advisory reasoning pass is affordable at all | Perceived quality of every demonstration | Harshan | Open |
+
 ## Knowledge coverage — from the Thermynx playbook review
 
 | ID | Question | Blocks | Owner | Status |

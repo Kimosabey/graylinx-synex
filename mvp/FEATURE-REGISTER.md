@@ -130,6 +130,7 @@ Every row here is constrained by an inherited decision; see `CONTEXT.md` §10.
 | RC16 | Deterministic assignee | Matched by skill against the fault label, never chosen by a model — so it works with the GPU off and "why this person" is answerable without replaying a prompt. | Supervisor | `SW` | P0 | MVP |
 | RC11 | Preventive actions become a scheduled obligation | A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns. | Supervisor | `SW` | P0 | MVP |
 | RC18 | Stored readings offered as a confirmation, never as the answer | Where the database already holds a value a checklist item asks for, the case shows it as *"the stored reading was X — confirm at the panel"*. A stored value is not a gauge reading now, so it never settles a blocking check on its own (`RC10`). | Technician | `SW` | P0 | MVP |
+| RC19 | Case correlation before escalation | Before a case may raise a work order it is checked against open cases on the same equipment in a window: the same label reopens rather than opening a second; different labels sharing a candidate cause are grouped under one investigation with one work order; an instrument fault in the group leads and the others hold. **Grouping is proposed, never silent** — a human sees what was grouped and can split it, because a wrong grouping hides a real second fault. | Reliability | `R` | P0 | MVP |
 | RC17 | Detection-to-queue reconciliation | A detected episode reaches the queue on a schedule, and the count of detected-but-not-queued is shown rather than assumed to be zero. `RC8` makes the seed safe to re-run; it does not make it run. | Data / Reliability | `SW` | P0 | MVP |
 
 ## K — Knowledge
@@ -228,7 +229,7 @@ evaluation suite that cannot fail is decoration.
 
 ---
 
-**Totals:** 146 features, of which 93 are in the proposed MVP cut.
+**Totals:** 147 features, of which 94 are in the proposed MVP cut.
 
 The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
 implementation. Four groups of capability were in daily use there, or required for
@@ -248,6 +249,13 @@ episodes covering 612 slots — including the only two of `critical` class — s
 the detector and never reached the queue, because the seeding call is idempotent by
 construction and nothing scheduled it. The queue was silently wrong on screen, which
 is a worse failure than an empty queue.
+
+Measuring fault correlation in our own window added `RC19`. Twelve equipment-days
+carried a fault, and a naive case per equipment-day-label gives **39** — a 3.25×
+inflation. On 2026-04-15 chiller 1 carried **five labels at once**, so one plausibly
+single problem could raise five work orders and five technician visits. Thermynx carries
+the same defect as an inherited-unsolved gap (see Q19). Detail in
+`docs/20-architecture/00-data-model.md` §4d and D-011.
 
 Analysing our own database added `C26`: `cond_flow` is fabricated by the
 simulation and never measured on the reference plant, so marking the window
