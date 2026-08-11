@@ -131,6 +131,67 @@ discriminator nobody qualified has reviewed. That is the whole reason for this h
 
 > **Answer / corrections, one line at a time:**
 
+### 1.4b The three lines that carry most of the risk
+
+If the hour runs short, answer these three and stop. Roughly forty-one
+eliminations exist across the four differentials; these three remove the most
+candidates per answer, and two of them sit on the questions most likely to be
+asked in production.
+
+**A · The commonest class, on its highest-power question**
+
+`HIGH_HEAD_AMBIGUOUS` is **430 of 674 fault slots — 64 %**, present on 12 of 12
+fault days. Its first question is the condenser approach temperature against
+design, and answering **wider** eliminates the cooling tower, reasoned as *"the
+tower sets the water temperature, not the approach across it."*
+
+- Can a tower fault raising entering-water temperature **coexist** with a widened
+  approach? If it can, this is `keep`, not `eliminate` — and it is the elimination
+  most likely to actually fire, because it is the lead question on two thirds of
+  our faults.
+
+> **Answer:**
+
+**B · One answer that removes three of five causes**
+
+`CONDENSER_WATER_SIDE_UNSPECIFIED` asks for condenser water flow against design.
+Answering **at design** eliminates low flow, a blocked strainer *and* the pump in
+one go, reasoned as *"adequate flow with a failing condenser points at the
+surface, not the hydraulics."*
+
+Two things make this the sharpest line in the library. It removes 60 % of the
+differential on a single answer — and **the measurement does not come from
+telemetry**. Condenser flow has never recorded a non-zero value on the reference
+plant, so the checklist already says to *expect to measure it manually rather
+than read it*.
+
+- Is the three-way elimination correct?
+- Is a manual condenser-flow measurement realistic on your plants? **If it is
+  not, what replaces it as the lead question?** This is the same instrumentation
+  gap as `Q1` in §2 — here it decides a differential rather than a model.
+
+> **Answer:**
+
+**C · Four causes closed by one judgement, not a measurement**
+
+`POWER_HIGH_UNEXPLAINED` asks whether actual load is higher than the current
+curve explains. Answering **genuinely higher** eliminates **all four** electrical
+causes — phase imbalance, the motor, the drive and a loose connection —
+reasoned as *"if the load explains the current there is no electrical fault to
+chase, and it is the one question an operator can answer from the panel."*
+
+The reasoning holds only if an operator can reliably tell *the machine is working
+harder* from a panel. That is a judgement rather than a measurement, and it would
+be recorded as **estimated** — which is exactly the case §4.3 asks about in the
+general. Here it is concrete: one estimated answer closes the entire electrical
+branch, and the plant streams no phase currents, no voltages and no drive
+registers, so none of the four can be checked against data afterwards.
+
+- Should this answer eliminate, or only **deprioritise** the electrical branch?
+- If an estimate should not settle it, what measurement should?
+
+> **Answer:**
+
 ### 1.5 Are any causes missing from the candidate lists?
 
 An absent cause can never be found, which is worse than a wrong elimination.
@@ -296,7 +357,7 @@ cross-check.
 
 | # | Question | Blocks |
 |---|---|---|
-| 5.1 | **Is the MVP cut agreed?** 83 of 136 features | `mvp/BACKLOG.md` and all build sequencing |
+| 5.1 | **Is the MVP cut agreed?** 90 of 143 features | `mvp/BACKLOG.md` and all build sequencing |
 | 5.2 | How do Synex and Thermynx relate? | every line of positioning copy |
 | 5.3 | Which of the three inherited gaps do we take on — no holding action, no retraction mechanism, duplicated checklist work under event grouping? | `F9`, `V7`, deferred-fault risk |
 | 5.4 | Four MVP features are named by no build stage, two of them safety | the stage-9 estimate |
