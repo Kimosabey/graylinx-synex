@@ -168,6 +168,7 @@ def check_register(rep: Report) -> tuple[set[str], int]:
 
     ids: set[str] = set()
     dupes: set[str] = set()
+    in_cut: set[str] = set()
     count = 0
     for n, line in enumerate(reg.read_text(encoding="utf-8").splitlines(), 1):
         m = re.match(rf"\|\s*({ID_PREFIX}\d{{1,2}})\s*\|", line)
@@ -179,6 +180,8 @@ def check_register(rep: Report) -> tuple[set[str], int]:
             dupes.add(fid)
             rep.error(reg, n, f"duplicate feature ID {fid}")
         ids.add(fid)
+        if line.rstrip().rstrip("|").rsplit("|", 1)[-1].strip() == "MVP":
+            in_cut.add(fid)
 
     body = reg.read_text(encoding="utf-8")
     m = re.search(r"\*\*Totals:\*\*\s*(\d+)\s*features", body)
@@ -187,6 +190,7 @@ def check_register(rep: Report) -> tuple[set[str], int]:
             f"mvp/FEATURE-REGISTER.md: stated total {m.group(1)} does not match "
             f"{count} rows found"
         )
+    check_scope_tables(rep, in_cut, ids - in_cut)
     return ids, count
 
 
@@ -288,6 +292,106 @@ def check_structure(rep: Report) -> None:
             rep.errors.append(f"required directory missing: {d}")
 
 
+# HANDOFF.md and DECISIONS.md are dated logs: a row that said "79 of 132" when it
+# was written stays correct, and rewriting history to match today's total would
+# destroy the traceability those files exist for.
+COUNT_EXEMPT = {"HANDOFF.md", "decisions/DECISIONS.md"}
+FEATURE_COUNT_RE = re.compile(r"\b(\d{2,3})\s+of\s+(?:the\s+)?(\d{2,3})\s+features\b")
+BARE_COUNT_RE = re.compile(r"\b(?:is|are|holds)\s+(\d{2,3})\s+features\b")
+
+
+def check_counts(files: list[Path], total: int, rep: Report) -> None:
+    """Feature arithmetic is quoted in prose all over the repo; the register owns it.
+
+    Only the denominator is checked. How many are in the cut is a proposal that a
+    document may legitimately restate while it is being argued about; how many
+    features exist is arithmetic, and two different answers to it means one is stale.
+    """
+    if not total:
+        return
+    for path in files:
+        if rel(path).replace("\\", "/") in COUNT_EXEMPT:
+            continue
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            for m in FEATURE_COUNT_RE.finditer(line):
+                if int(m.group(2)) != total:
+                    rep.error(path, n, f"{m.group(0)!r} — the register holds {total}")
+            for m in BARE_COUNT_RE.finditer(line):
+                if int(m.group(1)) != total:
+                    rep.error(path, n, f"{m.group(0)!r} — the register holds {total}")
+
+
+RANGE_RE = re.compile(rf"({ID_PREFIX})(\d{{1,2}})\s*[–—-]\s*(?:{ID_PREFIX})?(\d{{1,2}})")
+SINGLE_RE = re.compile(rf"\b({ID_PREFIX}\d{{1,2}})\b")
+
+
+def expand_ids(cell: str) -> set[str]:
+    """Read an ID cell such as 'F1–F8, F10–F11, F14' into the set it denotes."""
+    found: set[str] = set()
+    rest = cell
+    for m in RANGE_RE.finditer(cell):
+        pfx, lo, hi = m.group(1), int(m.group(2)), int(m.group(3))
+        found |= {f"{pfx}{i}" for i in range(lo, hi + 1)}
+        rest = rest.replace(m.group(0), " ")
+    found |= set(SINGLE_RE.findall(rest))
+    return found
+
+
+def table_ids(block: str, column: int) -> set[str]:
+    """Collect the IDs named in one column of a markdown table."""
+    found: set[str] = set()
+    for line in block.splitlines():
+        line = line.strip()
+        if not line.startswith("|") or set(line) <= set("|- :"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) > column:
+            found |= expand_ids(cells[column])
+    return found
+
+
+def check_scope_tables(rep: Report, in_cut: set[str], deferred: set[str]) -> None:
+    """MVP-SCOPE.md names what is in and what is out; the register decides which.
+
+    Both tables restate ID ranges, and a range is exactly the kind of thing that
+    stops matching the register silently — the header count was corrected three
+    times while the table beneath it was not. Checked as sets so a feature cannot
+    be in neither table, or in both.
+    """
+    path = ROOT / "mvp" / "MVP-SCOPE.md"
+    if not path.exists() or not in_cut:
+        return
+    text = path.read_text(encoding="utf-8")
+    try:
+        a = text.index("| Domain | In MVP | Why |")
+        b = text.index("## What is out, and why")
+        c = text.index("| Deferred | Reason |")
+        d = text.index("## MVP acceptance criteria")
+    except ValueError:
+        rep.error(path, 1, "the 'what is in' / 'what is out' tables are not both present")
+        return
+
+    # Only the ID column counts. A reason may legitimately cite a feature that is in
+    # the cut — "R1 already answers a question" is an argument for deferring R2, not
+    # a claim that R1 is deferred — so reading the whole row would misread the prose.
+    claimed_in = table_ids(text[a:b], column=1)
+    claimed_out = table_ids(text[c:d], column=0)
+
+    for label, claimed, actual in (("in the cut", claimed_in, in_cut),
+                                   ("deferred", claimed_out, deferred)):
+        missing = sorted(actual - claimed)
+        extra = sorted(claimed - actual)
+        if missing:
+            rep.error(path, 1, f"{label} in the register but named by no row: "
+                               f"{', '.join(missing)}")
+        if extra:
+            rep.error(path, 1, f"named as {label} but the register disagrees: "
+                               f"{', '.join(extra)}")
+    both = sorted(claimed_in & claimed_out)
+    if both:
+        rep.error(path, 1, f"named as both in and out: {', '.join(both)}")
+
+
 def check_handoff_freshness(rep: Report) -> None:
     h = ROOT / "HANDOFF.md"
     if h.exists() and "## 7. Recent changes" not in h.read_text(encoding="utf-8"):
@@ -338,6 +442,7 @@ def main() -> int:
     for path in files:
         check_file(path, path.read_text(encoding="utf-8"), rep, args.strict)
     check_id_references(files, known, rep)
+    check_counts(files, count, rep)
 
     print(f"Scanned {len(files)} markdown file(s) and {docx} source document(s). "
           f"Register holds {count} feature(s).\n")
