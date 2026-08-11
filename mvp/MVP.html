@@ -1170,6 +1170,21 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     </div>
 
     <div class="callout" style="margin-bottom:1.5rem">
+      <span class="k">WHAT THIS IS, AND WHAT IT IS FOR</span>
+      <p style="margin-bottom:.5rem"><strong>Synex is an AI layer on the existing Graylinx platform,
+      not a replacement for it.</strong> It plugs into what is already there — the plant database, the
+      equipment models, the work-order records — and adds the Copilot, the case lifecycle between a
+      fault and a work order, and the verification that proves a repair worked.</p>
+      <p style="margin-bottom:0"><strong>This MVP exists to be shown.</strong> That is a real
+      constraint on scope, and it explains the cut: the loop has to be <em>complete</em> end to end,
+      and it does not have to be <em>broad</em>. One asset class on one site, closing the loop, beats
+      ten domains that cannot prove anything. It does not relax the honesty rules — a demonstration
+      that overstates what the data supports is worth less than one that shows the platform refusing,
+      which is why <span class="state">NO_DIAGNOSIS</span> is in the walkthrough rather than hidden
+      from it.</p>
+    </div>
+
+    <div class="callout" style="margin-bottom:1.5rem">
       <span class="k">THE CORE OF THIS MVP</span>
       <p style="margin-bottom:.5rem"><strong>The Synex Copilot is not a feature of the platform. It is
       how the platform is used</strong> — and it is what Graylinx has that the alternatives do not. Every
@@ -2813,9 +2828,33 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       site.</p>
     </div>
 
-    <h3>16.2 Known constraints</h3>
+    <h3>16.2 The database, and what is in it</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Database</th><th>What it is</th><th class="nowrap">Access</th></tr></thead>
+        <tbody>
+          <tr><td class="id">shiva</td><td>The customer's snapshot as delivered</td><td><span class="badge">read-only</span></td></tr>
+          <tr><td class="id">graylinx_v2</td><td>A writable working copy, so nothing done to the data can corrupt the original</td><td><span class="badge">in active use</span></td></tr>
+          <tr><td class="id">graylinx_synex</td><td><strong>Ours.</strong> Cloned from the working copy on 2026-08-11 — 193 tables, 3,879 MB, verified table by table and by exact row count on the largest eight</td><td><span class="badge mvp">Synex writes here</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout stop">
+      <span class="k">156,129 SLOTS IN IT ARE SIMULATED</span>
+      <p style="margin-bottom:.5rem">The real snapshot ends <strong>2026-06-23</strong>. A simulation
+      extends it to <strong>2026-08-05</strong>. That is not a problem in itself — the copy carries a
+      registry, <code>snapshot_simulated_slots</code>, naming every synthetic
+      <em>(equipment, slot&nbsp;time)</em> pair, so measured and generated can always be told apart.</p>
+      <p style="margin-bottom:0">It becomes a problem the moment something is shown over a simulated
+      window without saying so. Treat one exactly as <code>C23</code> treats an untrusted window. A
+      demonstration that quietly presents generated data as measured is the precise failure this
+      product argues against.</p>
+    </div>
+
+    <h3>16.3 Known constraints</h3>
     <ul class="plain">
-      <li>On-premise by default. Embeddings and inference stay local.</li>
+      <li>On-premise by default. Embeddings and inference stay local — the back end talks to the model roster over Ollama on the rented box, never a hosted API.</li>
+      <li>Python and FastAPI on the back end; React and TypeScript on the front end. MySQL holds the plant snapshot, PostgreSQL with pgvector holds the platform's own state.</li>
       <li>Agents are read-only with respect to hardware control. No tool issues a control command to plant equipment, in any phase.</li>
       <li>Models are fitted per asset, not per fleet. Two identical chillers on one site do not share a model.</li>
       <li>The platform must state when it is in degraded mode rather than silently substituting a weaker capability.</li>
