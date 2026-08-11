@@ -123,6 +123,27 @@ chapters. If it is not in this file, it did not happen.
 - **Affects:** `CONTEXT.md` §9a. No feature IDs.
 - **Reflected in docs:** yes.
 
+### D-007 — A detected fault that never reaches the queue is registered as `RC17`
+- **Date:** 2026-08-11
+- **Decided by:** Harshan
+- **Closes:** nothing
+- **Decision:** `RC17` detection-to-queue reconciliation joins the cut. A detected
+  episode reaches the queue on a schedule, and the count of detected-but-not-queued
+  is displayed rather than assumed to be zero. Cut goes from 89 to 90 of 143.
+- **Reason:** the Thermynx FDD sequencing brainstorm records 22 detected episodes
+  covering 612 slots — including the only two of `critical` class — sitting in the
+  detector and never reaching the queue. The seeding call is idempotent by
+  construction and nothing scheduled it. `RC8` already registers that the seed is
+  safe to re-run; nothing registered that it runs, and the gap between those two
+  statements is where a plant with unreported critical faults hid. The brainstorm
+  calls fixing it *"the highest-value action in this entire workspace"*, and it is a
+  single scheduled call.
+- **Reason the count is shown rather than trusted:** the failure was silent. A queue
+  that is quietly incomplete reads exactly like a queue that is complete, so the
+  reconciliation has to be visible to be worth anything.
+- **Affects:** `mvp/FEATURE-REGISTER.md`, `mvp/MVP-SCOPE.md`, `mvp/MVP.html`.
+- **Reflected in docs:** yes.
+
 ### D-004 — The FDD instrumentation reality is recorded, and four gaps are closed
 - **Date:** 2026-08-10
 - **Decided by:** Harshan

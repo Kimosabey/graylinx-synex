@@ -127,6 +127,7 @@ Every row here is constrained by an inherited decision; see `CONTEXT.md` §10.
 | RC15 | Escalation produces a work order | No tool raises an **inspection** work order with the open checks as its task list; no authority raises an **authorisation** work order whose task is the question, not a measurement. | Supervisor | `SW + R` | P0 | MVP |
 | RC16 | Deterministic assignee | Matched by skill against the fault label, never chosen by a model — so it works with the GPU off and "why this person" is answerable without replaying a prompt. | Supervisor | `SW` | P0 | MVP |
 | RC11 | Preventive actions become a scheduled obligation | A preventive item creates a recurring commitment with a named approver, rather than a line of text nobody owns. | Supervisor | `SW` | P0 | MVP |
+| RC17 | Detection-to-queue reconciliation | A detected episode reaches the queue on a schedule, and the count of detected-but-not-queued is shown rather than assumed to be zero. `RC8` makes the seed safe to re-run; it does not make it run. | Data / Reliability | `SW` | P0 | MVP |
 
 ## K — Knowledge
 
@@ -224,7 +225,7 @@ evaluation suite that cannot fail is decoration.
 
 ---
 
-**Totals:** 142 features, of which 89 are in the proposed MVP cut.
+**Totals:** 143 features, of which 90 are in the proposed MVP cut.
 
 The cut grew from 51 to 65 after reviewing the flows in the existing Thermynx
 implementation. Four groups of capability were in daily use there, or required for
@@ -238,6 +239,12 @@ the loop to close, and named nowhere in this register:
 
 A later pass over the Thermynx FDD knowledge base added four more, each closing a
 gap that had already produced a real incident there: `C23`, `RC9`, `RC10`, `S6`.
+
+A final pass over the FDD sequencing brainstorm added `RC17`. There, 22 detected
+episodes covering 612 slots — including the only two of `critical` class — sat in
+the detector and never reached the queue, because the seeding call is idempotent by
+construction and nothing scheduled it. The queue was silently wrong on screen, which
+is a worse failure than an empty queue.
 See `CONTEXT.md` §10 constraints 20–22 and decision D-004.
 
 Recorded as decision D-002.
