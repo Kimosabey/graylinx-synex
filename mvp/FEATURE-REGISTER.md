@@ -252,7 +252,7 @@ is a worse failure than an empty queue.
 Analysing our own database added `C26`: `cond_flow` is fabricated by the
 simulation and never measured on the reference plant, so marking the window
 simulated is not enough — the signal itself has to carry what kind of claim it is.
-See `docs/20-architecture/01-data-model.md` and D-009.
+See `docs/20-architecture/00-data-model.md` and D-009.
 
 The same pass added `RC18` and `F17`. There, four readings a checklist told a
 technician to go and take were sitting in the same table the model had just read,

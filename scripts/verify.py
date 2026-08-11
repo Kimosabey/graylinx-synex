@@ -78,8 +78,36 @@ SEPARATION_VIOLATIONS = [
 # Two-letter prefixes MUST precede the single-letter class, or "RC1" matches
 # "C1" and the register silently mis-counts instead of failing.
 ID_PREFIX = r"(?:PL|RC|EV|[CRWAFKILVUSGE])"
-# A sentence that *denies* the thing is correct, not a violation.
-NEGATION_RE = re.compile(r"(?i)\b(never|not|cannot|can.t|no longer|does ?n.t|do ?n.t)\b")
+# A sentence that *denies* the thing is correct, not a violation. "refuse" belongs here:
+# "when the Copilot must refuse to diagnose" is the rule being enforced, not broken.
+NEGATION_RE = re.compile(
+    r"(?i)\b(never|not|cannot|can.t|no longer|does ?n.t|do ?n.t|refuses?|refusing|"
+    r"refusal|rather than|instead of|without|forbid(s|den)?|prohibit(s|ed)?)\b")
+
+SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def denies(text: str, match: re.Match) -> bool:
+    """Does the prose around this match deny it?
+
+    Checking only the matched span misses the commonest honest phrasing, where the
+    denial is the *next* sentence: "they will assume the language model is diagnosing
+    the equipment. It is not, and it never will." So the sentence containing the match
+    is checked together with the one after it — wide enough to see a denial, narrow
+    enough that an unrelated "never" three paragraphs away cannot excuse a real
+    violation.
+    """
+    if NEGATION_RE.search(match.group(0)):
+        return True
+    sentences = SENTENCE_SPLIT_RE.split(text)
+    pos, start = 0, match.start()
+    for i, s in enumerate(sentences):
+        end = pos + len(s)
+        if pos <= start <= end:
+            window = " ".join(sentences[i:i + 2])
+            return bool(NEGATION_RE.search(window))
+        pos = end + 1
+    return False
 
 FEATURE_ID_RE = re.compile(rf"\b{ID_PREFIX}\d{{1,2}}\b")
 QUESTION_ID_RE = re.compile(r"\b([QNSD])(\d{1,3})\b")
@@ -149,7 +177,7 @@ def check_file(path: Path, text: str, rep: Report, strict: bool) -> None:
 
         for pattern, why in SEPARATION_VIOLATIONS:
             m = re.search(pattern, line)
-            if m and not exempt and not NEGATION_RE.search(m.group(0)):
+            if m and not exempt and not denies(line, m):
                 rep.error(path, n, f"separation law: {why}")
 
         if strict and "TBD" in line and path.name not in STRICT_EXEMPT:

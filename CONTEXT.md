@@ -281,7 +281,7 @@ demonstration window is the most recent data, and it is entirely synthetic. Mark
 it *simulated* is not sufficient, because the problem is not that the numbers are
 generated: it is that they imply an **instrumentation capability the site does not
 have.** Every other synthetic signal continues something the plant genuinely
-measures. Full analysis in `docs/20-architecture/01-data-model.md`; the constraint is
+measures. Full analysis in `docs/20-architecture/00-data-model.md`; the constraint is
 D-009 and the feature is `C26`.
 
 ## 10b. The differential — how a cause is ruled out

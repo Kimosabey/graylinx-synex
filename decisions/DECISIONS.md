@@ -98,7 +98,7 @@ chapters. If it is not in this file, it did not happen.
   the copy is a strict superset: two extra tables and 313,424 extra rows, all
   attributable to the simulation. Zero registry entries fall at or before the measured
   boundary and the simulation log records `gaps_filled=False`, so not one measured slot
-  was overwritten. See `docs/20-architecture/01-data-model.md`.
+  was overwritten. See `docs/20-architecture/00-data-model.md`.
 - **Reason:** the lineage already has this shape. `shiva` is the customer snapshot
   and stays read-only; `graylinx_v2` exists as a writable copy so nothing done to
   the data can corrupt the original. Staging demo scenarios for a pitch is exactly
@@ -167,7 +167,7 @@ chapters. If it is not in this file, it did not happen.
   was generated. Their observation was made on data running through August, inside the
   simulated span. A candidate explanation, not a confirmed one, and cheap to check.
 - **Affects:** `mvp/FEATURE-REGISTER.md` (`C26`), `mvp/MVP-SCOPE.md`, `CONTEXT.md` §10a,
-  `docs/20-architecture/01-data-model.md` (new), `mvp/MVP.html`.
+  `docs/20-architecture/00-data-model.md` (new), `mvp/MVP.html`.
 - **Reflected in docs:** yes.
 
 ### D-007 — A detected fault that never reaches the queue is registered as `RC17`
