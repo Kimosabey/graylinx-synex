@@ -83,9 +83,22 @@ and `02-deployment.md`.
 
 | ID | Question | Blocks | Owner | Status |
 |---|---|---|---|---|
-| Q41 | **How does a turn establish identity?** There is no authentication library in the backend at all, and `gl_user` / `gl_role` / `gl_access` hold zero rows in the snapshot — yet `G1` is `P0` and the Control Plane cannot grant a scope it cannot establish. `pyjwt` + `passlib` for a self-contained demonstration, a signed header from the host platform for production, or `authlib` for OIDC? | `G1`–`G4`, `U3`, `U6`–`U8` | Harshan | Open |
-| Q42 | **Should the plant database be read-only by grant rather than by convention?** The backend connects as `root` with `SUPER`, `DROP`, `FILE` and `GRANT OPTION` on `*.*`, and all three databases share the server — so the credentials reach `shiva`. Two `GRANT` statements would make "Synex never writes to the plant" a database property. Touches a server Thermynx shares | Nothing today; it removes a class of accident | Harshan + Thermynx | Open |
-| Q43 | **What does "production" mean for an on-premise delivery?** There is no Dockerfile anywhere and no offline wheel bundle, and an air-gapped plant needs pre-built wheels, pre-pulled images and pre-pulled Ollama models. Also: do the run-time honesty counters ship, or is `/metrics` enough? | Handing the product to a customer | Harshan | Open |
+| Q41 | **How does a turn establish identity?** There is no authentication library in the backend at all, and `gl_user` / `gl_role` / `gl_access` hold zero rows in the snapshot — yet `G1` is `P0` and the Control Plane cannot grant a scope it cannot establish. `pyjwt` + `passlib` for a self-contained demonstration, a signed header from the host platform for production, or `authlib` for OIDC? | `G1`–`G4`, `U3`, `U6`–`U8` | Harshan + Vishnu | **Parked** — for the joint session |
+| Q42 | **Should the plant database be read-only by grant rather than by convention?** The backend connects as `root` with `SUPER`, `DROP`, `FILE` and `GRANT OPTION` on `*.*`, and all three databases share the server — so the credentials reach `shiva`. Two `GRANT` statements would make "Synex never writes to the plant" a database property. Touches a server Thermynx shares | Nothing today; it removes a class of accident | Harshan + Thermynx | **Parked** — for the joint session |
+| Q43 | **What does "production" mean for an on-premise delivery?** There is no Dockerfile anywhere and no offline wheel bundle, and an air-gapped plant needs pre-built wheels, pre-pulled images and pre-pulled Ollama models. Also: do the run-time honesty counters ship, or is `/metrics` enough? | Handing the product to a customer | Harshan | **Parked** — for the joint session |
+
+**All three are parked for the joint session, and parking costs nothing today.**
+Two of them genuinely block nothing: `Q42` removes a class of accident rather than fixing
+a live defect — the SQL validator is thorough and there is no reachable vulnerability — and
+`Q43` only becomes the critical path the moment someone says *"install it at the customer"*.
+
+`Q41` is the one to watch. It blocks no demonstration, but `G1` is `P0` and four personas
+need a scope, so it lands on the build critical path the day `S1` closes. If the build has
+to start before the question is answered, the demonstration-safe fallback is a **persona
+switcher with no real authentication, labelled as a demonstration affordance** — it lets
+`G1`'s scoping logic be built and tested against a known identity without committing to
+any of the three routes. That keeps the question genuinely open instead of answering it by
+default, which is how these get decided badly.
 
 ## Knowledge coverage — from the Thermynx playbook review
 
