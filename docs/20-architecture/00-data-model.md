@@ -176,8 +176,8 @@ The constraint that follows is in D-009.
 
 ### A side effect worth reporting upstream
 
-Thermynx's own discovery raised `Q-A11`: *"what feeds `chiller_flow` now that `dpt`
-is NULL?"*, recorded as verified finding VF4 — the documented derivation
+Thermynx's own discovery raised its question A-11 — *"what feeds `chiller_flow` now
+that `dpt` is NULL?"*, recorded as verified finding VF4 — the documented derivation
 `chiller_flow = 1.0 × dpt + 0.0` no longer holding.
 
 The measurement above offers a simpler explanation than an upstream change: in the

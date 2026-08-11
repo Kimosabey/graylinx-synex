@@ -20,10 +20,10 @@
 
 | **Level** | **Question answered** | **Typical artifacts** |
 |---|---|---|
-| **L0 — Business** | Why does Graylinx exist? | Objectives, value proposition, ROI |
-| **L1 — Product** | What do users experience? | Reports, WOs, Copilot, menus, user roles |
-| **L2 — Workflow** | How does a job move end-to-end? | Journey maps, workflow/state diagrams |
-| **L3 — Architecture** | What components make it work? | Layered architecture, service boundaries |
-| **L4 — Control** | Who/what is allowed to act? | RBAC/ABAC, rule, risk, approval, safety |
-| **L5 — Engineering** | How exactly is it implemented? | API/tool contracts, schemas, state machines |
-| **L6 — Verification** | How do we prove it works? | validation, test matrix, service targets, audit evidence |
+| **Level 0 — Business** | Why does Graylinx exist? | Objectives, value proposition, ROI |
+| **Level 1 — Product** | What do users experience? | Reports, WOs, Copilot, menus, user roles |
+| **Level 2 — Workflow** | How does a job move end-to-end? | Journey maps, workflow/state diagrams |
+| **Level 3 — Architecture** | What components make it work? | Layered architecture, service boundaries |
+| **Level 4 — Control** | Who/what is allowed to act? | RBAC/ABAC, rule, risk, approval, safety |
+| **Level 5 — Engineering** | How exactly is it implemented? | API/tool contracts, schemas, state machines |
+| **Level 6 — Verification** | How do we prove it works? | validation, test matrix, service targets, audit evidence |

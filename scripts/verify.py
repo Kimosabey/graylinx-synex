@@ -236,8 +236,12 @@ def check_id_references(files: list[Path], known: set[str], rep: Report) -> None
                 continue
             if in_code:
                 continue
-            # Only check inside explicit ID contexts to avoid false positives.
-            for m in re.finditer(rf"(?:^|\s|\()({ID_PREFIX}\d{{1,2}})(?=[\s,.)\u2013-]|$)", line):
+            # Emphasis and table pipes count as boundaries. They were missing, and in
+            # 47 table-heavy chapters that is where most IDs live \u2014 a cell reading
+            # "| **G0 Design** |" was invisible, which is how two ID collisions with
+            # the register survived being converted into markdown at all.
+            for m in re.finditer(
+                    rf"(?:^|[\s(|*])({ID_PREFIX}\d{{1,2}})(?=[\s,.)|*\u2013\u2014-]|$)", line):
                 fid = m.group(1)
                 if fid not in known:
                     rep.warn(path, n, f"feature ID {fid} is not in the register")

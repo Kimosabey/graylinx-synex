@@ -73,7 +73,7 @@ def cell_text(cell) -> str:
     """A table cell, flattened. A pipe inside a cell would break the row."""
     parts = [inline(p) for p in cell.paragraphs]
     text = " ".join(p.strip() for p in parts if p.strip())
-    return text.replace("|", "\\|").replace("\n", " ")
+    return normalise(text.replace("|", "\\|").replace("\n", " "))
 
 
 def render_table(tbl: Table) -> list[str]:
@@ -91,6 +91,35 @@ def render_table(tbl: Table) -> list[str]:
     out += ["| " + " | ".join(r) + " |" for r in body]
     out.append("")
     return out
+
+
+# The source labels two of its own tables with tokens that collide with feature IDs:
+# design levels L0-L6 against Alerts L1-L6, and release gates G0-G5 against the Control
+# Plane G1-G6. The collision is worse than it looks, because L1-L6 and G1-G5 all *exist*
+# in the register — so a reader or a script reading "L1" gets a confident wrong answer
+# rather than an error. CLAUDE.md rule 7 forbids introducing such a prefix; this one
+# arrived in the source, and docs/00-source/ is read-only, so it is normalised on the way
+# out instead. Spelled out rather than re-prefixed, so no new prefix can collide later.
+# The gate names are enumerated rather than pattern-matched on capitalisation: a loose
+# rule would also rewrite a genuine reference to the Control Plane feature G6, turning a
+# correct ID into a wrong one. Six labels, and only these six.
+GATE_NAMES = "Design|Data|AI|Action|Production|Post-release"
+# Two different L-series exist and must not be conflated with each other either:
+# chapter 26 numbers *design levels* L0-L6, chapter 28 numbers *architecture layers*
+# L0-L9. The first becomes "Level", the second "Layer", which is what each table's own
+# header column already calls them.
+NORMALISE = [
+    (re.compile(r"\bL(\d)\s*(?=[—–-])"), r"Level \1 "),
+    # normalise() runs after inline() has added emphasis, so the cell reads "**L0**"
+    (re.compile(r"^(\**)L(\d)(\**)$"), r"\1Layer \2\3"),
+    (re.compile(rf"\bG(\d)\s+(?={GATE_NAMES})"), r"Gate \1 — "),
+]
+
+
+def normalise(text: str) -> str:
+    for pattern, repl in NORMALISE:
+        text = pattern.sub(repl, text)
+    return text
 
 
 def slug(title: str) -> str:
@@ -121,7 +150,7 @@ def convert(doc: Document) -> list[dict]:
             continue
 
         style = item.style.name
-        text = inline(item).strip()
+        text = normalise(inline(item).strip())
 
         if style == "Heading 1":
             raw = item.text.strip()

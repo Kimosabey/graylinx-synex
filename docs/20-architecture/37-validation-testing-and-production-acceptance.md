@@ -24,9 +24,9 @@
 
 | **Gate** | **Required evidence** | **Decision** |
 |---|---|---|
-| **G0 Design** | Use case, risk, threat model, owners | Proceed / redesign |
-| **G1 Data** | Quality, lineage, privacy/security | Proceed / block |
-| **G2 AI** | validation, grounding, red-team, evaluation | Approve / reject |
-| **G3 Action** | Tool, rule, approval, safety tests | Approve / reject |
-| **G4 Production** | service target, audit, rollback, incident plan | Go / no-go |
-| **G5 Post-release** | Monitoring, incidents, drift, outcomes | Continue / remediate / rollback |
+| **Gate 0 — Design** | Use case, risk, threat model, owners | Proceed / redesign |
+| **Gate 1 — Data** | Quality, lineage, privacy/security | Proceed / block |
+| **Gate 2 — AI** | validation, grounding, red-team, evaluation | Approve / reject |
+| **Gate 3 — Action** | Tool, rule, approval, safety tests | Approve / reject |
+| **Gate 4 — Production** | service target, audit, rollback, incident plan | Go / no-go |
+| **Gate 5 — Post-release** | Monitoring, incidents, drift, outcomes | Continue / remediate / rollback |
