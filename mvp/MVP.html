@@ -4024,9 +4024,24 @@ const CASES = [
    ['S3','Different labels, one machine, one physical cause','chiller 1, 15 April: five labels at once. A fouled condenser plausibly explains four','was the worst gap','RC19'],
    ['S4','Same label, different machines, shared upstream cause','A tower starving both chillers \u2014 zero co-faulted slots in our window, so not demonstrable here','deferred, honestly','L1'],
    ['S5','One dead instrument, many faults','cond_flow feeds four of six models; our \u2212273.2 on cond_leaving_temp is this shape','detected, now grouped','F6'],
-   ['S6','A plant event, not an equipment fault','A setpoint change or load shift','covered','F2'],
+   ['S6','A plant event, not an equipment fault','A setpoint change or load shift','covered','F3'],
    ['S7','The fault already has an open work order','An alert today for work started yesterday','was a gap','RC19'],
-   ['S8','Verification failed and the fault returned','The repair did not hold','covered','W10']]}
+   ['S8','Verification failed and the fault returned','The repair did not hold','covered','W10']]},
+ {t:'Two labels that contradict each other',
+  ask:'Both say something is wrong. They disagree about what.',
+  flow:'On one machine-day the isolation path produced CONDENSER_LOW_FLOW, whose signature has a positive discharge-pressure residual and implicates the water side \u2014 and HIGH_HEAD_AMBIGUOUS, whose negative residual is the very thing used to argue the water side is not implicated \u2192 the differential does not pick a winner \u2192 it says the evidence is inconsistent, names both, and asks the one measurement that separates them \u2192 if nobody can take it, the case is exhausted rather than settled.',
+  res:'A contradiction is reported as a contradiction. The alternative \u2014 quietly preferring the label with more slots \u2014 would be a confident wrong answer with an audit trail behind it.',
+  ids:['F5','F7','F16','RC12','RC13','RC14','C7','C25','RC19']},
+ {t:'Same fault, two machines, only one model worth trusting',
+  ask:'Why does chiller 1 keep alarming and chiller 2 does not?',
+  flow:'Both machines carry the same label \u2192 but the current model on chiller 1 has nRMSE 48.03 against chiller 2\u2019s 2.65, and the healthy residual medians differ too, \u221225.645 against \u221230.01 \u2192 so "high" is measured against each asset\u2019s own distribution, never an absolute threshold \u2192 a model this poor is quarantined rather than merely badged \u2192 the answer says which of the two readings it can stand behind.',
+  res:'The honest answer may be that the difference is in the model, not the machine. Eighteen times worse fit is not a detail a fault label can carry on its own.',
+  ids:['F10','F11','F15','F17','C21','RC10','F2']},
+ {t:'The machine is off, not broken',
+  ask:'Is chiller 2 faulty, or just idle?',
+  flow:'Roughly 23,800 of 31,884 measured slots read zero across every signal at once \u2014 a duty cycle near 25%, not a plant-wide instrument failure \u2192 the running-steady gate reads it as stopped, so no rule may fire \u2192 a combination that cannot physically occur is rejected rather than averaged \u2192 the period is reported as no readings, never as normal.',
+  res:'A fault raised on a stopped machine is the cheapest false positive available, and the gate exists to refuse it. Zero, a dash, "nothing notable" and "never measured" are four different claims.',
+  ids:['F3','F4','F8','F16','C21','C22','C26']}
 ];
 
 /* --- coverage, computed from the register --------------------------------- */
@@ -4337,13 +4352,14 @@ document.getElementById('toc-domains').innerHTML = DOMAIN_ROWS.map(d => `
     </button>
   </li>`).join('');
 
-/* The split across the eight cases, counted rather than asserted. */
+/* The split across the cases, counted rather than asserted. */
 {
   const tally = CASES.map(c => coverage(c.ids));
   const whole = tally.filter(c => c.total && c.mvp === c.total).length;
   const none = tally.filter(c => c.total && c.mvp === 0).length;
   const part = tally.length - whole - none;
-  const n = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+  const n = ['zero','one','two','three','four','five','six','seven','eight','nine','ten',
+             'eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen'];
   const N = w => n[w] ?? String(w);
   document.getElementById('case-split').textContent =
     `Of ${N(tally.length)} cases, ${N(whole)} sit entirely inside the proposed cut, ` +

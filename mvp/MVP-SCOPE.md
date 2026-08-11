@@ -126,6 +126,37 @@ Every one of the 147 registered features appears in exactly one of the two table
 above. `scripts/verify.py` checks that against `mvp/FEATURE-REGISTER.md` and fails
 if a feature is in neither or in both.
 
+## The cases the MVP must handle
+
+Fifteen. Each one is a question somebody actually asks, and the point of the list is
+coverage of *kinds* rather than volume — a happy path, a refusal, a contradiction, a
+safety stop, a data-quality lie, and a duplicate. The full flow and the feature IDs behind
+each are in `mvp/MVP.html` section 7; this is the source list.
+
+| # | Case | Kind |
+|--:|---|---|
+| 1 | Manager finds today's important problems | happy path, read |
+| 2 | Fault becomes a work order | the loop, forward |
+| 3 | Technician gets help | field, scoped |
+| 4 | Repair is verified | the loop, closing |
+| 5 | Executive wants the business story | read, deferred surface |
+| 6 | Somebody asks for something they may not have | authorization |
+| 7 | The answer is "not enough evidence" | **refusal** |
+| 8 | A detected fault nobody ever looked at | **operational silence** |
+| 9 | The narrowing runs out of questions | **exhausted, not settled** |
+| 10 | The machine has to stop now | **safety, not a work order** |
+| 11 | The window was blind, and the report says so | **data-quality honesty** |
+| 12 | Many alerts are really one problem | **duplicate work orders** — eight sub-cases |
+| 13 | Two labels that contradict each other | **inconsistent evidence** |
+| 14 | Same fault, two machines, only one model worth trusting | **model trust** |
+| 15 | The machine is off, not broken | **the cheapest false positive** |
+
+**Cases 12 to 15 were added from measurement rather than imagination.** Each is visible in
+the measured window of our own database, and each shows the platform declining to be
+confident rather than performing well — which is the harder thing to demonstrate and the
+reason the honesty features are in the cut. See
+`docs/20-architecture/00-data-model.md` §4a–§4d.
+
 ## MVP acceptance criteria
 
 The MVP is done when all of these are demonstrably true on real site data:
