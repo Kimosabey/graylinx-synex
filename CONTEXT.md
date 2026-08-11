@@ -347,6 +347,25 @@ is right. Each route produces a different artefact — this is `RC7` and `RC15`:
 | Wrong moment | nobody — parked with a reason and a date | `deferred` | none; nobody was called |
 | Not sure | stays with you, offered for confirmation | unchanged | none; it eliminates nothing |
 
+## 10d. The eight surfaces
+
+Where work happens. The Copilot is one of them and every other one is reachable from it,
+which is what "the Copilot is how the platform is used" means in practice.
+
+| Surface | Who | What it holds |
+|---|---|---|
+| **Synex Copilot** | everyone | The front door. Ask, investigate, draft, act, verify |
+| Reliability workspace | Reliability Engineer | The fault queue, the residuals behind each one, the case it opens — `U6` |
+| Supervisor queue | Supervisor | Approvals, blocked cases, closures verification has not cleared — `U7` |
+| Technician job pack | Technician | The work, its checklists, findings capture with an explicit cannot-check — `U3` |
+| Case | Reliability + Supervisor | The lifecycle between a named fault and a closed work order — `RC1`–`RC18` |
+| Work order | Supervisor + Technician | Created carrying its evidence; cannot close unproven — `W1`–`W10` |
+| Reports and Asset | Manager, Analyst, Reliability | Read surfaces. Ask, explain a change, drill to source — `R1`, `R3`, `R5`, `R10`, `A1` |
+| Administrator | Administrator | Scope, the approval matrix, the policy version — `U8`, `G1`–`G3` |
+
+**FDD detection has no screen of its own.** It runs, and what it produces arrives as a
+case. That is deliberate: a queue of residuals is not a thing anyone acts on.
+
 ## 11. The three role systems
 
 Three different things are called roles, and conflating them causes real routing

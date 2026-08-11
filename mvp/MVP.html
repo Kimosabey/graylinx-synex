@@ -2668,6 +2668,49 @@ details.case[open]>summary::before{transform:rotate(180deg)}
     the roster itself &mdash; sizes and environment variables &mdash; is in
     <a href="#platform">section 16</a>, so it is stated once. There is no fifth.</p>
 
+    <h4 style="font-size:.95rem;margin:1.1rem 0 .4rem">Code never names a model</h4>
+    <p style="font-size:.9rem">Every call site asks for a <strong>role</strong>; a table resolves it to a
+    model. Three roles are aliases. This is inherited, and it earned its keep the day the previous SQL
+    model was retired &mdash; <em>"retiring it was one line: <code>sql</code> now resolves to
+    <code>tool</code>. Nothing else changed, because the security guarantee never lived in the model
+    choice."</em></p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Role asked for</th><th class="nowrap">Resolves to</th><th>Job</th></tr></thead>
+        <tbody>
+          <tr><td class="id">brain</td><td class="nowrap">gemma4 26B</td><td>Writes the answer. Plans. Reasons over evidence</td></tr>
+          <tr><td class="id">planner</td><td class="nowrap">&rarr; brain</td><td>Decomposes a goal &mdash; Phase 2, see 13.10</td></tr>
+          <tr><td class="id">composer</td><td class="nowrap">&rarr; brain</td><td>Final composition</td></tr>
+          <tr><td class="id">tool</td><td class="nowrap">devstral</td><td>Decides which tools to call</td></tr>
+          <tr><td class="id">sql</td><td class="nowrap">&rarr; tool</td><td>Writes the <code>SELECT</code></td></tr>
+          <tr><td class="id">auditor</td><td class="nowrap">phi4</td><td>Critique, routing arbitration, ranking</td></tr>
+          <tr><td class="id">text / rag</td><td class="nowrap">phi4</td><td>Narration and grounding</td></tr>
+          <tr><td class="id">embed</td><td class="nowrap">nomic-embed-text</td><td>Retrieval, 768-dim</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.88rem;color:var(--muted)">The four rules above become properties of this table
+    rather than conventions in prose &mdash; which is the point.</p>
+
+    <h4 style="font-size:.95rem;margin:1.1rem 0 .4rem">Reasoning on or off, per task</h4>
+    <p style="font-size:.9rem">The brain emits a separate thinking channel, and whether it is on is a
+    per-task decision. <strong>Getting it wrong does not produce a worse answer &mdash; it produces an
+    empty one:</strong> on a tight token budget the model spends the whole budget thinking and returns no
+    content.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Reasoning ON</th><th class="nowrap">Reasoning OFF</th></tr></thead>
+        <tbody>
+          <tr><td>root cause &middot; diagnose &middot; domain analysis &middot; investigate &middot; plan</td>
+              <td>compose &middot; synthesise &middot; quick facts &middot; brief &middot; SQL &middot; audit</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.88rem">Anything unrecognised <strong>defaults OFF</strong>, because composition
+    is the common case and the one that breaks. Two safety rules ride along: the flag is only sent when
+    the effective model is actually the brain &mdash; the other two reject it &mdash; and the planner is
+    exempt, because forced-JSON output has no free-form channel to starve.</p>
+
     <h3>13.12 Agent families and their hard boundaries</h3>
     <p style="font-size:.88rem">Ten families. A family is a scope and a boundary, not a running
     process — which is what makes them enforceable by plain software rather than by prompt.</p>
@@ -2721,6 +2764,87 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <!-- ===================== 13. DELIVERY PRIORITIES ===================== -->
 <section id="roadmap">
   <div class="wrap">
+    <h3>13.14 The defence stack &mdash; five layers against a confident wrong answer</h3>
+    <p style="font-size:.9rem">The separation law in section 11 says what the model may not decide. This
+    is how that is enforced on every turn. Inherited whole; detail in
+    <code>docs/20-architecture/03-from-thermynx.md</code>.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Layer</th><th class="nowrap">Cost</th><th>What it catches</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><strong>&#9312; Preflight</strong><br><span style="color:var(--muted);font-size:.85rem">refuse before you pay</span></td><td class="nowrap">~1 ms<br>regex</td>
+              <td>Input length &middot; prompt-leak &middot; unperformable actions &middot; equipment that does not exist &middot; off-topic scope</td></tr>
+          <tr><td class="nowrap"><strong>&#9313; Grounding</strong></td><td class="nowrap">&mdash;</td>
+              <td><strong>The model never fetches its own facts.</strong> Every figure is computed in plain code from SQL; the model narrates over numbers it cannot alter</td></tr>
+          <tr><td class="nowrap"><strong>&#9314; Constraint</strong></td><td class="nowrap">&mdash;</td>
+              <td>Prompt rules, strongest last: the authoritative equipment list, never invent a number, measured versus estimated</td></tr>
+          <tr><td class="nowrap"><strong>&#9315; Postcheck</strong></td><td class="nowrap">&lt;50 ms</td>
+              <td>Six deterministic audits &mdash; numeric &middot; equipment &middot; citations &middot; language &middot; never-measured &middot; <strong>phantom work orders</strong></td></tr>
+          <tr><td class="nowrap"><strong>&#9316; Critique</strong></td><td class="nowrap">1&ndash;3 s</td>
+              <td>A second model classifies every claim <em>verified</em> / <em>unverified</em> / <em>suspicious</em>, then a <strong>soft</strong> gate</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <span class="k">WHY THE LAST GATE IS SOFT</span>
+      <p style="margin-bottom:0">The answer is never hidden or rewritten. It ships with a
+      <strong>needs review</strong> badge. <em>A hidden answer teaches people the system is broken; a
+      badged one teaches them what to check.</em> That is the same argument as
+      <span class="state">NO_DIAGNOSIS</span> being a feature, one level down: degrade
+      <strong>visibly</strong> rather than suppress.</p>
+    </div>
+    <div class="callout stop">
+      <span class="k">TOOL OUTPUT AND HUMAN TEXT ARE BOTH TREATED AS HOSTILE</span>
+      <p style="margin-bottom:.5rem">A tool result is fenced and labelled as data, and
+      <strong>every string leaf is sanitised recursively at every nesting level</strong> &mdash; so a
+      nested value cannot close the block early and smuggle instructions after it. Fence-forgery
+      patterns and role markers such as <code>[SYSTEM: &hellip;]</code> are neutralised.</p>
+      <p style="margin-bottom:0"><strong>A technician's findings get exactly the same treatment</strong>,
+      and it is tested: hostile instructions planted in a finding were refused. That matters here
+      because <code>RC4</code> takes free text from the field and <code>RC18</code> shows stored readings
+      beside it &mdash; two untrusted paths into a prompt.</p>
+    </div>
+
+    <h3>13.15 Bounded everywhere &mdash; the ceilings, and what each one stops</h3>
+    <p style="font-size:.9rem">Every bound names the failure it prevents. Two are easy to get wrong and
+    are called out: truncation must be <strong>marked</strong>, and a repaired query must be
+    <strong>re-validated</strong>.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Bound</th><th class="nowrap">Value</th><th>Stops</th></tr></thead>
+        <tbody>
+          <tr><td>Per-request input characters</td><td class="nowrap">capped</td><td>A pasted wall of text becoming a VRAM spike</td></tr>
+          <tr><td>Assembled context</td><td class="nowrap">hard cap, <strong>marked</strong></td><td>Unbounded growth, and silent partial context</td></tr>
+          <tr><td>Tool-loop steps</td><td class="nowrap"><strong>8</strong></td><td>A loop that never terminates</td></tr>
+          <tr><td>One graph run</td><td class="nowrap"><strong>150 s</strong></td><td>A wedged model stalling a request forever</td></tr>
+          <tr><td>One tool call</td><td class="nowrap"><strong>30 s</strong></td><td>One slow tool holding the loop</td></tr>
+          <tr><td>Specialists</td><td class="nowrap"><strong>4</strong></td><td>A planner fanning out unboundedly &mdash; Phase 2</td></tr>
+          <tr><td>Grounding retries</td><td class="nowrap"><strong>1</strong></td><td>A retry loop burning the GPU on a bad answer</td></tr>
+          <tr><td>Router arbiter</td><td class="nowrap"><strong>3 s</strong></td><td>Routing costing more than answering</td></tr>
+          <tr><td>SQL rows</td><td class="nowrap">hard <code>LIMIT</code></td><td>A generated query pulling the whole table</td></tr>
+          <tr><td>SQL repair attempts</td><td class="nowrap"><strong>1</strong>, <strong>re-validated</strong></td><td>An error-feedback loop, and a repair smuggling a write</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout stop">
+      <span class="k">THE LESSON THAT OUTRANKS THE REST OF THIS SECTION</span>
+      <p style="margin-bottom:.5rem">The honesty layer described above shipped, in the existing
+      implementation, with a bug <strong>of exactly the kind it exists to prevent</strong>. Its signal
+      check compared absolute values, so 60 slots of a flow reading <code>&minus;2.49</code> counted as
+      credible. It reported a dead transmitter as <em>"dead for 5 days"</em> when the truth was 62 days
+      more &mdash; <strong>erring toward reassurance</strong>.</p>
+      <p style="margin-bottom:.5rem"><strong>56 unit tests, a clean typecheck and a 100% first
+      evaluation score all missed it. Reading one live report did not.</strong> Our
+      <code>EV1</code>&ndash;<code>EV4</code> would not have caught it either, which is why
+      <code>EV4</code> &mdash; the evaluation's own tests, fed deliberately dishonest input &mdash; is
+      in the cut rather than deferred.</p>
+      <p style="margin-bottom:0">And the recurring finding, worth planning around: <strong>every defect
+      found in their final week was a data-truth defect, not a model defect.</strong> The 26B refused to
+      guess, named the dead tag and its date, and recommended repairing the instrument rather than
+      overhauling the chiller. The bugs were all in what it was handed &mdash; which is why section 16.2
+      was measured rather than assumed.</p>
+    </div>
+
     <h2><span class="num">14</span>Delivery priorities</h2>
     <p class="lede">The build order carried forward from the reference document, which the eight MVP
     stages in section 9 implement.</p>
