@@ -75,6 +75,25 @@ the row to the Closed section — do not delete it.
 | Q15 | What proves a condenser cleaning worked? | `rPwr`, `rDP`, `rCWL` back inside band, held several days across a representative load range | Open |
 | Q16 | Re-baseline policy after an overhaul — who authorises, how long must the machine run first? | SME authorises; minimum steady running period to be agreed | Open |
 
+## Platform and delivery
+
+Three decisions that are ours rather than Vishnu's, all raised by reading the Thermynx
+stack and measuring our own server. Full detail in `docs/20-architecture/01-stack.md`
+and `02-deployment.md`.
+
+| ID | Question | Blocks | Owner | Status |
+|---|---|---|---|---|
+| Q41 | **How does a turn establish identity?** There is no authentication library in the backend at all, and `gl_user` / `gl_role` / `gl_access` hold zero rows in the snapshot — yet `G1` is `P0` and the Control Plane cannot grant a scope it cannot establish. `pyjwt` + `passlib` for a self-contained demonstration, a signed header from the host platform for production, or `authlib` for OIDC? | `G1`–`G4`, `U3`, `U6`–`U8` | Harshan | Open |
+| Q42 | **Should the plant database be read-only by grant rather than by convention?** The backend connects as `root` with `SUPER`, `DROP`, `FILE` and `GRANT OPTION` on `*.*`, and all three databases share the server — so the credentials reach `shiva`. Two `GRANT` statements would make "Synex never writes to the plant" a database property. Touches a server Thermynx shares | Nothing today; it removes a class of accident | Harshan + Thermynx | Open |
+| Q43 | **What does "production" mean for an on-premise delivery?** There is no Dockerfile anywhere and no offline wheel bundle, and an air-gapped plant needs pre-built wheels, pre-pulled images and pre-pulled Ollama models. Also: do the run-time honesty counters ship, or is `/metrics` enough? | Handing the product to a customer | Harshan | Open |
+
+## Knowledge coverage — from the Thermynx playbook review
+
+| ID | Question | Blocks | Owner | Status |
+|---|---|---|---|---|
+| Q44 | **Should fault and alarm code lookup be in the cut?** Thermynx has **zero** coverage — not one drive or controller fault code in any playbook — so a technician holding a code has nothing to retrieve. Registered nowhere by us either | `K1`, `K5` depth | Harshan + Vishnu | Open |
+| Q45 | **Should a work-order resolution note become searchable knowledge automatically?** It already works in Thermynx and only **2** notes have ever been captured. This is not the same thing as `F9`/`V7`, which we deferred deliberately: human-written text becoming retrievable is a weaker claim than a model-derived root cause hardening into precedent. Cheap, and it grows plant-specific knowledge for free | `K1`, and the value of `W8` findings | Harshan | Open |
+
 ## To reconcile
 
 The Thermynx FDD initiative holds **57 open questions** at

@@ -130,6 +130,45 @@ chapters. If it is not in this file, it did not happen.
 - **Affects:** `CONTEXT.md` §9a. No feature IDs.
 - **Reflected in docs:** yes.
 
+### D-010 — The Thermynx stack is inherited whole, including two refusals
+- **Date:** 2026-08-11
+- **Decided by:** Harshan
+- **Closes:** nothing. Raises Q41, Q42, Q43
+- **Decision:** Synex uses the existing stack as it stands, and adopts its **refusals**
+  as well as its choices. Recorded in full in `docs/20-architecture/01-stack.md`;
+  the deployment shape in `02-deployment.md`.
+  - **Evaluation: DeepEval** with a local Ollama judge, plus `pytest`. A stronger cloud
+    judge stays available, lazy-imported, pointed only at the **synthetic** golden set —
+    so a hard case can be judged well with zero egress.
+  - **Observability: Prometheus, Grafana, Loki, Alertmanager**, already in the compose
+    file behind `profiles: [obs]`. We run with that profile **on**, which is a
+    configuration change rather than new technology.
+  - **Refused: Ragas.** Not unchosen — removed there on 2026-06-10 because it
+    hard-imports a class langchain 1.x deleted, and pinning low enough to restore it
+    breaks langgraph. Their note calls it *"the ADR-0001 framework-churn risk, realized.
+    Do not re-add without a stack bump."*
+  - **Refused: Langfuse.** Integrated and then deliberately disabled: self-hosting v3
+    needs five more containers. For an on-premise product that is five more things a
+    customer must accept, patch and back up, and Prometheus answers the same question.
+  - **Refused: `scikit-learn`.** The six models are OLS; `statsmodels` and `numpy`
+    already do it. Adding an ML framework to compute an RMSE is how a stack drifts.
+- **Reason:** every one of these has a reason recorded against it, which is the only
+  thing that makes D-003's "inherit rather than re-litigate" safe. Two of them are
+  refusals with an incident behind them, and a refusal is easier to reverse by accident
+  than a choice — so they are written down here rather than left implicit in a
+  requirements comment in another repository.
+- **What this closes without work:** `arq` is already installed, so `RC17` is a
+  scheduled job and a visible counter rather than a component — the Thermynx failure was
+  a scheduler nobody pointed at the seed. `echarts` is already in the frontend, so `C24`
+  has its charting library. `@axe-core/playwright` is already there, so the WCAG work on
+  the design system is testable in CI rather than by eye.
+- **What it does not settle:** identity has no library at all and the snapshot's user and
+  role tables are empty (Q41); the plant database is read-only by convention rather than
+  by grant (Q42); and there is no application image or offline wheel bundle (Q43).
+- **Affects:** `CONTEXT.md` §9, `docs/20-architecture/01-stack.md` and `02-deployment.md`
+  (both new), `mvp/MVP.html`. No feature IDs.
+- **Reflected in docs:** yes.
+
 ### D-009 — The demonstration window is the real one, because our database invented condenser flow
 - **Date:** 2026-08-11
 - **Decided by:** Harshan

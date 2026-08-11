@@ -186,9 +186,106 @@ derivation is not broken — it is **not being applied, because that window was
 generated rather than measured.** Their observation was made on data running through
 August, which is inside the simulated span.
 
-This is a candidate explanation, not a confirmed one — it needs someone with access
-to the live feed to check. But it is cheap to check and it would retire a platform
-question.
+**This is now confirmed on our own data rather than merely plausible.** In the measured
+window `dpt` and `chiller_flow` are the same column to the digit — identical zero counts
+(23,795 on chiller 1, 26,629 on chiller 2), identical maxima (107.0 and 112.9) and
+identical distinct-value counts. So `chiller_flow = 1.0 × dpt + 0.0` **holds wherever
+the data is real**, and breaks only where the data was generated. Someone with access to
+the live feed should still confirm it there, but the derivation is not the thing that
+changed.
+
+Two other things the measured window shows, both of which the honesty features exist for:
+
+| Observed | Why it matters |
+|---|---|
+| `cond_leaving_temp` reaches **&minus;273.2** on both chillers | Absolute zero as a sensor sentinel. A physically impossible reading that `F16` must reject rather than average into a residual |
+| `kw_per_tr` ranges **&minus;6,265 to +30,183** on chiller 1 | Efficiency computed while flow is near zero. `C21` and `F16` exist for exactly this; a report that quotes it as a number is worse than one that refuses |
+| ~23,800 of 31,884 slots are zero across every signal at once | The machine is **off**, not broken. Roughly a 25% duty cycle, and the gates must read it as off — a "fault" on a stopped chiller is the commonest false positive available |
+
+---
+
+## 4a. What is demonstrable — the fault inventory in the measured window
+
+The engine's output already exists for the real window, so a demonstration does not have
+to stage a single fault. `gla_model_residuals_wc` carries six residual columns and a
+label per slot:
+
+| `fault_label` | Slots |
+|---|--:|
+| `NO_DIAGNOSIS` | **5,309** |
+| `NO_EFFICIENCY_FAULT` | 943 |
+| `HIGH_HEAD_AMBIGUOUS` | 430 |
+| `REFRIGERANT_SIDE_HIGH_HEAD` | 104 |
+| `COMPRESSOR_INEFFICIENCY` | 58 |
+| `STARVED_EVAP_UNDERCHARGE_OR_RESTRICTION` | 32 |
+| `CONDENSER_WATER_SIDE_UNSPECIFIED` | 25 |
+| `POWER_HIGH_UNEXPLAINED` | 22 |
+| `CONDENSER_LOW_FLOW` — the only `critical` class | 3 |
+| unlabelled | 7,662 |
+
+**All seven model fault classes are present on measured data.** So is the only `critical`
+one.
+
+And note the top row. `NO_DIAGNOSIS` is the most common labelled outcome by a wide
+margin — 5,309 slots. The honest refusal is not a contrived demonstration case to be
+apologised for; it is what the platform genuinely does most, on real readings. That makes
+it the strongest asset in this database rather than a caveat.
+
+## 4b. Coverage — twelve equipment tables, two with any model
+
+The scope argument for "one asset class, done completely" is measurable rather than
+rhetorical:
+
+| | Count |
+|---|--:|
+| Normalized equipment tables holding telemetry | **12** |
+| …with fitted model parameters | **2** |
+| …with residual reference bands | **2** |
+| …with residuals ever scored | **2** |
+
+The two are `chiller_1_normalized` and `chiller_2_normalized`. Three condenser pumps,
+three cooling towers, three primary pumps and `plant_normalized` all carry telemetry and
+have **no** model, **no** band and **no** scored residual.
+
+`gla_residual_stats_wc` is ten rows — five residuals for each of the two chillers. So a
+rule that refuses to score equipment with no reference band is not defensive coding; it is
+the difference between two machines and twelve.
+
+## 4c. Model fit — why per-asset bands and one severity are not optional
+
+`gla_equipment_model_metrics`, ten rows, five models per chiller:
+
+| Equipment | Model | nRMSE |
+|---|---|--:|
+| chiller_1 | Chiller_Current | **48.03** |
+| chiller_1 | Discharge_Temp | 36.41 |
+| chiller_1 | Suction_Pres | 7.93 |
+| chiller_1 | Discharge_Pres | 5.38 |
+| chiller_1 | Condenser_Leav_Temp | 2.95 |
+| chiller_2 | Suction_Pres | 3.77 |
+| chiller_2 | Discharge_Temp | 3.41 |
+| chiller_2 | Discharge_Pres | 2.90 |
+| chiller_2 | Chiller_Current | **2.65** |
+| chiller_2 | Condenser_Leav_Temp | 1.68 |
+
+Three things follow.
+
+**Five models exist per chiller, not six.** There is no compressor-power model, and
+`compressor_power_residual` is 100% NULL in the residuals table. The six-model
+description in `CONTEXT.md` §6 is the design; five is what is fitted.
+
+**The same model is eighteen times worse on one machine than the other** — chiller_1's
+current model at nRMSE 48.03 against chiller_2's 2.65. An identical fault label on the two
+machines does not mean the same thing, which is `F10` and `F15` earning their place from
+measurement rather than argument.
+
+**Ignore MAPE.** It reads 2,931,599 and 12,202,370 on three of the ten rows, because the
+denominator approaches zero. A figure that large is not a bad score, it is a meaningless
+one, and `C21` says it must be shown as a stated absence rather than as a number.
+
+Severity, for its own part, is **not stored anywhere** — `gla_model_residuals_wc` has
+`equipment`, `slot_time`, six residuals and `fault_label`, and no severity column. So
+`F17` (one severity scale) is a code-discipline rule, not a data fix.
 
 ---
 

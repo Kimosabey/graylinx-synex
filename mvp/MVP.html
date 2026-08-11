@@ -2974,6 +2974,96 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       for free.</p>
     </div>
 
+    <h3>16.0a The stack &mdash; inherited, with the refusals</h3>
+    <p style="font-size:.9rem">Nothing here is a new choice. Every line was already decided in the
+    existing implementation <em>with its reasoning recorded</em>, which is the only thing that makes
+    inheriting it safe. All of it is OSI open source. Full detail in
+    <code>docs/20-architecture/01-stack.md</code>; the decision is D-010.</p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Layer</th><th>What it is</th><th>The part worth knowing</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><strong>Service</strong></td><td class="nowrap">FastAPI &middot; uvicorn</td>
+              <td>One back end. SQLAlchemy async over two drivers &mdash; MySQL for the plant, PostgreSQL for ours</td></tr>
+          <tr><td class="nowrap"><strong>Queue</strong></td><td class="nowrap">Redis &middot; <code>arq</code></td>
+              <td><strong>Already installed &mdash; so <code>RC17</code> is a scheduled job, not a component.</strong> The failure it fixes was a scheduler nobody pointed at the seeding call</td></tr>
+          <tr><td class="nowrap"><strong>SQL safety</strong></td><td class="nowrap"><code>sqlglot</code></td>
+              <td><strong>Generated SQL is verified, not trusted.</strong> Must parse as one statement, the AST root must be a query, DML and DDL are rejected by class, <code>outfile</code>/<code>infile</code> by token, and tables against an allow-list</td></tr>
+          <tr><td class="nowrap"><strong>Turn engine</strong></td><td class="nowrap">LangGraph 1.2.4</td>
+              <td>Plus a Postgres checkpointer, so a human-in-the-loop pause <strong>survives a restart</strong> and is shared across workers</td></tr>
+          <tr><td class="nowrap"><strong>Retrieval</strong></td><td class="nowrap">LlamaIndex &middot; <code>docling</code> &middot; <code>flashrank</code></td>
+              <td>RAG over the pgvector we already run; scanned manuals ingested; reranking on <strong>CPU in milliseconds &mdash; never a new model hop</strong></td></tr>
+          <tr><td class="nowrap"><strong>Models</strong></td><td class="nowrap">Ollama, four local</td>
+              <td>On the rented box, never a hosted API. <code>statsmodels</code> and <code>numpy</code> fit the FDD regressions</td></tr>
+          <tr><td class="nowrap"><strong>Evaluation</strong></td><td class="nowrap">DeepEval &middot; pytest</td>
+              <td>Local judge. A stronger cloud judge exists, lazy-imported, and is pointed <strong>only at the synthetic set &mdash; zero egress</strong></td></tr>
+          <tr><td class="nowrap"><strong>Observability</strong></td><td class="nowrap">Prometheus &middot; Grafana &middot; Loki</td>
+              <td>Self-hosted, already in the compose file behind an opt-in profile. We run with it <strong>on</strong></td></tr>
+          <tr><td class="nowrap"><strong>Surfaces</strong></td><td class="nowrap">React 19 &middot; Vite &middot; ECharts</td>
+              <td><strong>ECharts is already there, so <code>C24</code> has its charting library.</strong> So is <code>axe-core</code>, which makes the WCAG work testable in CI rather than by eye</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout stop">
+      <span class="k">WHAT WE REFUSE TO ADD, AND WHY IT IS WRITTEN DOWN</span>
+      <p style="margin-bottom:.5rem">A refusal is easier to reverse by accident than a choice, so the
+      refusals are recorded next to the choices rather than left implicit.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="nowrap">Refused</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><strong>Ragas</strong></td><td>Not unchosen &mdash; <strong>removed</strong>, because it hard-imports a class LangChain 1.x deleted and pinning low enough to restore it breaks LangGraph. Recorded there as <em>"the framework-churn risk, realized. Do not re-add without a stack bump."</em></td></tr>
+            <tr><td class="nowrap"><strong>Langfuse</strong></td><td>Integrated, then deliberately disabled: self-hosting needs <strong>five more containers</strong>. On-premise, that is five more things a customer must accept, patch and back up &mdash; and Prometheus answers the same question</td></tr>
+            <tr><td class="nowrap"><code>scikit-learn</code></td><td>The models are OLS. Adding an ML framework to compute an RMSE is how a stack starts drifting</td></tr>
+            <tr><td class="nowrap">Parallel multi-agent</td><td>Concurrency breaks attribution, and <em>"which agent said this"</em> must have exactly one answer. Phase 2 &mdash; see 13.10</td></tr>
+            <tr><td class="nowrap">Vision / P&amp;ID OCR</td><td>Shipped there once and <strong>parked</strong> &mdash; OCR on drawings proved unreliable. We have no vision feature, and that is now evidence-backed rather than accidental</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-bottom:0"><strong>One genuine gap: identity.</strong> There is no authentication
+      library in the back end at all, and <code>gl_user</code>, <code>gl_role</code> and
+      <code>gl_access</code> hold <strong>zero rows</strong> in the snapshot &mdash; yet
+      <code>G1</code> is <code>P0</code>, and the Control Plane cannot grant a scope it cannot
+      establish. That is question <code>Q41</code>, and it is the one place a runtime dependency
+      should be added.</p>
+    </div>
+
+    <h3>16.0b Deployment, and what on-premise still needs</h3>
+    <p style="font-size:.9rem">Graylinx deploys <strong>on-premise</strong>, and every line below
+    follows from that. <code>docs/20-architecture/02-deployment.md</code> has the detail.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="nowrap">Piece</th><th>Where it runs</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap">PostgreSQL + pgvector</td><td>Docker &mdash; <code>pgvector/pgvector:pg16</code>, one image for both stores we need</td></tr>
+          <tr><td class="nowrap">Redis</td><td>Docker. Backs the queue <code>RC17</code> schedules on</td></tr>
+          <tr><td class="nowrap">Prometheus, Grafana, Loki</td><td>Docker, behind an opt-in profile. <strong>On</strong> for us</td></tr>
+          <tr><td class="nowrap">Back end and front end</td><td><strong>The host, natively.</strong> There is no Dockerfile yet &mdash; see below</td></tr>
+          <tr><td class="nowrap">MySQL &mdash; the plant</td><td>The host, <strong>port 3307</strong>. Not containerised, because the snapshot belongs to the existing platform</td></tr>
+          <tr><td class="nowrap">Ollama, four models</td><td>The rented box, over the network</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout stop">
+      <span class="k">TWO THINGS ON-PREMISE NEEDS THAT DO NOT EXIST YET</span>
+      <p style="margin-bottom:.5rem"><strong>Read-only by grant, not by promise.</strong> The back end
+      connects as <code>root</code>, holding <code>SUPER</code>, <code>DROP</code>, <code>FILE</code>
+      and <code>GRANT OPTION</code> on everything &mdash; and all three databases share the server, so
+      the credentials reach the customer's snapshot. The SQL validator above is genuinely thorough and
+      there is no live vulnerability, but it is a single application-layer guard in front of a
+      credential that can drop <code>shiva</code>. Two <code>GRANT</code> statements would make
+      <em>"Synex never writes to the plant"</em> a property of the database instead of a sentence in a
+      document. Question <code>Q42</code>.</p>
+      <p style="margin-bottom:0"><strong>An artefact, and an offline path.</strong> No application image
+      exists and no wheel bundle is built. A plant site may have no outbound internet at all, which
+      means pre-built wheels, pre-pulled images and <strong>pre-pulled models</strong>. Building it
+      early also means the demonstration runs from the same artefact a customer would receive, so
+      <em>"it worked on my machine"</em> stops being discoverable in front of an audience. Question
+      <code>Q43</code>.</p>
+    </div>
+
     <h3>16.1 The four local models</h3>
     <p style="font-size:.88rem">There is no fifth. Power comes from models + agents + tools +
     existing ML/FDD + data + RAG + Control Plane + workflows + verification.</p>
@@ -3006,6 +3096,46 @@ details.case[open]>summary::before{transform:rotate(180deg)}
         </tbody>
       </table>
     </div>
+    <div class="callout">
+      <span class="k">WHAT IS ALREADY DEMONSTRABLE, ON MEASURED DATA</span>
+      <p style="margin-bottom:.5rem">The engine's output exists for the real window, so a
+      demonstration does not have to stage a single fault. <strong>All seven model fault classes are
+      present on measured readings</strong>, including the only <code>critical</code> one.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Label</th><th class="nowrap">Slots</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td class="id">NO_DIAGNOSIS</td><td><strong>5,309</strong></td><td><strong>The most common labelled outcome, by a wide margin</strong></td></tr>
+            <tr><td class="id">NO_EFFICIENCY_FAULT</td><td>943</td><td>Healthy on the efficiency branch</td></tr>
+            <tr><td class="id">HIGH_HEAD_AMBIGUOUS</td><td>430</td><td>The commonest fault class</td></tr>
+            <tr><td class="id">REFRIGERANT_SIDE_HIGH_HEAD</td><td>104</td><td></td></tr>
+            <tr><td class="id">COMPRESSOR_INEFFICIENCY</td><td>58</td><td></td></tr>
+            <tr><td class="id">STARVED_EVAP_UNDERCHARGE_OR_RESTRICTION</td><td>32</td><td>Honest ambiguity &mdash; two causes kept combined</td></tr>
+            <tr><td class="id">CONDENSER_WATER_SIDE_UNSPECIFIED</td><td>25</td><td></td></tr>
+            <tr><td class="id">POWER_HIGH_UNEXPLAINED</td><td>22</td><td>The weakest signature in the catalogue</td></tr>
+            <tr><td class="id">CONDENSER_LOW_FLOW</td><td>3</td><td><strong>The only <code>critical</code> class</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-bottom:0">Note the top row. <span class="state">NO_DIAGNOSIS</span> is not a
+      contrived case to be apologised for &mdash; on real readings it is what the platform does most.
+      That makes the honest refusal the strongest asset in this database rather than a caveat.</p>
+    </div>
+
+    <div class="callout stop">
+      <span class="k">TWELVE EQUIPMENT TABLES HAVE DATA &middot; TWO HAVE A MODEL</span>
+      <p style="margin-bottom:.5rem">The scope argument for <em>one asset class, done completely</em>
+      is measurable rather than rhetorical. Twelve normalised tables carry telemetry; <strong>two</strong>
+      have fitted parameters, residual bands, or any residual ever scored &mdash; both chillers. Three
+      condenser pumps, three cooling towers, three primary pumps and the plant table have none.</p>
+      <p style="margin-bottom:0">The same model is also <strong>eighteen times worse on one machine
+      than the other</strong> &mdash; chiller&nbsp;1's current model at nRMSE 48.03 against
+      chiller&nbsp;2's 2.65. An identical fault label on the two machines does not mean the same thing,
+      which is <code>F10</code> and <code>F15</code> earning their place from measurement. And five
+      models are fitted per chiller, not six: there is no compressor-power model, and that residual is
+      100% NULL.</p>
+    </div>
+
     <div class="callout stop">
       <span class="k">THE SIMULATION INVENTED THE SIGNAL THAT MATTERS MOST</span>
       <p style="margin-bottom:.5rem">Every numeric column on <code>chiller_1_normalized</code> was
