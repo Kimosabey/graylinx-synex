@@ -2023,32 +2023,69 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       the fault; the Control Plane grants the permission. The Copilot explains both.</p>
     </div>
 
-    <h3>11.1 Where the intelligence actually is</h3>
-    <p style="font-size:.9rem">Counted from the register, over the features in the cut. The shape of this
-    chart <em>is</em> the separation law — a platform whose answers are mostly model output cannot explain
-    any of them.</p>
+    <h3>11.1 Where the authority is &mdash; which is not the same as where the intelligence is</h3>
+    <p style="font-size:.9rem">This section used to be headed <em>"where the intelligence actually is"</em>,
+    and the chart below was offered as evidence that a small language-model share was an achievement. That
+    framing was wrong, and it was quietly steering the design: <strong>a metric that rewards a low model
+    share will keep producing a rule engine with a chat window on the front.</strong></p>
+    <div class="callout stop">
+      <span class="k">THE SEPARATION LAW IS ABOUT AUTHORITY, NOT CAPABILITY</span>
+      <p style="margin-bottom:.5rem"><em>"The language model never names the fault"</em> is a rule about
+      <strong>who is accountable for a safety-critical claim.</strong> It was never a rule about how much
+      the model is allowed to think.</p>
+      <p style="margin-bottom:0"><strong>Deterministic code owns authority, arithmetic, and anything a
+      technician's safety rests on. The agent owns what to look at, what to ask next, what to say, and
+      when to stop.</strong> A rule can rank candidate questions by how much they would narrow the
+      answer. It cannot weigh <em>"that measurement takes twenty minutes and he is leaving at
+      six"</em> &mdash; and pretending otherwise is how a diagnosis degrades into a lookup.</p>
+    </div>
     <div class="figure" style="padding:1.2rem 1.1rem">
       <div id="enginebars"></div>
       <p style="font-size:.82rem;color:var(--muted);margin:.9rem 0 0">
-      A feature can use more than one engine, so the bars total more than the feature count. What matters
-      is the ratio: the language model appears in a minority, and never on a line where being wrong is
-      expensive.</p>
+      A feature can use more than one engine, so the bars total more than the feature count. Read this as
+      <strong>where authority sits</strong>, not as a scorecard. The number below is the one that needs
+      watching in the other direction.</p>
+    </div>
+    <div class="callout">
+      <span class="k">THE NUMBER THAT NEEDS WATCHING</span>
+      <p style="margin-bottom:.5rem"><strong><span data-count="nollm"></span> of the
+      <span data-count="cut"></span> features in the cut involve no language model at all</strong>
+      &mdash; <span data-count="nollmpct"></span>. Pure software is
+      <span data-count="swonlypct"></span> and pure rules <span data-count="ronlypct"></span>.</p>
+      <p style="margin-bottom:0">Most of that is correct and should stay: idempotency, a priority formula,
+      an audit trail and an authorization check have no business being probabilistic. But it is <em>also</em>
+      the shape of a system that narrates and routes without ever investigating &mdash; so it is recorded
+      here as a risk to be argued with rather than a result to be pleased about.</p>
     </div>
     <div class="scroll">
       <table>
-        <thead><tr><th class="nowrap">The question</th><th class="nowrap">Answered by</th><th>Why not the model</th></tr></thead>
+        <thead><tr><th class="nowrap">The question</th><th class="nowrap">Answered by</th><th>Why</th></tr></thead>
         <tbody>
+          <tr><td colspan="3" style="background:var(--sunken);font-weight:600;font-size:.85rem">Authority &mdash; deterministic, and rightly so</td></tr>
           <tr><td>Is this reading abnormal?</td><td><span class="badge">ML</span></td><td>A residual is a measurement, not an opinion.</td></tr>
           <tr><td>Is the equipment fit to judge?</td><td><span class="badge">R</span></td><td>A gate must give the same answer twice.</td></tr>
           <tr><td>Which fault class is this?</td><td><span class="badge">R</span></td><td>The isolation path is testable line by line; a model's reasoning is not.</td></tr>
           <tr><td>What priority does it get?</td><td><span class="badge">R</span></td><td>A planner has to be able to recalculate it by hand.</td></tr>
           <tr><td>Is this person allowed?</td><td><span class="badge">SW</span></td><td>Authorization by inference is not authorization.</td></tr>
+          <tr><td>Who gets the job?</td><td><span class="badge">SW</span></td><td>Matched by skill, so it works with the GPU off and "why this person" is answerable.</td></tr>
           <tr><td>Did the repair work?</td><td><span class="badge">ML</span> <span class="badge">R</span></td><td>Post-work residuals under valid gates. Not the closure note.</td></tr>
-          <tr><td>What does it mean, in plain English?</td><td><span class="badge">LLM</span></td><td class="dash">— this is the part a model is genuinely better at</td></tr>
+          <tr><td colspan="3" style="background:var(--sunken);font-weight:600;font-size:.85rem">Judgment &mdash; where the agent should be, and where it is currently thinner than it should be</td></tr>
+          <tr><td>What does it mean, in plain English?</td><td><span class="badge">LLM</span></td><td class="dash">&mdash; the part a model is genuinely better at</td></tr>
           <tr><td>What should we do about it?</td><td><span class="badge">LLM</span> <span class="badge">R</span></td><td>The model proposes, rules rank, a human decides.</td></tr>
+          <tr><td>What evidence is worth gathering for <em>this</em> question?</td><td><span class="badge">SW</span></td><td><strong>Under review.</strong> A fixed pack is a lookup; choosing what to fetch is judgment &mdash; <code>C4</code></td></tr>
+          <tr><td>Which question should the technician be asked next?</td><td><span class="badge">R</span></td><td><strong>Under review.</strong> Rules can produce the candidates; ordering them by cost, skill and what is already known is judgment &mdash; <code>RC12</code></td></tr>
+          <tr><td>Are these several alarms really one problem?</td><td><span class="badge">R</span></td><td><strong>Under review.</strong> This is precisely the question the SME session asks a human, over specific residuals &mdash; <code>RC19</code></td></tr>
+          <tr><td>Have we run out of useful questions?</td><td><span class="badge">R</span></td><td><strong>Under review.</strong> Knowing when the returns have gone is a judgment about diminishing returns &mdash; <code>RC14</code></td></tr>
         </tbody>
       </table>
     </div>
+    <p style="font-size:.88rem"><strong>The four rows marked <em>under review</em> are the open design
+    question in this section.</strong> Moving them to <code>R + LLM</code> or <code>SW + LLM</code> would
+    weaken no honesty rule: in every one the agent proposes and either a deterministic gate or a named
+    human disposes. What it would change is whether the platform investigates or merely reports &mdash;
+    and that is the difference between an agentic product and a large rule engine with a good
+    conversation on top.</p>
+
     <h3>11.2 The full split</h3>
     <div class="scroll">
       <table>
@@ -3764,11 +3801,19 @@ function esc(s){
     if (what === 'all')     return dom ? FEATURES.filter(f => f.d === dom).length : FEATURES.length;
     if (what === 'cut')     return dom ? inCut.filter(f => f.d === dom).length : inCut.length;
     if (what === 'domains') return new Set(FEATURES.map(f => f.d)).size;
+    // Section 11.1 argues about these three, so they are counted rather than typed.
+    const usesLLM = f => f.e.includes('LLM');
+    const only = tag => inCut.filter(f => f.e.length === 1 && f.e[0] === tag).length;
+    const pct = n => Math.round(n / inCut.length * 100) + '%';
+    if (what === 'nollm')      return inCut.filter(f => !usesLLM(f)).length;
+    if (what === 'nollmpct')   return pct(inCut.filter(f => !usesLLM(f)).length);
+    if (what === 'swonlypct')  return pct(only('SW'));
+    if (what === 'ronlypct')   return pct(only('R'));
     return NaN;
   };
   document.querySelectorAll('[data-count]').forEach(el => {
     const n = value(el.getAttribute('data-count'));
-    if (Number.isNaN(n)) return;
+    if (typeof n === 'number' && Number.isNaN(n)) return;
     let s = String(n);
     if (el.hasAttribute('data-word')) {
       s = word(n);
