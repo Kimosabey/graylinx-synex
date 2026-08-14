@@ -892,3 +892,95 @@ figure.chart figcaption {
     transform: none;
   }
 }
+
+/* ── the reconciliation table (R10) ────────────────────────────────────────── */
+
+table.recon {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+table.recon th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+  padding: 6px 10px;
+  background: var(--thead);
+  border-bottom: 1px solid var(--rule);
+}
+
+table.recon th:first-child { border-radius: 6px 0 0 0; }
+table.recon th:last-child  { border-radius: 0 6px 0 0; }
+
+table.recon td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+table.recon .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.recon-row[data-agrees='false'][data-checkable='true'] {
+  background: var(--warn-bg);
+}
+
+/* Not recomputed is a stated absence, in the same muted italic a Figure uses — never a
+   blank cell, which would read as agreement. */
+.recon-row[data-checkable='false'] .absent {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.recon-row .ico {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  margin-right: 7px;
+}
+
+.recon-row[data-agrees='true'] .ico { color: var(--ok); }
+.recon-row[data-checkable='false'] .ico { color: var(--muted); }
+.recon-row[data-agrees='false'][data-checkable='true'] .ico { color: var(--warn); }
+
+.recon .src {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.linklike {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.linklike:hover { text-decoration: underline; }
+
+.recon-detail td {
+  background: var(--sunken);
+  padding: 10px 14px 12px;
+}
+
+ul.sample {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+ul.sample li { margin-bottom: 2px; }
+
+/* The rail items are links now, so they need the anchor reset the buttons had. */
+a.navitem {
+  text-decoration: none;
+}

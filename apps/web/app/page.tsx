@@ -17,12 +17,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FigureView } from '@/components/FigureView';
 import {
   IconAlert,
-  IconChat,
   IconCheck,
-  IconClipboard,
-  IconGauge,
   IconHalt,
-  IconShield,
   IconUsers,
 } from '@/components/Icons';
 import { ResidualChart, type SeriesBand, type SeriesPoint } from '@/components/ResidualChart';
@@ -47,18 +43,10 @@ interface Episode {
   slot_count: number;
 }
 
-const PERSONAS = [
-  ['reliability_engineer', 'Reliability Engineer'],
-  ['technician', 'Technician'],
-  ['supervisor', 'Supervisor'],
-  ['administrator', 'Administrator'],
-] as const;
-
 export default function Page() {
   const { turn, ask, stop } = useTurn();
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [selected, setSelected] = useState<Episode | null>(null);
-  const [persona, setPersona] = useState<string>('reliability_engineer');
   const [question, setQuestion] = useState('Why was this flagged, and what does the evidence support?');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [series, setSeries] = useState<Series | null>(null);
@@ -93,11 +81,6 @@ export default function Page() {
       .catch(() => setSeries(null));
   }, [selected]);
 
-  const switchPersona = useCallback(async (key: string) => {
-    await fetch(`${API}/api/v1/personas/${key}`, { method: 'POST', credentials: 'include' });
-    setPersona(key);
-  }, []);
-
   const send = useCallback(() => {
     if (!question.trim()) return;
     ask({
@@ -113,67 +96,8 @@ export default function Page() {
   const notes = useMemo(() => turn.audits.filter((a) => !a.findings), [turn.audits]);
 
   return (
-    <div className="shell">
-      <header className="topbar">
-        {/* An `h1`, not a styled span. The page needs exactly one level-one heading for
-            screen-reader navigation, and the product name is it — semantics are not a
-            function of type size. Caught by the accessibility scan, which reported it as
-            the page's only violation. */}
-        <h1 className="brand">Graylinx Synex</h1>
-        <span className="tagline">Intelligent Operations, Connected by AI.</span>
-        <span className="spacer" />
-        <span className="window" title="Real readings stop here; everything after is simulated">
-          measured to 2026-06-23 11:50
-        </span>
-        {turn.state && (
-          <span className="state-line">
-            <span className="state-pill" data-state={turn.state.state}>
-              {turn.state.state}
-            </span>
-          </span>
-        )}
-      </header>
+    <>
 
-      <nav className="rail" aria-label="Surfaces">
-        <div className="railgroup">
-          <h2>Copilot</h2>
-          <button className="navitem" aria-current="page">
-            <IconChat className="ico" />
-            Ask
-          </button>
-        </div>
-        <div className="railgroup">
-          <h2>Surfaces</h2>
-          <button className="navitem" disabled title="Arrives with M2">
-            <IconGauge className="ico" />
-            Reliability
-          </button>
-          <button className="navitem" disabled title="Arrives with M2">
-            <IconClipboard className="ico" />
-            Work orders
-          </button>
-          <button className="navitem" disabled title="Arrives with M3">
-            <IconShield className="ico" />
-            Verification
-          </button>
-        </div>
-        <div className="railgroup">
-          <h2>Persona</h2>
-          {PERSONAS.map(([key, label]) => (
-            <button
-              key={key}
-              className="navitem"
-              aria-current={persona === key ? 'page' : undefined}
-              onClick={() => switchPersona(key)}
-            >
-              <IconUsers className="ico" />
-              {label}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      <main className="content">
         <p className="muted" style={{ marginTop: 0 }}>
           The persona switcher is a demonstration affordance, not authentication — anyone
           here can select any persona. <code className="mono">Q41</code> is unanswered; see
@@ -324,7 +248,6 @@ export default function Page() {
         )}
 
         {turn.error && <p className="muted">Stream error: {turn.error}</p>}
-      </main>
-    </div>
+    </>
   );
 }

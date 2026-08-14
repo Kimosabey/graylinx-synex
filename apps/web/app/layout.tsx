@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { Shell } from '@/components/Shell';
 
 export const metadata: Metadata = {
   title: 'Graylinx Synex',
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
        * renders real content, would suppress genuine mismatches — the ones caused by
        * `Date.now()`, locale formatting or a `typeof window` branch, which are real bugs
        * worth hearing about. */}
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <Shell>{children}</Shell>
+      </body>
     </html>
   );
 }
