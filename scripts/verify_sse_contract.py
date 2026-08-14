@@ -48,11 +48,16 @@ EXCLUDE_DIRS = {"node_modules", ".next", "dist", "build", "__pycache__", ".venv"
 
 
 def load_contract():
-    """Load the contract module directly, without importing the `app` package.
+    """Load the contract module directly, without importing the whole `app.agents` package.
 
-    Importing `app.agents` would drag in whatever else that package grows, and this gate
-    must keep working when the graph it describes is half-written.
+    `app.agents/__init__.py` will grow a graph that imports a model client; this gate must
+    keep working with the box terminated, so the module is loaded by path rather than by
+    package import. `backend/` still goes on the path, because the contract re-exports the
+    six answer states from `app.domain.answer` rather than restating them.
     """
+    backend = str(ROOT / "backend")
+    if backend not in sys.path:
+        sys.path.insert(0, backend)
     spec = importlib.util.spec_from_file_location("synex_sse_contract", CONTRACT_PATH)
     if not spec or not spec.loader:
         raise SystemExit(f"cannot load the contract at {CONTRACT_PATH}")

@@ -45,7 +45,13 @@ ignore = [
     # MINUS SIGN because that is what the documents use, and a docstring quoting a measured
     # fact should quote it exactly. Rewriting it to a hyphen would make the code and the
     # document disagree on a character, which is the kind of drift the gates exist to stop.
+    # Same for Δ in "condenser ΔT" and × in "18× worse".
+    #
+    # RUF001 (strings) is included because the `note=` fields on the signal registry are
+    # quoted measurements — "−273.2", "−6,265 to +30,183" — that render to a user.
+    "RUF001",
     "RUF002",
+    "RUF003",
 ]
 
 [lint.per-file-ignores]

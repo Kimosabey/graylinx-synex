@@ -22,6 +22,8 @@ from __future__ import annotations
 
 from typing import Final
 
+from app.domain.answer import ANSWER_STATES as _ANSWER_STATES
+
 # ── the frames ──────────────────────────────────────────────────────────────────
 
 FRAMES: Final[tuple[str, ...]] = (
@@ -39,15 +41,11 @@ FRAMES: Final[tuple[str, ...]] = (
 
 # ── the answer contract ─────────────────────────────────────────────────────────
 
-# CONTEXT.md §7. Every turn ends in exactly one of these six.
-ANSWER_STATES: Final[tuple[str, ...]] = (
-    "ANSWERED",
-    "PARTIAL",
-    "NO_DIAGNOSIS",
-    "NEEDS_APPROVAL",
-    "BLOCKED",
-    "FAILED",
-)
+# Re-exported, never restated. `app.domain.answer` owns the six states because `domain` is
+# the leaf: the graph, the API and this contract all need them, and a leaf is the only place
+# all three can reach without an upward import. A second list here would be the drift the
+# gates exist to prevent — CLAUDE.md §2.8.
+ANSWER_STATES: Final[tuple[str, ...]] = _ANSWER_STATES
 
 # Exactly one `state` frame per turn, and it is the frame that carries one of the six above.
 # "Exactly one" is the rule that stops a turn narrowing from ANSWERED to PARTIAL halfway
