@@ -1,0 +1,15 @@
+# Synex back end — runtime dependencies.
+#
+# Pinned exactly, not loosely. `docs/20-architecture/01-stack.md` records the reason:
+# the sibling removed Ragas after it hard-imported a class LangChain 1.x deleted, and a
+# floating upper bound is how that arrives. A version here is a reviewed decision.
+#
+# This file is deliberately short. Nothing is listed before the milestone that uses it —
+# FastAPI, SQLAlchemy, LangGraph and the Ollama client arrive with M1.3, M1.1 and M1.4
+# respectively. Declaring them now would mean CI installing, and a reader trusting, a
+# dependency no code imports.
+#
+# The versions are what M0 was verified against, on Python 3.12.3.
+
+pydantic==2.13.4
+pydantic-settings==2.5.2

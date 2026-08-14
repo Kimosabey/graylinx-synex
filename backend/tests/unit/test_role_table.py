@@ -29,9 +29,12 @@ def test_no_module_but_the_role_table_names_a_model() -> None:
             continue
         text = path.read_text(encoding="utf-8")
         for literal in ast.walk(ast.parse(text)):
-            if isinstance(literal, ast.Constant) and isinstance(literal.value, str):
-                if literal.value in names:
-                    offenders.append(f"{path.relative_to(APP.parent)}:{literal.lineno}")
+            if (
+                isinstance(literal, ast.Constant)
+                and isinstance(literal.value, str)
+                and literal.value in names
+            ):
+                offenders.append(f"{path.relative_to(APP.parent)}:{literal.lineno}")
     assert not offenders, (
         "a model name appears outside the role table:\n  "
         + "\n  ".join(offenders)

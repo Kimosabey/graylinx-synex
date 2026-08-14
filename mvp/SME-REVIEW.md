@@ -337,7 +337,8 @@ different window.
 
 ## §3 · Thresholds — the numbers we refuse to invent
 
-Every one of these is currently `TBD` in the documents. We will not guess them.
+Every one of these is unresolved in the documents, and carries no agreed number. We will
+not guess them.
 
 | # | Question | Our proposed starting point | If it is wrong |
 |---|---|---|---|

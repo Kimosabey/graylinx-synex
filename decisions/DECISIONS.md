@@ -212,6 +212,25 @@ chapters. If it is not in this file, it did not happen.
   `backend/app/db/telemetry.py`, `backend/app/analytics/`.
 - **Reflected in docs:** yes.
 
+### D-016 — The demonstration runs live on the box; the gate never does
+- **Date:** 2026-08-14
+- **Decided by:** Harshan
+- **Closes:** nothing
+- **Decision:** the demonstration on **18 August 2026** reaches the model roster live on the
+  Jarvis box — `SYNEX_MODEL_MODE=live`. `stub` stays the default in `app/config.py` and is
+  set explicitly in every CI job, so the gate continues to run with the box terminated.
+- **Reason:** the demonstration's purpose is to be convincing, and genuine inference is more
+  convincing than a replay. The cost is a live dependency on the day, which is accepted
+  knowingly: a fresh box wipes `/home`, so the roster re-pulls in about ten minutes, and
+  `Q46` means no agreed turn time exists to hold the 150 s graph ceiling against.
+- **Consequence worth naming:** the date is **four days** from this decision, and the plan
+  sizes the remaining milestones at roughly five to six weeks for one builder. The scope that
+  actually lands on the day is therefore smaller than the 94-feature cut, and which parts
+  land is a live question rather than a settled one. Recorded so the gap between *the MVP*
+  and *the demonstration* is a stated fact rather than a discovery on the day.
+- **Affects:** `backend/app/config.py`, `.github/workflows/ci.yml`, the demonstration script.
+- **Reflected in docs:** yes.
+
 ### D-015 — `NO_DIAGNOSIS` gets its own streaming frame
 - **Date:** 2026-08-13
 - **Decided by:** Harshan

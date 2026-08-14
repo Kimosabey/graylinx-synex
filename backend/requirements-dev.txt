@@ -1,0 +1,16 @@
+# Synex back end — the gate's own dependencies.
+#
+# Split from `requirements.txt` so the runtime image never carries a test runner, and so
+# `pip install -r requirements.txt` on an air-gapped site stays the small list (Q43).
+#
+# `import-linter` is not optional tooling here. It is the executable form of D-012's
+# layering law: the sibling accumulated fifteen back-edges against a rule its own
+# docstrings stated, which is what an unenforced rule becomes. `tests/architecture/`
+# runs it in-process so a bare `pytest` is the whole gate.
+
+-r requirements.txt
+
+pytest==9.1.1
+pytest-asyncio==1.4.0
+import-linter==2.13
+ruff==0.16.3

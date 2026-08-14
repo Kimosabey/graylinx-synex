@@ -6,12 +6,12 @@ turned into assertions, so a change that would let one of them slip fails the bu
 """
 from __future__ import annotations
 
+from dataclasses import FrozenInstanceError
 from datetime import datetime
 
 import pytest
 
 from app.analytics.honesty import Absence, Basis, DataWindow, Figure, Provenance
-
 
 # ── the invariant: a value xor a reason ────────────────────────────────────────
 
@@ -157,7 +157,12 @@ def test_a_window_states_its_period() -> None:
 
 
 def test_a_figure_is_immutable() -> None:
-    """A figure that can be edited after construction can be edited past its own invariant."""
+    """A figure that can be edited after construction can be edited past its own invariant.
+
+    The exception is named rather than blind. `pytest.raises(Exception)` would also pass if
+    the assignment failed for some unrelated reason — an `AttributeError` from a renamed
+    field, say — which would leave this test green while the frozen guarantee was gone.
+    """
     f = Figure.measured("kW", 175.0)
-    with pytest.raises(Exception):
+    with pytest.raises(FrozenInstanceError):
         f.value = 0.0  # type: ignore[misc]

@@ -100,6 +100,15 @@ switcher with no real authentication, labelled as a demonstration affordance** �
 any of the three routes. That keeps the question genuinely open instead of answering it by
 default, which is how these get decided badly.
 
+## Raised while building
+
+These arrived from measuring or from writing code, not from reading a document. They had
+been appended to the section above without a header row of their own, so they rendered as
+paragraphs rather than as a table — which is why `Q46` and `Q47` now sit under a heading.
+
+| ID | Question | Blocks | Owner | Status |
+|---|---|---|---|---|
+| Q48 | **What are the three unnumbered resource ceilings?** `docs/20-architecture/03-from-thermynx.md` §7 gives ten bounds and names the failure each prevents, but three carry no value: per-request input characters ("capped"), assembled context ("hard cap") and SQL rows ("hard `LIMIT`"). The other seven are numbers we inherited and can copy. These three cannot be invented — the input cap trades a pasted log against a VRAM spike, the context cap trades evidence against silent partial context, and the row cap trades a useful answer against pulling a whole table. `app/config.py` carries conservative provisional values and marks all three `provisional: true` in `ceilings()`, so the operations endpoint shows which numbers are ours and which are guesses | Nothing today — the bounds hold. It blocks *claiming* they are the right bounds | Harshan | Open |
 | Q47 | **Which fault labels can share one physical cause, and which must never be grouped?** On 2026-04-15 chiller 1 carried five labels at once, and twelve equipment-days produce thirty-nine naive cases. `RC19` groups them; the grouping rules are **our inference and unreviewed**. The dangerous direction is over-grouping: a hidden undercharge costs a compressor where a duplicate visit costs a morning. Also: two of the five contradict each other on the sign of the discharge-pressure residual — two faults, one transition, or untrustworthy data? | `RC19` grouping rules, and `RC12` narrowing when labels conflict | Vishnu | Open — agenda §1.8 |
 | Q46 | **What is the target turn time for the demonstration?** No document states one, and the purpose of this MVP is to be shown. Fourteen stages, a brain call with a generous budget, a 1–3 s critique layer and a 150 s graph ceiling can compose into an answer nobody wants to watch arrive. A number is needed — it is not ours to invent, and once set it constrains whether the advisory reasoning pass is affordable at all | Perceived quality of every demonstration | Harshan | Open |
 

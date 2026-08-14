@@ -35,6 +35,9 @@ def test_import_contracts_hold() -> None:
         cwd=BACKEND,
         capture_output=True,
         text=True,
+        # Explicit: a non-zero exit is the interesting case, and `pytest.fail` below
+        # reports the linter's own output, which names the offending import chain.
+        check=False,
     )
     if result.returncode != 0:
         # The linter's own output names the offending import chain, which is the useful part.

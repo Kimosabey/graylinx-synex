@@ -1,0 +1,58 @@
+# Ruff configuration for the Synex back end.
+#
+# **Why this file exists at all.** Before it, there was no ruff config anywhere in the repo,
+# so the rule set was whatever the installed version happens to default to. That is not a
+# gate — it is a gate whose rules change when somebody upgrades a tool, which turns CI red
+# for reasons unrelated to the change that triggered it. `select` is therefore explicit.
+
+line-length = 100
+target-version = "py312"
+
+[lint]
+select = [
+    "E", "W",    # pycodestyle
+    "F",         # pyflakes
+    "I",         # import sorting
+    "B",         # bugbear — mutable defaults, blind excepts, loop-variable binding
+    "SIM",       # simplification
+    "UP",        # pyupgrade
+    "DTZ",       # naive datetimes
+    "C4",        # comprehensions
+    "PL",        # pylint subset
+    "RUF",
+]
+
+ignore = [
+    # A plant reading has no timezone, and giving it one would be inventing information.
+    # MySQL `DATETIME` columns in the snapshot carry no offset; the slot times are plant
+    # wall-clock. `SYNEX_MEASURED_WINDOW_END=2026-06-23T11:50:00` is the same instant the
+    # database holds, and attaching a tzinfo would assert a fact about the site nobody has
+    # verified — which is the failure CLAUDE.md 2.2 exists to prevent.
+    #
+    # DTZ003 and DTZ005 stay ON deliberately: `utcnow()` and a naive `now()` are real bugs,
+    # because *those* are moments the software chooses rather than moments it read.
+    "DTZ001",
+
+    # Magic values are the whole point of a test. `assert nrmse == 48.03` is the assertion.
+    "PLR2004",
+
+    # A gate that names every failure it prevents has long argument lists and many branches
+    # by design. Splitting `ceilings()` into four functions would scatter the ten bounds.
+    "PLR0913",
+    "PLR0912",
+
+    # The typography is deliberate and repo-wide. A residual median of −25.65 uses U+2212
+    # MINUS SIGN because that is what the documents use, and a docstring quoting a measured
+    # fact should quote it exactly. Rewriting it to a hyphen would make the code and the
+    # document disagree on a character, which is the kind of drift the gates exist to stop.
+    "RUF002",
+]
+
+[lint.per-file-ignores]
+# Tests assert on privates deliberately, and the gate tests import `verify` *after*
+# `_load_verify_code()` has put `scripts/` on the path — so that import cannot be
+# hoisted to the top of the file without breaking it.
+"tests/**" = ["PLR2004", "S101", "PLC0415"]
+
+[lint.isort]
+known-first-party = ["app"]
