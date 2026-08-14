@@ -22,6 +22,7 @@ from app.analytics.gates import (
     check_measured_window,
     check_running,
 )
+from app.analytics.verification import verify
 from app.api.deps import CurrentScope, Repo, current_scope, get_repo
 from app.config import Settings, get_settings
 from app.db.plant import RESIDUAL_COLUMNS
@@ -347,6 +348,68 @@ async def episode_work_order(
         other_labels_same_day=others,
     )
     return work_orders.draft_from_pack(pack).as_dict()
+
+
+@router.get("/episodes/{episode_id}/verification")
+async def episode_verification(
+    episode_id: str,
+    repo: Repo = Depends(get_repo),
+    scope: CurrentScope = Depends(current_scope),
+    settings: Settings = Depends(get_settings),
+    after_days: int = Query(
+        7, ge=1, le=60,
+        description="Days after the episode to read as the post-work window",
+    ),
+) -> dict:
+    """`V1`-`V4` — did it work? Post-work residuals against this asset's own band.
+
+    The post-work window is taken as the days following the episode. On this snapshot no
+    repair was ever recorded, so what is being verified is a **natural clearing** — and the
+    honest answer for the one this data offers is `UNKNOWN`, because the label disappears
+    while the gates stop passing and the residual gets worse.
+    """
+    if not scope.allows(Capability.VIEW_RESIDUALS):
+        raise HTTPException(403, "this persona may not view residuals")
+
+    equipment_key, label, day_str = _parse_episode_id(episode_id)
+    day = date.fromisoformat(day_str)
+    residual_name = "chiller_current_residual"
+
+    before_rows = await repo.residuals_for_day(
+        equipment_key, datetime(day.year, day.month, day.day)
+    )
+    before = tuple(r.residuals.get(residual_name) for r in before_rows if r.fault_label == label)
+
+    after: list[float | None] = []
+    diagnosable = False
+    for offset in range(1, after_days + 1):
+        d = date.fromordinal(day.toordinal() + offset)
+        rows = await repo.residuals_for_day(equipment_key, datetime(d.year, d.month, d.day))
+        for r in rows:
+            after.append(r.residuals.get(residual_name))
+            # The window counts as diagnosable only where the engine actually reached a
+            # judgement. NO_DIAGNOSIS and an absent label are both "not judged".
+            if r.fault_label not in (None, "NO_DIAGNOSIS"):
+                diagnosable = True
+
+    bands = await repo.residual_bands()
+    band = next(
+        (b for b in bands if b.equipment_key == equipment_key and b.residual_name == residual_name),
+        None,
+    )
+    result = verify(
+        residual_name=residual_name,
+        before=before,
+        after=tuple(after),
+        band=band,
+        after_was_diagnosable=diagnosable,
+    )
+    return {
+        "episode_id": episode_id,
+        "post_work_window_days": after_days,
+        "post_work_was_diagnosable": diagnosable,
+        **result.as_dict(),
+    }
 
 
 def _parse_episode_id(episode_id: str) -> tuple[str, str, str]:

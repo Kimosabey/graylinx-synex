@@ -1014,3 +1014,25 @@ a.navitem {
   color: var(--muted);
   font-style: italic;
 }
+
+/* Verification outcomes reuse the priority pill. UNKNOWN is styled like every other stated
+   absence in this product — muted italic, never a warning — because it is the correct
+   answer when the data cannot decide, not a failure of the check. FAIL takes the warning
+   treatment; PASS the ok colour. */
+.pri[data-band='UNKNOWN'] {
+  background: transparent;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.pri[data-band='FAIL'] {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.pri[data-band='PASS'] {
+  background: transparent;
+  color: var(--ok);
+  border-color: var(--ok);
+}

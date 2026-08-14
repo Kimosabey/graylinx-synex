@@ -38,6 +38,17 @@ interface WorkOrder {
   warnings: string[];
 }
 
+interface VerificationResult {
+  outcome: 'PASS' | 'FAIL' | 'UNKNOWN';
+  reason: string;
+  closes_the_work_order: boolean;
+  post_work_was_diagnosable: boolean;
+  before: { in_band: number; total: number };
+  after: { in_band: number; total: number };
+  blocked_by: string | null;
+  notes: string[];
+}
+
 interface Series {
   points: SeriesPoint[];
   band: SeriesBand | null;
@@ -65,6 +76,7 @@ export default function Page() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [series, setSeries] = useState<Series | null>(null);
   const [wo, setWo] = useState<WorkOrder | null>(null);
+  const [ver, setVer] = useState<VerificationResult | null>(null);
 
   useEffect(() => {
     fetch(`${API}/api/v1/episodes`, { credentials: 'include' })
@@ -105,6 +117,18 @@ export default function Page() {
       .then((r) => (r.ok ? r.json() : null))
       .then(setWo)
       .catch(() => setWo(null));
+
+    // V1-V4 — did it work? Read the days after the episode as the post-work window. No
+    // repair was ever recorded on this snapshot, so what is verified is a natural
+    // clearing, which is exactly where the honest answer is most easily got wrong.
+    setVer(null);
+    fetch(
+      `${API}/api/v1/episodes/${encodeURIComponent(selected.id)}/verification?after_days=8`,
+      { credentials: 'include' },
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setVer)
+      .catch(() => setVer(null));
   }, [selected]);
 
   const send = useCallback(() => {
@@ -214,6 +238,45 @@ export default function Page() {
             <p className="muted">
               This is a <strong>draft</strong>. Nothing is persisted: Synex&apos;s own state
               belongs in PostgreSQL and that is not wired yet.
+            </p>
+          </section>
+        )}
+
+        {ver && (
+          <section className="card" aria-labelledby="ver">
+            <h2 id="ver">
+              Verification — did it work?{' '}
+              <span className="pri" data-band={ver.outcome}>
+                {ver.outcome}
+              </span>
+            </h2>
+            <p className="answer measure">{ver.reason}</p>
+
+            <p className="muted">
+              Readings inside this asset&apos;s own band: {ver.before.in_band} of{' '}
+              {ver.before.total} before, {ver.after.in_band} of {ver.after.total} after.
+            </p>
+
+            {!ver.post_work_was_diagnosable && (
+              <p className="muted">
+                The gates did not pass over the post-work window, so nothing was being
+                judged. A NULL means not diagnosed — never healthy.
+              </p>
+            )}
+
+            {ver.notes.map((n) => (
+              <p className="muted" key={n}>
+                {n}
+              </p>
+            ))}
+
+            <p className="muted">
+              {ver.closes_the_work_order
+                ? 'This closes the work order.'
+                : ver.outcome === 'FAIL'
+                  ? 'This does not close the work order — what was measured has not been fixed.'
+                  : 'This does not close the work order. UNKNOWN is a permitted outcome, and an open job is the correct state when the data cannot decide.'}
+              {ver.blocked_by && ` A PASS is unreachable until ${ver.blocked_by} is answered.`}
             </p>
           </section>
         )}
