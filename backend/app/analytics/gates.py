@@ -66,6 +66,21 @@ class GateResult:
     """Set when the gate could not be evaluated because its threshold is unagreed. Such a
     gate reports `passed=False` — refusing — and names the question."""
 
+    def __post_init__(self) -> None:
+        """Both texts are sentences shown to a person, so both end like sentences.
+
+        Normalised here rather than left to each gate, because the evaluation suite's
+        `did_terminate` dimension reads the assembled answer and a remedy without a full
+        stop makes a complete refusal look truncated. That is not cosmetic: a reader who
+        thinks the answer was cut off does not trust the part they did read — and the
+        dimension exists precisely because a report once scored full marks while ending
+        mid-word. It found this one.
+        """
+        for field_name in ("reason", "remedy"):
+            text = getattr(self, field_name).strip()
+            if text and text[-1] not in ".!?":
+                object.__setattr__(self, field_name, text + ".")
+
 
 @dataclass(frozen=True)
 class GateOutcome:

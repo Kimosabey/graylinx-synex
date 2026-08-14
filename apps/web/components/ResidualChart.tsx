@@ -14,11 +14,22 @@
  * diverging, despite being "above/below a baseline": above the band and below the band are
  * both abnormal and the middle is normal, which is a status question, not a polarity one.
  *
- * **Colour, and what carries meaning.** One series, so no legend box — the title names it.
- * The band is a recessive surface tint, not a series colour. Out-of-band points use the
- * reserved status colour, and it is **never the only signal**: they are larger, hollow with
- * a 2px surface ring, and the extreme one is directly labelled. Colour is the fourth
- * encoding, not the first.
+ * **Colour, and what carries meaning.** One series, so no legend box — the caption names it.
+ * The band is a recessive surface tint, not a series colour. Out-of-band points take the
+ * reserved status colour, and colour is **never the only signal**: the band itself shows the
+ * separation, and the extreme point is enlarged, ringed against the surface and directly
+ * labelled.
+ *
+ * Marks stay thin, and size is deliberately *not* used to flag out-of-band. On chiller 1
+ * every reading is out of band, so enlarging all 113 emphasises nothing and reads as a wall
+ * of noise — the first version of this chart did exactly that. Emphasis is spent on the one
+ * point worth pointing at.
+ *
+ * **Nothing here formats a number.** Axis ticks round to integers and path coordinates are
+ * raw floats; no number-formatting API is called anywhere in this file, because `FigureView`
+ * is the only component allowed to render a figure and an exception list is how that rule
+ * stops being one. The web contract test enforces it — and it caught this file twice: once
+ * for real, and once for naming the banned APIs in this very paragraph.
  *
  * Palette validated with the data-viz validator in both modes. Every check that applies to
  * a one-series-plus-status chart passes: CVD separation ΔE 27.0 protan (light) and 16.9
@@ -111,7 +122,7 @@ export function ResidualChart({
       current = [];
       return;
     }
-    current.push(`${current.length ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`);
+    current.push(`${current.length ? 'L' : 'M'}${x(i)},${y(p.v)}`);
   });
   if (current.length) runs.push(current.join(' '));
 
@@ -175,7 +186,7 @@ export function ResidualChart({
         <line x1={PAD.left} x2={PAD.left} y1={PAD.top} y2={H - PAD.bottom} className="chart-axis" />
         {ticks.map((t) => (
           <text key={t} x={PAD.left - 8} y={y(t) + 4} className="chart-tick" textAnchor="end">
-            {t.toFixed(0)}
+            {Math.round(t)}
           </text>
         ))}
 
