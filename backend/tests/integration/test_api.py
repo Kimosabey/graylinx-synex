@@ -302,3 +302,160 @@ async def test_the_ceilings_show_which_numbers_are_guesses(
     assert all(c["stops"] for c in body["ceilings"])
     provisional = [c for c in body["ceilings"] if c["provisional"]]
     assert all(c["question"] == "Q48" for c in provisional)
+
+
+# ── the streamed turn ───────────────────────────────────────────────────────────
+
+async def _frames(client: httpx.AsyncClient, body: dict) -> list[tuple[str, dict]]:
+    """Collect (event, payload) pairs from one streamed turn."""
+    import json as _json
+
+    out: list[tuple[str, dict]] = []
+    event = None
+    async with client.stream("POST", "/api/v1/ask", json=body) as r:
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/event-stream")
+        async for line in r.aiter_lines():
+            if line.startswith("event: "):
+                event = line[7:]
+            elif line.startswith("data: ") and event:
+                out.append((event, _json.loads(line[6:])))
+    return out
+
+
+CRITICAL_ASK = {
+    "question": "why was chiller 1 flagged that day?",
+    "equipment_key": "chiller_1",
+    "fault_label": "CONDENSER_LOW_FLOW",
+    "day": "2026-04-15",
+}
+
+
+async def test_a_turn_emits_exactly_one_state_and_done_is_last(
+    client: httpx.AsyncClient,
+) -> None:
+    """The contract's two structural rules. A turn that narrows from ANSWERED to PARTIAL
+    halfway through would leave the interface showing whichever arrived last."""
+    frames = await _frames(client, CRITICAL_ASK)
+    assert [e for e, _ in frames].count("state") == 1
+    assert frames[-1][0] == "done"
+
+
+async def test_every_emitted_frame_is_in_the_contract(client: httpx.AsyncClient) -> None:
+    from app.agents.sse_contract import FRAMES
+
+    for event, _ in await _frames(client, CRITICAL_ASK):
+        assert event in FRAMES
+
+
+async def test_the_evidence_arrives_before_the_prose(client: httpx.AsyncClient) -> None:
+    """Figures first, then text. The interface can render the numbers while the answer is
+    still being composed, and the reader sees the evidence is not a summary of the prose."""
+    events = [e for e, _ in await _frames(client, CRITICAL_ASK)]
+    assert events.index("figure") < events.index("token")
+    assert events.index("evidence") < events.index("token")
+
+
+async def test_the_absent_residual_streams_as_null_plus_a_reason(
+    client: httpx.AsyncClient,
+) -> None:
+    figures = [p for e, p in await _frames(client, CRITICAL_ASK) if e == "figure"]
+    absent = next(f for f in figures if f["name"] == "compressor_power_residual")
+    assert absent["value"] is None
+    assert absent["text"] == "no model is fitted for this signal"
+
+
+async def test_a_poor_fit_streams_its_nrmse(client: httpx.AsyncClient) -> None:
+    figures = [p for e, p in await _frames(client, CRITICAL_ASK) if e == "figure"]
+    current = next(f for f in figures if f["name"] == "chiller_current_residual")
+    assert current["model_nrmse"] == 48.03
+    assert current["poor_fit"] is True
+
+
+async def test_degraded_mode_is_announced_rather_than_silent(
+    client: httpx.AsyncClient,
+) -> None:
+    """No transcript is recorded, so the prose layer is unavailable and the turn falls back
+    to the deterministic answer. CONTEXT.md 13: say so rather than substituting quietly."""
+    audits = [p for e, p in await _frames(client, CRITICAL_ASK) if e == "audit"]
+    degraded = [a for a in audits if a.get("degraded")]
+    assert degraded, "a fallback must be announced"
+    assert "assembled deterministically" in degraded[0]["detail"]
+
+
+async def test_the_deterministic_answer_passes_its_own_audits(
+    client: httpx.AsyncClient,
+) -> None:
+    """The fallback is held to the same honesty bar as the model's prose. If it were not,
+    the degraded path would be the easy way to ship an ungrounded number."""
+    audits = [p for e, p in await _frames(client, CRITICAL_ASK) if e == "audit"]
+    graded = next(a for a in audits if "findings" in a)
+    assert graded["passed"], [f for f in graded["findings"] if not f["passed"]]
+    assert graded["replaced"] is False
+
+
+async def test_an_out_of_scope_question_is_blocked_without_evidence(
+    client: httpx.AsyncClient,
+) -> None:
+    frames = await _frames(client, {"question": "what is the capital of France"})
+    states = [p for e, p in frames if e == "state"]
+    assert states[0]["state"] == "BLOCKED"
+    assert not any(e == "figure" for e, _ in frames)
+    assert states[0]["used_model"] is False
+
+
+async def test_a_greeting_is_answered_without_touching_telemetry(
+    client: httpx.AsyncClient,
+) -> None:
+    frames = await _frames(client, {"question": "hi"})
+    route = next(p for e, p in frames if e == "route")
+    assert route["skill"] == "converse"
+    assert route["layer"].startswith("1.5")
+    assert not any(e == "figure" for e, _ in frames)
+
+
+async def test_a_control_command_is_refused_in_the_stream(
+    client: httpx.AsyncClient,
+) -> None:
+    frames = await _frames(client, {"question": "turn off chiller 1"})
+    states = [p for e, p in frames if e == "state"]
+    assert states[0]["state"] == "BLOCKED"
+    text = " ".join(p["text"] for e, p in frames if e == "token")
+    assert "read-only" in text
+
+
+async def test_an_unscoreable_asset_refuses_with_no_diagnosis(
+    client: httpx.AsyncClient,
+) -> None:
+    """Ten of twelve. The refusal names why rather than returning an empty answer."""
+    frames = await _frames(
+        client,
+        {
+            "question": "why was cooling tower 1 flagged?",
+            "equipment_key": "cooling_tower_1",
+            "fault_label": "HIGH_HEAD_AMBIGUOUS",
+            "day": "2026-04-15",
+        },
+    )
+    states = [p for e, p in frames if e == "state"]
+    assert states[0]["state"] == "NO_DIAGNOSIS"
+
+
+async def test_a_refusal_uses_its_own_frame_not_answer_text(
+    client: httpx.AsyncClient,
+) -> None:
+    """D-015. Rendering a refusal in the same typeface as a confident answer softens it by
+    presentation, and on this data the refusal is the modal outcome."""
+    frames = await _frames(
+        client,
+        {
+            "question": "why was cooling tower 1 flagged?",
+            "equipment_key": "cooling_tower_1",
+            "fault_label": "HIGH_HEAD_AMBIGUOUS",
+            "day": "2026-04-15",
+        },
+    )
+    refusals = [p for e, p in frames if e == "no_diagnosis"]
+    assert refusals, "NO_DIAGNOSIS must emit its own frame"
+    assert refusals[0]["failed_gates"]
+    assert all(g["what_would_change_it"] for g in refusals[0]["failed_gates"])
