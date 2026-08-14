@@ -1,0 +1,100 @@
+# Infrastructure only. The application runs on the host.
+#
+# That split is inherited: the sibling has no Dockerfile anywhere, every compose service is a
+# pulled image, and the back end and front end run natively. Q43 is about changing that for
+# on-premise delivery; it does not block the demonstration.
+#
+# Ports are deliberately not the defaults. Thermynx already occupies 5442 and 6380 on the same
+# machine, and both may run at once. MySQL is NOT here — the plant snapshot is the existing
+# platform's, on the host at 3307. Ollama is not here either: one box, one roster, one card.
+#
+# The observability profile is opt-in there because of memory on a 48 GB box. Here it should be
+# ON, because the honesty counters are part of what is being demonstrated:
+#
+#     docker compose --profile obs up -d
+#
+# No redis-commander. It is pinned to :latest and it is a database UI — it should not exist in
+# anything shared.
+
+name: synex
+
+services:
+  postgres:
+    # pgvector in the Postgres image, so both stores the architecture needs are one container.
+    image: pgvector/pgvector:pg16
+    container_name: synex-postgres
+    environment:
+      POSTGRES_USER: synex
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: synex
+    ports:
+      - "5443:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/02-postgres-extensions.sql:/docker-entrypoint-initdb.d/02-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U synex -d synex"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: synex-redis
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: synex-prometheus
+    profiles: [obs]
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: synex-grafana
+    profiles: [obs]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: dev
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3101:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: synex-loki
+    profiles: [obs]
+    command: ["-config.file=/etc/loki/loki.yml"]
+    ports:
+      - "3102:3100"
+    volumes:
+      - ./monitoring/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  grafana_data:
+  loki_data:
