@@ -24,6 +24,7 @@ from app.analytics.gates import (
 )
 from app.api.deps import CurrentScope, Repo, current_scope, get_repo
 from app.config import Settings, get_settings
+from app.db.plant import RESIDUAL_COLUMNS
 from app.domain import equipment as eq
 from app.domain.answer import AnswerState
 from app.services import audit_log
@@ -233,6 +234,67 @@ async def episode_pack(
         # Exactly what the language model will be handed in M1.4, verbatim. Returned so a
         # person can read it — the strongest form of "the model only ever saw this".
         "prompt_data": pack.to_prompt_data(),
+    }
+
+
+@router.get("/episodes/{episode_id}/series")
+async def episode_series(
+    episode_id: str,
+    repo: Repo = Depends(get_repo),
+    scope: CurrentScope = Depends(current_scope),
+    residual: str = Query(
+        "chiller_current_residual",
+        description="Which residual column to plot. Defaults to the current residual.",
+    ),
+) -> dict:
+    """One residual over one day, with **that asset's own band** to draw it against.
+
+    The band is the entire point. A residual plotted against zero would show chiller 1's
+    ordinary running as a large excursion — its healthy median is −25.645 and its band never
+    approaches zero. Plotted against its own band, the same series reads correctly, and the
+    reader can see what "high for this asset" means rather than being told.
+
+    Nulls are returned as `null` and counted separately. A gap in a line is ambiguous —
+    it reads as "no fault here" — so the caller renders the count as a stated absence.
+    """
+    if not scope.allows(Capability.VIEW_RESIDUALS):
+        raise HTTPException(403, "this persona may not view residuals")
+
+    equipment_key, label, day_str = _parse_episode_id(episode_id)
+    day = date.fromisoformat(day_str)
+    rows = await repo.residuals_for_day(
+        equipment_key, datetime(day.year, day.month, day.day)
+    )
+    if residual not in RESIDUAL_COLUMNS:
+        raise HTTPException(400, f"unknown residual {residual!r}")
+
+    bands = await repo.residual_bands()
+    band = next(
+        (b for b in bands if b.equipment_key == equipment_key and b.residual_name == residual),
+        None,
+    )
+    points = [
+        {"t": r.slot_time.isoformat(), "v": r.residuals.get(residual), "label": r.fault_label}
+        for r in rows
+    ]
+    return {
+        "episode_id": episode_id,
+        "equipment_key": equipment_key,
+        "fault_label": label,
+        "residual": residual,
+        "day": day.isoformat(),
+        "points": points,
+        "null_count": sum(1 for p in points if p["v"] is None),
+        "band": (
+            {"median": band.median, "lower": band.lower, "upper": band.upper}
+            if band
+            else None
+        ),
+        "band_absent_reason": (
+            None
+            if band
+            else "no reference band is fitted for this asset, so nothing can be judged"
+        ),
     }
 
 

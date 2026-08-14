@@ -44,6 +44,10 @@
   --dur: 170ms;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --radius: 10px;
+
+  /* The Graylinx mark, lifted from the mock. One token, swapped per theme, so the
+     wordmark never sits at the wrong contrast against its own bar. */
+  --logo: url('/graylinx-light.png');
 }
 
 [data-theme='dark'],
@@ -68,6 +72,7 @@
   --refusal: #83abff;
   --refusal-bg: #303541;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.35);
+  --logo: url('/graylinx-dark.png');
 }
 
 @media (prefers-color-scheme: dark) {
@@ -92,6 +97,7 @@
     --refusal: #83abff;
     --refusal-bg: #303541;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.35);
+    --logo: url('/graylinx-dark.png');
   }
 }
 
@@ -149,11 +155,16 @@ body {
    span — the heading level is a promise to a screen reader, not a type choice. */
 .topbar .brand {
   margin: 0;
-  font-weight: 650;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-  font-size: 16px;
-  line-height: 1.2;
+  width: 132px;
+  height: 30px;
+  background: var(--logo) left center / contain no-repeat;
+  /* The heading keeps its text for assistive technology and clips it visually. An
+     image-only h1 with no accessible name is the classic logo accessibility failure —
+     the page would announce its title as nothing at all. */
+  text-indent: -9999px;
+  overflow: hidden;
+  white-space: nowrap;
+  flex: none;
 }
 
 .topbar .tagline {
@@ -561,4 +572,107 @@ ul.reasons li {
   main.content {
     padding: 16px 14px 80px;
   }
+}
+
+/* ── chart ─────────────────────────────────────────────────────────────────────
+ *
+ * Thin marks, hairline recessive chrome, and the band as a surface tint rather than a
+ * series colour. `--chart-out` is the reserved status step: it marks a reading outside
+ * this asset's own band, and it is never the only signal — those points are also larger,
+ * ringed against the surface, and the extreme one is directly labelled.
+ */
+
+:root {
+  --chart-line: #0020b0;
+  --chart-out: #87000e;
+  --chart-band: #e7efff;
+  --chart-grid: #ccd3e1;
+}
+
+[data-theme='dark'] {
+  --chart-line: #83abff;
+  --chart-out: #ee8f86;
+  --chart-band: #364157;
+  --chart-grid: #49505f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --chart-line: #83abff;
+    --chart-out: #ee8f86;
+    --chart-band: #364157;
+    --chart-grid: #49505f;
+  }
+}
+
+figure.chart {
+  margin: 0;
+}
+
+figure.chart figcaption {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.chart-band {
+  fill: var(--chart-band);
+}
+
+.chart-median {
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+}
+
+.chart-axis {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--chart-line);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-dot {
+  fill: var(--chart-line);
+}
+
+.chart-dot.out {
+  fill: var(--chart-out);
+}
+
+/* A 2px surface ring rather than a border drawn around the mark — spent on the one point
+   that is directly labelled, not on every out-of-band reading. */
+.chart-dot.extreme {
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.chart-crosshair {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+
+.chart-tick,
+.chart-annot {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  /* Text wears text tokens, never the series colour. */
+  fill: var(--muted);
+}
+
+.chart-annot.out {
+  fill: var(--chart-out);
+  font-weight: 650;
 }

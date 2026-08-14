@@ -25,7 +25,17 @@ import {
   IconShield,
   IconUsers,
 } from '@/components/Icons';
+import { ResidualChart, type SeriesBand, type SeriesPoint } from '@/components/ResidualChart';
 import { useTurn } from '@/lib/useTurn';
+
+interface Series {
+  points: SeriesPoint[];
+  band: SeriesBand | null;
+  band_absent_reason: string | null;
+  residual: string;
+  equipment_key: string;
+  null_count: number;
+}
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'http://127.0.0.1:8001';
 
@@ -51,6 +61,7 @@ export default function Page() {
   const [persona, setPersona] = useState<string>('reliability_engineer');
   const [question, setQuestion] = useState('Why was this flagged, and what does the evidence support?');
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [series, setSeries] = useState<Series | null>(null);
 
   useEffect(() => {
     fetch(`${API}/api/v1/episodes`, { credentials: 'include' })
@@ -67,6 +78,20 @@ export default function Page() {
       })
       .catch((e: Error) => setLoadError(e.message));
   }, []);
+
+  // The chart loads with the episode rather than with the turn: the evidence exists whether
+  // or not anyone has asked a question about it, and showing it first is the same argument
+  // the frame order makes — the answer is a reading of the evidence, not the other way round.
+  useEffect(() => {
+    if (!selected) return;
+    setSeries(null);
+    fetch(`${API}/api/v1/episodes/${encodeURIComponent(selected.id)}/series`, {
+      credentials: 'include',
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setSeries)
+      .catch(() => setSeries(null));
+  }, [selected]);
 
   const switchPersona = useCallback(async (key: string) => {
     await fetch(`${API}/api/v1/personas/${key}`, { method: 'POST', credentials: 'include' });
@@ -174,6 +199,20 @@ export default function Page() {
             ))}
           </div>
         </section>
+
+        {series && series.points.length > 0 && (
+          <section className="card" aria-labelledby="ch">
+            <h2 id="ch">Residual against this asset&apos;s own band</h2>
+            <ResidualChart
+              points={series.points}
+              band={series.band}
+              bandAbsentReason={series.band_absent_reason}
+              residual={series.residual}
+              equipment={series.equipment_key.replace('_', ' ')}
+              nullCount={series.null_count}
+            />
+          </section>
+        )}
 
         <div className="composer">
           <label htmlFor="q" className="sr-only" style={{ position: 'absolute', left: -9999 }}>
