@@ -54,6 +54,19 @@ ignore = [
     "RUF003",
 ]
 
+[lint.flake8-bugbear]
+# B008 forbids function calls in argument defaults, which is exactly how FastAPI declares a
+# dependency. Listing them here is the targeted fix — a blanket `ignore = ["B008"]` would
+# also excuse the real bug the rule exists for, a mutable or time-dependent default
+# evaluated once at import.
+extend-immutable-calls = [
+    "fastapi.Cookie",
+    "fastapi.Depends",
+    "fastapi.Header",
+    "fastapi.Path",
+    "fastapi.Query",
+]
+
 [lint.per-file-ignores]
 # Tests assert on privates deliberately, and the gate tests import `verify` *after*
 # `_load_verify_code()` has put `scripts/` on the path — so that import cannot be

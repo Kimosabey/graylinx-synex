@@ -24,3 +24,9 @@ pydantic-settings==2.5.2
 # dependency. Q42.
 aiomysql==0.2.0
 PyMySQL==1.1.3
+
+# The HTTP surface. FastAPI because the OpenAPI schema it generates is what the `contracts`
+# CI job will diff the committed TypeScript types against — the check that kills the whole
+# class of "the web renders a field the API stopped sending".
+fastapi==0.115.0
+uvicorn==0.47.0
