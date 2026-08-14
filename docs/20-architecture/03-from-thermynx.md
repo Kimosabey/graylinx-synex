@@ -279,6 +279,14 @@ mechanism. Raised as **Q45**.
 
 ## 6. Code structure — the rule that makes tests run without a GPU
 
+> **Amended 2026-08-13 by D-012.** The table below describes the *containment* correctly and
+> we keep all of it. Its **direction** is wrong, and measurably so: it places the
+> probabilistic layer below services and analytics, which a LangGraph orchestrator cannot
+> satisfy — it must call services and read analytics. The sibling's own import graph shows
+> fifteen back-edges and one cycle against this rule. Synex enforces
+> **`api → agents → services → analytics · retrieval → llm · prompts → db → domain`**
+> with import-linter contracts. See `04-code-layering.md`.
+
 A strict one-way dependency; nothing below reaches up.
 
 | | Layer | Contains |

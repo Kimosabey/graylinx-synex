@@ -87,8 +87,8 @@ question S1 is closed.
 
 | ID | Feature | What it does | Primary user | Engine | Pri | Phase |
 |---|---|---|---|---|---|---|
-| F1 | Six normal-operation models per chiller | DP, SP, DT, Power, Compressor Amps, Condenser Leaving. | Reliability | `ML` | P0 | MVP |
-| F2 | Residual computation | Actual minus predicted, with a validity flag per residual. | Reliability | `ML` | P0 | MVP |
+| F1 | The normal-operation models per chiller | DP, SP, DT, Power, Compressor Amps, Condenser Leaving — **read from the platform, not fitted here** (D-014). Five are fitted; compressor power is absent and is shown as a stated absence. | Reliability | `SW` | P0 | MVP |
+| F2 | Residual access, with validity | Actual minus predicted, with a validity flag per residual, read from `gla_model_residuals_wc`. Synex consumes; it never re-detects (constraint 34). | Reliability | `SW` | P0 | MVP |
 | F3 | Operating gates | Running steady, load above floor, flows valid, no setpoint change. | Reliability | `R` | P0 | MVP |
 | F4 | Persistence and volatility test | Separates a fault from a passing disturbance. | Reliability | `R` | P0 | MVP |
 | F5 | Deterministic isolation path | Power to head to water side vs refrigerant side to a single class. | Reliability | `R` | P0 | MVP |

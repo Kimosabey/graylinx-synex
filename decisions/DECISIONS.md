@@ -130,6 +130,108 @@ chapters. If it is not in this file, it did not happen.
 - **Affects:** `CONTEXT.md` §9a. No feature IDs.
 - **Reflected in docs:** yes.
 
+### D-012 — The build is a monorepo, and the layering direction in `03-from-thermynx.md` §6 is corrected
+- **Date:** 2026-08-13
+- **Decided by:** Harshan
+- **Closes:** nothing
+- **Decision, part one:** application code lives in this repository beside the
+  documentation — `backend/`, `frontend/`, `infra/` alongside `docs/`, `mvp/`, `decisions/`,
+  `brand/` and `scripts/`. None of the existing directories move, because `netlify.toml`,
+  `scripts/build_site.sh` and `CLAUDE.md` §3 all depend on where they are. The Python
+  package is named `app`, so the ported modules need no import edits.
+- **Decision, part two:** the one-way dependency order is
+  **`api → agents → services → analytics · retrieval → llm · prompts → db → domain`**,
+  enforced by import-linter contracts from the first commit.
+- **Reason the chapter needed correcting:** §6 lists the order as
+  `api → services → analytics → ai → db → domain`, placing the probabilistic layer
+  *below* services and analytics. That cannot be satisfied. A LangGraph agent loop is an
+  orchestrator: it must call services and read analytics. The sibling implementation's own
+  import graph proves it — `ai → services` seven times, `ai → analytics` five times, and
+  `services → ai` seven times. Fifteen back-edges and one cycle, in a codebase whose
+  docstrings state the rule. **An unsatisfiable contract is not a strict rule, it is a rule
+  that gets switched off in week two.**
+- **What the chapter got right, and keeps:** the *containment*. `analytics` and `domain`
+  stay pure — no DB, no LLM, no I/O. `services` holds no prompts and makes no model calls.
+  Everything probabilistic stays in one place so it can be gated. A prompt change still
+  cannot alter a state transition, because the transition validator never sees a prompt.
+  Those three consequences are why the rule exists and all three survive the reorder.
+- **Three moves eliminate every back-edge rather than excusing it:**
+  - `assess_checks` and `escalation_target` drop to `domain`. Both are pure and LLM-free, so
+    they are domain constants rather than AI — and escalation must work with the GPU off.
+  - the tool-payload sanitiser drops to `domain/untrusted_text.py`. Treating text as hostile
+    is a domain rule, and `RC4` technician findings need it from the services side anyway.
+  - RAG becomes its own `retrieval` layer below services.
+- **Affects:** `docs/20-architecture/03-from-thermynx.md` §6 amended,
+  `docs/20-architecture/04-code-layering.md` (new), `backend/importlinter.ini`. No feature IDs.
+- **Reflected in docs:** yes.
+
+### D-013 — A persona switcher with no authentication closes `Q41` for the MVP without answering it
+- **Date:** 2026-08-13
+- **Decided by:** Harshan
+- **Closes:** `Q41`, for the MVP only. The production route stays open
+- **Decision:** identity for the demonstration is a persona switcher with **no
+  authentication**, labelled in the interface as a demonstration affordance. Every audit row
+  carries `identity_kind='demonstration_persona'`, so it cannot silently become production
+  auth. Scope is recomputed every turn and never inherited.
+- **Reason:** `G1` is `P0` and four personas need a scope, so the Control Plane cannot be
+  built without *an* identity — but `gl_user`, `gl_role` and `gl_access` hold zero rows in
+  the snapshot and there is no authentication library in the inherited back end. The
+  switcher lets `G1`'s scoping logic be built and tested against a known identity while
+  leaving all three real routes open. `AUTH_MODE` carries them as
+  `dev_jwt` / `signed_header` / `oidc`.
+- **Reason it is recorded rather than assumed:** under schedule pressure this is exactly the
+  kind of question that gets answered by default. Writing it down makes the default a
+  decision.
+- **Affects:** `backend/app/api/deps.py`, `backend/app/services/control_plane.py`,
+  `frontend` persona control. Constrains `G1`–`G4`, `U3`, `U6`–`U8`.
+- **Reflected in docs:** yes.
+
+### D-014 — The FDD models are consumed, not built, and `F1`/`F2` are reclassified
+- **Date:** 2026-08-13
+- **Decided by:** Harshan
+- **Closes:** nothing. It removes `Q1`, `Q2` and `Q14` from the build critical path
+- **Decision:** Synex reads the residuals the Graylinx platform already computes. The six
+  regression models are not code we own. `gla_model_residuals_wc`,
+  `gla_residual_stats_wc`, `gla_equipment_model_params` and `gla_equipment_model_metrics`
+  hold the residuals, the per-asset bands, the coefficients and the fit quality, so `F1` and
+  `F2` are a read-only repository layer plus one band function. **Their `Engine` column is
+  `SW`, not `ML`.**
+- **Reason:** inherited constraint 34 says never re-detect. Re-fitting models we do not own,
+  against a snapshot, to reproduce labels that already exist would add a second source of
+  truth for the one thing the separation law says must have exactly one.
+- **What this changes about sequencing:** `mvp/MVP-SCOPE.md`'s Stage 1 depends on `Q1`, `Q2`
+  and `Q14`, and everything else queues behind it — which draws the whole build behind a site
+  survey. But the residuals and labels exist on the measured window regardless of whether
+  condenser flow is measured at a *future* site. **`Q1` blocks a claim about a target site,
+  not a build step**, and the designed response to it — `NO_DIAGNOSIS` plus a data-quality
+  work order — is already the behaviour.
+- **What it does not change:** five models are fitted per chiller, not six.
+  `compressor_power_residual` is 100% NULL, and it is rendered as a stated absence rather
+  than omitted, because omission is the failure constraint 14 exists to prevent.
+- **Affects:** `mvp/FEATURE-REGISTER.md` (`F1`, `F2` engine), `mvp/MVP-SCOPE.md` sequencing,
+  `backend/app/db/telemetry.py`, `backend/app/analytics/`.
+- **Reflected in docs:** yes.
+
+### D-015 — `NO_DIAGNOSIS` gets its own streaming frame
+- **Date:** 2026-08-13
+- **Decided by:** Harshan
+- **Closes:** nothing
+- **Decision:** the streaming contract carries a `no_diagnosis` frame of its own, holding the
+  gate that failed, the reason, and what would change the answer. It renders as a distinct
+  state rather than as answer text, and it increments `no_diagnosis_total{gate}` from the same
+  place.
+- **Reason:** the inherited implementation emits a refusal as a `token` frame, so the
+  interface cannot style a refusal differently from an answer. `CLAUDE.md` §2.6 says
+  `NO_DIAGNOSIS` is a feature and must never be softened — and rendering a refusal in the same
+  typeface as a confident answer **softens it by presentation**. On this data the refusal is
+  also the modal outcome: 5,309 slots against 674 faulted ones. A state that common needs to
+  look deliberate.
+- **Consequence worth naming:** the frontend port is therefore not a pure port. Recording it
+  so the divergence is a decision rather than a surprise during the port.
+- **Affects:** `backend/app/agents/sse_frames.py`, `frontend` turn rendering,
+  `scripts/verify_sse_contract.py`. Constrains `C7`, `F8`.
+- **Reflected in docs:** yes.
+
 ### D-011 — One problem must not become five work orders: `RC19`
 - **Date:** 2026-08-11
 - **Decided by:** Harshan
