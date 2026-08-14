@@ -27,7 +27,7 @@ from app.config import Settings, get_settings
 from app.db.plant import RESIDUAL_COLUMNS
 from app.domain import equipment as eq
 from app.domain.answer import AnswerState
-from app.services import audit_log
+from app.services import audit_log, work_orders
 from app.services.control_plane import Capability, audit_row
 from app.services.evidence import build_pack, window_for
 
@@ -296,6 +296,57 @@ async def episode_series(
             else "no reference band is fitted for this asset, so nothing can be judged"
         ),
     }
+
+
+@router.get("/episodes/{episode_id}/work-order")
+async def episode_work_order(
+    episode_id: str,
+    repo: Repo = Depends(get_repo),
+    scope: CurrentScope = Depends(current_scope),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """`W2`, `W3`, `W4` — the work order this episode would raise, with its evidence.
+
+    A draft. Nothing is persisted, because Synex's own state belongs in PostgreSQL and that
+    is not wired yet — and a work order nobody can be dispatched against should not look
+    like one they can. `is_draft` says so in the payload.
+    """
+    if not scope.allows(Capability.VIEW_FAULTS):
+        raise HTTPException(403, "this persona may not view faults")
+
+    equipment_key, label, day_str = _parse_episode_id(episode_id)
+    day = date.fromisoformat(day_str)
+    rows = await repo.residuals_for_day(equipment_key, datetime(day.year, day.month, day.day))
+    matching = tuple(r for r in rows if r.fault_label == label)
+    bands = await repo.residual_bands()
+    band = next(
+        (b for b in bands if b.equipment_key == equipment_key
+         and b.residual_name == "chiller_current_residual"),
+        None,
+    )
+    signal_values = dict(matching[-1].residuals) if matching else {}
+    gates = GateOutcome(
+        (
+            check_running(signal_values),
+            check_band_available(band, _display(equipment_key)),
+            check_measured_window(
+                matching[-1].slot_time if matching else datetime(day.year, day.month, day.day),
+                settings.synex_measured_window_end,
+            ),
+        )
+    )
+    others = tuple(sorted({r.fault_label for r in rows if r.is_fault and r.fault_label != label}))
+    pack = build_pack(
+        rows=matching,
+        bands=bands,
+        gates=gates,
+        window=window_for(day, settings.synex_measured_window_end),
+        equipment_key=equipment_key,
+        fault_label=label,
+        day=day,
+        other_labels_same_day=others,
+    )
+    return work_orders.draft_from_pack(pack).as_dict()
 
 
 def _parse_episode_id(episode_id: str) -> tuple[str, str, str]:

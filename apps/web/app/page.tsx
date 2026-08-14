@@ -24,6 +24,20 @@ import {
 import { ResidualChart, type SeriesBand, type SeriesPoint } from '@/components/ResidualChart';
 import { useTurn } from '@/lib/useTurn';
 
+interface WorkOrder {
+  is_draft: boolean;
+  title: string;
+  priority: {
+    band: string;
+    is_complete: boolean;
+    explanation: string;
+    missing: { input: string; why: string }[];
+  };
+  evidence: { kind: string; text: string; source: string }[];
+  cannot_close_until: string[];
+  warnings: string[];
+}
+
 interface Series {
   points: SeriesPoint[];
   band: SeriesBand | null;
@@ -50,6 +64,7 @@ export default function Page() {
   const [question, setQuestion] = useState('Why was this flagged, and what does the evidence support?');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [series, setSeries] = useState<Series | null>(null);
+  const [wo, setWo] = useState<WorkOrder | null>(null);
 
   useEffect(() => {
     fetch(`${API}/api/v1/episodes`, { credentials: 'include' })
@@ -79,6 +94,17 @@ export default function Page() {
       .then((r) => (r.ok ? r.json() : null))
       .then(setSeries)
       .catch(() => setSeries(null));
+
+    // W2 · W3 · W4 — the job this episode would raise, with its evidence already attached.
+    // Loaded alongside the chart because the whole point of the pillar is that the
+    // justification travels with the work rather than being looked up afterwards.
+    setWo(null);
+    fetch(`${API}/api/v1/episodes/${encodeURIComponent(selected.id)}/work-order`, {
+      credentials: 'include',
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setWo)
+      .catch(() => setWo(null));
   }, [selected]);
 
   const send = useCallback(() => {
@@ -138,6 +164,57 @@ export default function Page() {
               equipment={series.equipment_key.replace('_', ' ')}
               nullCount={series.null_count}
             />
+          </section>
+        )}
+
+        {wo && (
+          <section className="card" aria-labelledby="wo">
+            <h2 id="wo">
+              Work order — draft{' '}
+              <span className="pri" data-band={wo.priority.band}>
+                {wo.priority.band}
+              </span>
+            </h2>
+            <p className="answer measure">{wo.title}</p>
+
+            <p className="muted">
+              <strong>How this priority was reached:</strong> {wo.priority.explanation}
+            </p>
+
+            {!wo.priority.is_complete && wo.priority.missing.length > 0 && (
+              <ul className="reasons">
+                {wo.priority.missing.map((m) => (
+                  <li key={m.input}>
+                    <code className="mono">{m.input}</code> — {m.why}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {wo.warnings.map((w) => (
+              <p className="muted" key={w}>
+                {w}
+              </p>
+            ))}
+
+            <p className="muted">
+              <strong>Cannot close until:</strong>
+            </p>
+            <ul className="reasons">
+              {wo.cannot_close_until.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+
+            <p className="muted">
+              {wo.evidence.length} pieces of evidence travel with this job — residuals with
+              their bands and fit, every gate result, and the provenance of each unusable
+              signal. Nothing is fetched again by whoever opens it.
+            </p>
+            <p className="muted">
+              This is a <strong>draft</strong>. Nothing is persisted: Synex&apos;s own state
+              belongs in PostgreSQL and that is not wired yet.
+            </p>
           </section>
         )}
 
