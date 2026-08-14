@@ -30,7 +30,7 @@ export function FigureView({ figure, index = 0 }: { figure: FigureFrame; index?:
       style={{ animationDelay: `${Math.min(index, 8) * 28}ms` }}
     >
       <span className="name">{figure.name}</span>
-      <span>
+      <span className="readout">
         {/* figure.text, never figure.value — the back end formatted it once, already. */}
         <span className="value">{figure.text}</span>
 

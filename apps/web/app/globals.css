@@ -111,6 +111,26 @@ body {
   padding: 0;
 }
 
+/* The scrollbar is hidden, not the scrolling.
+ *
+ * Wheel, trackpad, keyboard (space, PageDown, arrows) and programmatic scrolling all still
+ * work — only the visual gutter is suppressed, so the page does not shift by ~15px when
+ * content grows past the fold and the layout stays put through a streaming answer.
+ *
+ * The trade-off, stated rather than hidden: a scrollbar is also an affordance that says
+ * "there is more below". The evidence and answer cards are tall enough that the content
+ * itself signals it, and the keyboard path is untouched, so nothing becomes unreachable. */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 body {
   background: var(--page);
   color: var(--body);
@@ -172,6 +192,26 @@ body {
   font-size: 13px;
 }
 
+/* Constraint 15: every artefact states its data window. The topbar is the one place it is
+   true of the whole screen rather than of one card, and it also fills a bar that was
+   mostly empty — a real fact rather than decoration to balance the layout. */
+.topbar .window {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  padding: 3px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .topbar .tagline,
+  .topbar .window {
+    display: none;
+  }
+}
+
 .topbar .spacer {
   flex: 1;
 }
@@ -229,8 +269,20 @@ body {
 }
 
 main.content {
-  padding: 22px 24px 90px;
+  padding: 22px 28px 90px;
   max-width: 1120px;
+}
+
+/* Line length. The answer was running the full 1120px — about 140 characters a line,
+   against a 60-75 guideline. Nothing else in this pass changes readability as much: prose
+   is the one thing here a person reads left-to-right rather than scans. Evidence and
+   provenance stay wide, because they are scanned in columns. */
+/* Applied to the prose *card*, not just the text inside it. Constraining the text alone
+   left a full-width box half empty, which reads as a layout bug rather than as a decision.
+   A narrower card gives the prose a column of its own and sets up a deliberate rhythm
+   against the wide evidence and provenance tables, which are scanned rather than read. */
+.measure {
+  max-width: 74ch;
 }
 
 /* ── cards ─────────────────────────────────────────────────────────────────── */
@@ -256,6 +308,19 @@ main.content {
 .card.sunken {
   background: var(--sunken);
   box-shadow: none;
+}
+
+/* Supporting material: present, complete, and clearly subordinate to the evidence and the
+   answer. Denser type, flat surface, no shadow. */
+.card.supporting {
+  background: var(--sunken);
+  box-shadow: none;
+  padding: 13px 16px;
+  font-size: 13.5px;
+}
+
+.card.supporting > h2 {
+  margin-bottom: 8px;
 }
 
 .row {
@@ -352,8 +417,11 @@ main.content {
 /* ── figures — the only place a number is rendered ─────────────────────────── */
 
 .figure {
-  display: flex;
-  justify-content: space-between;
+  /* A grid, not space-between. With space-between every value floats to a different
+     position and a column of six residuals cannot be compared down the page — which is
+     the one thing a reader does with them. */
+  display: grid;
+  grid-template-columns: minmax(11rem, 22ch) 1fr;
   align-items: baseline;
   gap: 14px;
   padding: 9px 0;
@@ -388,12 +456,21 @@ main.content {
   color: var(--muted);
 }
 
+.figure .readout {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .figure .value {
   font-family: var(--mono);
   /* Tabular figures so a column of residuals does not jitter as digits change. */
   font-variant-numeric: tabular-nums;
   font-size: 14px;
   color: var(--body);
+  min-width: 6ch;
+  text-align: right;
 }
 
 /* An absence is a statement, not missing data. Words, muted, italic — never 0, never —. */
@@ -492,7 +569,8 @@ main.content {
 
 .answer {
   white-space: pre-wrap;
-  font-size: 15px;
+  font-size: 15.5px;
+  line-height: 1.62;
   color: var(--body);
 }
 
@@ -675,4 +753,142 @@ figure.chart figcaption {
 .chart-annot.out {
   fill: var(--chart-out);
   font-weight: 650;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * Depth and feedback
+ *
+ * **Gradients here are depth, never decoration.** Every one is a 2-4% lightness shift
+ * between two steps already in the palette — enough to give a surface a top edge and stop
+ * the page reading as flat card-on-card, not enough to become a colour in its own right. A
+ * saturated wash would fight the one thing on screen that is allowed to be loud, which is a
+ * residual sitting outside its band.
+ *
+ * **Motion stays inside the budget.** 170ms on the mock's own easing, one or two elements
+ * per interaction, and `prefers-reduced-motion` already collapses every transition to 1ms
+ * further up this file.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.topbar {
+  /* A top-lit bar. The gradient is what separates it from the page without a heavier rule. */
+  background: linear-gradient(180deg, var(--card) 0%, var(--sunken) 100%);
+  backdrop-filter: saturate(1.4) blur(6px);
+}
+
+.rail {
+  background: linear-gradient(180deg, var(--sunken) 0%, var(--page) 70%);
+}
+
+.card {
+  background: linear-gradient(180deg, var(--card) 0%, var(--card) 62%, var(--sunken) 100%);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.card.supporting,
+.card.sunken {
+  background: linear-gradient(180deg, var(--sunken) 0%, var(--page) 100%);
+}
+
+.card.refusal {
+  background: linear-gradient(180deg, var(--refusal-bg) 0%, var(--card) 100%);
+}
+
+/* ── press and hover feedback ─────────────────────────────────────────────── */
+
+.chip,
+.navitem,
+.btn {
+  /* Feedback must land inside ~100ms; the transform restores on release. Transform and
+     opacity only — animating width or height would reflow the whole episode row. */
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    transform 90ms var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.chip:active,
+.navitem:active,
+.btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.chip:hover {
+  border-color: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 32, 176, 0.09);
+}
+
+.chip[aria-pressed='true'] {
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hover) 100%);
+  box-shadow: 0 1px 4px rgba(0, 32, 176, 0.28);
+}
+
+.btn {
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hover) 100%);
+  box-shadow: 0 1px 3px rgba(0, 32, 176, 0.22);
+}
+
+.btn:hover:not(:disabled) {
+  box-shadow: 0 2px 8px rgba(0, 32, 176, 0.3);
+}
+
+.navitem[aria-current='page'] {
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hover) 100%);
+  box-shadow: 0 1px 4px rgba(0, 32, 176, 0.24);
+}
+
+.navitem:disabled {
+  /* Reduced emphasis plus no pointer, so a surface that arrives in M2 reads as "not yet"
+     rather than as broken. The title attribute says which milestone. */
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── the figure row ───────────────────────────────────────────────────────── */
+
+.figure {
+  transition: background var(--dur) var(--ease);
+  border-radius: 6px;
+  padding-inline: 8px;
+  margin-inline: -8px;
+}
+
+.figure:hover {
+  background: var(--thead);
+}
+
+/* ── the state pill ───────────────────────────────────────────────────────── */
+
+.state-pill {
+  background: linear-gradient(180deg, var(--thead) 0%, var(--sunken) 100%);
+  border: 1px solid var(--rule);
+}
+
+/* ── the answer arrives, rather than appearing ────────────────────────────── */
+
+.card.measure,
+.card.refusal {
+  animation: settle 220ms var(--ease) both;
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.measure,
+  .card.refusal {
+    animation: none;
+  }
+  .chip:active,
+  .navitem:active,
+  .btn:active:not(:disabled) {
+    transform: none;
+  }
 }

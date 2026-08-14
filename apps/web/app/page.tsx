@@ -122,6 +122,9 @@ export default function Page() {
         <h1 className="brand">Graylinx Synex</h1>
         <span className="tagline">Intelligent Operations, Connected by AI.</span>
         <span className="spacer" />
+        <span className="window" title="Real readings stop here; everything after is simulated">
+          measured to 2026-06-23 11:50
+        </span>
         {turn.state && (
           <span className="state-line">
             <span className="state-pill" data-state={turn.state.state}>
@@ -232,7 +235,7 @@ export default function Page() {
         </div>
 
         {turn.route && (
-          <section className="card" aria-labelledby="rt">
+          <section className="card supporting" aria-labelledby="rt">
             <h2 id="rt">Route</h2>
             <p className="mono">
               {turn.route.skill} · {turn.route.layer} · {turn.route.reason} ·{' '}
@@ -251,7 +254,7 @@ export default function Page() {
         )}
 
         {turn.evidence && (
-          <section className="card sunken" aria-labelledby="pv">
+          <section className="card supporting" aria-labelledby="pv">
             <h2 id="pv">Provenance</h2>
             <p className="muted">
               Window {turn.evidence.window.start} to {turn.evidence.window.end} · severity{' '}
@@ -277,7 +280,7 @@ export default function Page() {
             on this data; colouring it like an error would soften it in the other
             direction, making an answer look like a bug. */}
         {refused && turn.refusal && (
-          <section className="card refusal" aria-labelledby="nd">
+          <section className="card refusal measure" aria-labelledby="nd">
             <h2 id="nd">
               <IconHalt className="ico" style={{ verticalAlign: '-2px', marginRight: 6 }} />
               No diagnosis — a result, not a failure
@@ -294,14 +297,14 @@ export default function Page() {
         )}
 
         {turn.text && !refused && (
-          <section className="card" aria-labelledby="an">
+          <section className="card measure" aria-labelledby="an">
             <h2 id="an">Answer</h2>
             <p className="answer">{turn.text}</p>
           </section>
         )}
 
         {(graded || notes.length > 0) && (
-          <section className="card" aria-labelledby="hc">
+          <section className="card supporting" aria-labelledby="hc">
             <h2 id="hc">Honesty checks</h2>
             {graded?.findings?.map((f) => (
               <div className="audit" key={f.audit} data-passed={f.passed}>
