@@ -13,3 +13,14 @@
 
 pydantic==2.13.4
 pydantic-settings==2.5.2
+
+# The plant snapshot, read-only. `aiomysql` because the API is async and a synchronous
+# driver would block the event loop on every telemetry read; `PyMySQL` is its protocol
+# layer rather than a second choice.
+#
+# Only `app.db` may import either — contract 6 in `importlinter.ini`, enforced in CI. The
+# connection uses `synex_plant_ro`, which holds SELECT on `graylinx_synex` and nothing else,
+# so "Synex never writes to the plant" is a property of the database rather than of this
+# dependency. Q42.
+aiomysql==0.2.0
+PyMySQL==1.1.3

@@ -22,8 +22,21 @@ a pure function.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
+
+# The band itself is plant data and lives in `domain`, because `app.db` must construct one
+# and `db` sits below `analytics` in the layering law — see `app/domain/bands.py`. Re-exported
+# here so callers that judge a residual import one module rather than two.
+from app.domain.bands import ResidualBand
+
+__all__ = [
+    "BandVerdict",
+    "ResidualBand",
+    "bands_by_key",
+    "classify",
+    "find_band",
+    "is_judgeable",
+]
 
 
 class BandVerdict(StrEnum):
@@ -43,33 +56,6 @@ class BandVerdict(StrEnum):
 
     Ten of twelve equipment tables land here, and that is the correct answer rather than a
     gap. It is the difference between two machines and twelve."""
-
-
-@dataclass(frozen=True)
-class ResidualBand:
-    """One asset's healthy distribution for one residual, from `gla_residual_stats_wc`.
-
-    Ten rows exist — five residuals for each of the two chillers — and nothing else. The
-    bounds are the healthy spread, not a fault threshold: crossing one means *unusual for
-    this machine*, which is the input to the isolation path rather than a verdict.
-    """
-
-    equipment_key: str
-    residual_name: str
-    median: float
-    lower: float
-    upper: float
-
-    def __post_init__(self) -> None:
-        if self.lower > self.upper:
-            raise ValueError(
-                f"band for {self.equipment_key}/{self.residual_name} has lower "
-                f"{self.lower} above upper {self.upper}"
-            )
-
-    @property
-    def width(self) -> float:
-        return self.upper - self.lower
 
 
 def classify(value: float | None, band: ResidualBand | None) -> BandVerdict:

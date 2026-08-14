@@ -47,55 +47,86 @@ from app.analytics.gates import (
 
 # ── the bands ───────────────────────────────────────────────────────────────────
 
-# Chiller 1's current residual sits at a median of −25.645 in NORMAL operation. The band is
-# built around that median so the test states the real shape: −25 is ordinary here.
+# ── the real bands, read from gla_residual_stats_wc on 2026-08-14 ───────────────
+#
+# These are the measured `robust_low`/`med`/`robust_high` values, not illustrative ones. An
+# earlier version of this file invented plausible bounds and asserted the claim the plan
+# makes — that −25 is normal on chiller 1 and abnormal on chiller 2. **Querying the database
+# disproved it:** chiller 2's robust band is [−60.700, 0.680], so −25 is comfortably normal
+# on both machines. The invented band had made a false statement look verified, which is the
+# exact failure this whole test file exists to catch, one level up.
+#
+# The real numbers make the point better, because the two bands barely overlap in *shape*:
+# chiller 1's is narrow (mad 2.93) and sits well below zero; chiller 2's is four times wider
+# (mad 6.90) and reaches past zero.
+
+# Keyed by the *domain* equipment key, not the table name. `gla_residual_stats_wc` stores
+# `chiller_1_normalized`; the repository maps that to `chiller_1` on the way in, so database
+# naming never reaches the analytics layer.
 CHILLER_1_CURRENT = ResidualBand(
     equipment_key="chiller_1",
-    residual_name="Chiller_Current",
+    residual_name="chiller_current_residual",
     median=-25.645,
-    lower=-40.0,
-    upper=-12.0,
+    lower=-38.677,
+    upper=-12.613,
 )
 
-# Chiller 2's healthy distribution for the same signal sits elsewhere entirely. Same signal,
-# same fleet, two machines — which is why models are fitted per asset and never per fleet.
 CHILLER_2_CURRENT = ResidualBand(
     equipment_key="chiller_2",
-    residual_name="Chiller_Current",
-    median=-2.0,
-    lower=-6.0,
-    upper=6.0,
+    residual_name="chiller_current_residual",
+    median=-30.010,
+    lower=-60.700,
+    upper=0.680,
 )
 
 
-def test_the_same_residual_is_normal_on_one_machine_and_abnormal_on_the_other() -> None:
-    """`F15`, entire. This is the test that permanently catches the compare-to-zero bug.
+def test_zero_is_abnormal_on_one_machine_and_normal_on_the_other() -> None:
+    """`F15`, entire. The test that permanently catches the compare-to-zero bug.
 
-    A reading of −25 is ordinary operation on chiller 1 and far outside chiller 2's healthy
-    spread. Any implementation that compares against zero, or against a shared threshold,
-    fails here — and would otherwise have ranked chiller 1's normal running as a fault.
-    """
-    assert classify(-25.0, CHILLER_1_CURRENT) is BandVerdict.NORMAL
-    assert classify(-25.0, CHILLER_2_CURRENT) is BandVerdict.LOW
+    A residual of exactly **0.0** — the value a naive implementation treats as perfectly
+    healthy — is `HIGH` on chiller 1, whose healthy band is [−38.677, −12.613] and never
+    comes near zero. On chiller 2 the same 0.0 is ordinary.
 
-
-def test_zero_is_not_the_reference() -> None:
-    """A residual of exactly 0.0 is *abnormal* on chiller 1, whose healthy median is −25.645.
-
-    Stated explicitly because "0 means healthy" is the intuition this whole module exists to
-    defeat, and it is a very natural one.
+    So the naive reading is not merely imprecise; it is **inverted** on one of the two
+    machines. Any implementation comparing against zero fails here.
     """
     assert classify(0.0, CHILLER_1_CURRENT) is BandVerdict.HIGH
     assert classify(0.0, CHILLER_2_CURRENT) is BandVerdict.NORMAL
 
 
+def test_a_large_negative_residual_is_a_fault_on_one_machine_and_routine_on_the_other() -> None:
+    """−50 sits outside chiller 1's band and inside chiller 2's. Same signal, same fleet.
+
+    This is why models are fitted per asset and never per fleet, and why a shared threshold
+    would raise on chiller 1 while missing the identical reading on chiller 2.
+    """
+    assert classify(-50.0, CHILLER_1_CURRENT) is BandVerdict.LOW
+    assert classify(-50.0, CHILLER_2_CURRENT) is BandVerdict.NORMAL
+
+
+def test_minus_25_is_normal_on_both_machines() -> None:
+    """The measured correction to the plan's example, kept as a test so it cannot regress.
+
+    The plan states −25 is abnormal on chiller 2. It is not: the robust band reaches
+    0.680. Asserting the true behaviour here stops someone "fixing" the code to match the
+    document — the document is the thing that was wrong.
+    """
+    assert classify(-25.0, CHILLER_1_CURRENT) is BandVerdict.NORMAL
+    assert classify(-25.0, CHILLER_2_CURRENT) is BandVerdict.NORMAL
+
+
+def test_the_two_bands_have_very_different_widths() -> None:
+    """mad 2.93 against 6.90. A single tolerance cannot serve both."""
+    assert CHILLER_1_CURRENT.width < CHILLER_2_CURRENT.width / 2
+
+
 @pytest.mark.parametrize(
     "value,expected",
     [
-        (-40.0, BandVerdict.NORMAL),   # on the lower bound — inclusive
-        (-12.0, BandVerdict.NORMAL),   # on the upper bound — inclusive
-        (-40.1, BandVerdict.LOW),
-        (-11.9, BandVerdict.HIGH),
+        (-38.677, BandVerdict.NORMAL),   # on the lower bound — inclusive
+        (-12.613, BandVerdict.NORMAL),   # on the upper bound — inclusive
+        (-38.678, BandVerdict.LOW),
+        (-12.612, BandVerdict.HIGH),
     ],
 )
 def test_the_band_edges_are_inclusive(value: float, expected: BandVerdict) -> None:
@@ -121,12 +152,16 @@ def test_a_band_cannot_be_inverted() -> None:
 
 
 def test_find_band_does_not_cross_assets() -> None:
-    """Scoring chiller 1 against chiller 2's band would look entirely plausible in output,
-    and be wrong by twenty points."""
+    """Scoring chiller 1 against chiller 2's band would look entirely plausible in output.
+
+    And it would be wrong in the worst direction: chiller 2's band is nearly four times
+    wider, so chiller 1 readings would be judged normal almost everywhere.
+    """
     bands = (CHILLER_1_CURRENT, CHILLER_2_CURRENT)
-    assert find_band(bands, "chiller_1", "Chiller_Current") is CHILLER_1_CURRENT
-    assert find_band(bands, "cooling_tower_1", "Chiller_Current") is None
-    assert find_band(bands, "chiller_1", "Suction_Pres") is None
+    assert find_band(bands, "chiller_1", "chiller_current_residual") is CHILLER_1_CURRENT
+    assert find_band(bands, "chiller_2", "chiller_current_residual") is CHILLER_2_CURRENT
+    assert find_band(bands, "cooling_tower_1", "chiller_current_residual") is None
+    assert find_band(bands, "chiller_1", "Sp_residual") is None
 
 
 # ── gate 1: off, not broken ─────────────────────────────────────────────────────
