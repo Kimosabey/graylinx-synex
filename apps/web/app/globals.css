@@ -1,0 +1,280 @@
+/*
+ * Synex tokens.
+ *
+ * The brand colour is #0020B0 — decision D-001, and `scripts/palette.py` derives the whole
+ * system from it and audits every rendered pair against WCAG 2.2 AA. The values below are
+ * from that derivation rather than picked by eye.
+ *
+ * Three semantic colours carry meaning the product depends on, so they are named for what
+ * they mean rather than for what they look like:
+ *   --refusal   a NO_DIAGNOSIS. Deliberately NOT red — a refusal is a correct outcome, not
+ *               an error, and colouring it like a failure is the presentational softening
+ *               D-015 exists to prevent, in reverse.
+ *   --caution   a badged figure: the model behind it fits poorly.
+ *   --absent    a stated absence. Muted, never a dash and never zero.
+ */
+
+:root {
+  --brand: #0020b0;
+  --brand-ink: #ffffff;
+  --brand-tint: #eef1ff;
+
+  --bg: #ffffff;
+  --surface: #f7f8fb;
+  --border: #d8dce8;
+  --ink: #10142a;
+  --ink-muted: #565d7a;
+
+  --refusal: #6b4bd6;
+  --refusal-bg: #f3efff;
+  --caution: #8a5a00;
+  --caution-bg: #fff6e5;
+  --absent: #6b7189;
+  --ok: #0a6b3d;
+
+  --radius: 10px;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c0f1c;
+    --surface: #151a2c;
+    --border: #2a3150;
+    --ink: #eef0f7;
+    --ink-muted: #a3aac4;
+    --brand-tint: #171f4a;
+    --refusal: #b9a5ff;
+    --refusal-bg: #221a44;
+    --caution: #f0c069;
+    --caution-bg: #33280f;
+    --absent: #98a0bb;
+    --ok: #6ede9f;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+}
+
+header.masthead {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+header.masthead h1 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+header.masthead p {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+
+.chip {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.composer input {
+  flex: 1;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+.composer button {
+  padding: 11px 20px;
+  border: 1px solid var(--brand);
+  border-radius: var(--radius);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 600;
+}
+
+.composer button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── figures ─────────────────────────────────────────────────────────────── */
+
+.figure {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 14px;
+}
+
+.figure:last-child {
+  border-bottom: 0;
+}
+
+.figure .name {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.figure .value {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.figure[data-absent='true'] .value {
+  color: var(--absent);
+  font-style: italic;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.badge.caution {
+  background: var(--caution-bg);
+  color: var(--caution);
+}
+
+.badge.verdict {
+  background: var(--brand-tint);
+  color: var(--brand);
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge.verdict {
+    color: var(--ink);
+  }
+}
+
+/* ── the refusal, styled to look deliberate ──────────────────────────────── */
+
+.refusal {
+  border: 1px solid var(--refusal);
+  background: var(--refusal-bg);
+  border-left-width: 4px;
+}
+
+.refusal h2 {
+  color: var(--refusal);
+}
+
+.gate {
+  margin: 10px 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--refusal);
+  font-size: 14px;
+}
+
+.gate .what {
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.answer {
+  white-space: pre-wrap;
+  font-size: 15px;
+}
+
+.audit {
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.audit .mark {
+  font-family: var(--mono);
+}
+
+.audit[data-passed='true'] .mark {
+  color: var(--ok);
+}
+
+.audit[data-passed='false'] .mark {
+  color: var(--caution);
+}
+
+.muted {
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 12px;
+}

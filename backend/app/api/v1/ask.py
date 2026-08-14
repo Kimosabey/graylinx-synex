@@ -113,7 +113,11 @@ async def _stream(
         pack=pack,
         client=client,
         mode_override=body.mode,
-        last_equipment=body.last_equipment,
+        # Selecting an episode **is** naming the equipment. Without this the scope gate
+        # refuses the most natural question in the product — "why was this flagged?" — which
+        # contains no machine name and no domain word, because the machine is on screen and
+        # already selected. The router reads text only, so the selection has to reach it.
+        last_equipment=body.last_equipment or body.equipment_key,
     )
 
     # ── route ───────────────────────────────────────────────────────────────────
