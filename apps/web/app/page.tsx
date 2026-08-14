@@ -38,6 +38,29 @@ interface WorkOrder {
   warnings: string[];
 }
 
+interface CaseItem {
+  id: string;
+  text: string;
+  capability: string;
+  blocking: boolean;
+  is_sample: boolean;
+  stored_reading: string | null;
+  finding: string;
+}
+
+interface CaseView {
+  state: string;
+  content_is_sample: boolean;
+  content_note: string;
+  unreviewed_in_library: number;
+  may_advance: boolean;
+  advance_reason: string;
+  operator_can_start: boolean;
+  viewing_as: string;
+  my_items: CaseItem[];
+  for_others: { id: string; text: string; capability: string }[];
+}
+
 interface VerificationResult {
   outcome: 'PASS' | 'FAIL' | 'UNKNOWN';
   reason: string;
@@ -77,6 +100,8 @@ export default function Page() {
   const [series, setSeries] = useState<Series | null>(null);
   const [wo, setWo] = useState<WorkOrder | null>(null);
   const [ver, setVer] = useState<VerificationResult | null>(null);
+  const [kase, setKase] = useState<CaseView | null>(null);
+  const [viewAs, setViewAs] = useState('technician');
 
   useEffect(() => {
     fetch(`${API}/api/v1/episodes`, { credentials: 'include' })
@@ -130,6 +155,20 @@ export default function Page() {
       .then(setVer)
       .catch(() => setVer(null));
   }, [selected]);
+
+  // RC1 · RC3 · RC5 — the case this episode seeds, rendered for one capability. Reloaded
+  // when the capability changes, because the task list is *theirs*, not everyone's.
+  useEffect(() => {
+    if (!selected) return;
+    setKase(null);
+    fetch(
+      `${API}/api/v1/episodes/${encodeURIComponent(selected.id)}/case?viewing_as=${viewAs}`,
+      { credentials: 'include' },
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setKase)
+      .catch(() => setKase(null));
+  }, [selected, viewAs]);
 
   const send = useCallback(() => {
     if (!question.trim()) return;
@@ -278,6 +317,73 @@ export default function Page() {
                   : 'This does not close the work order. UNKNOWN is a permitted outcome, and an open job is the correct state when the data cannot decide.'}
               {ver.blocked_by && ` A PASS is unreachable until ${ver.blocked_by} is answered.`}
             </p>
+          </section>
+        )}
+
+        {kase && (
+          <section className="card" aria-labelledby="case">
+            <h2 id="case">
+              Case — {kase.state.replace('_', ' ')}{' '}
+              <span className="pri" data-band={kase.may_advance ? 'PASS' : 'FAIL'}>
+                {kase.may_advance ? 'can advance' : 'blocked'}
+              </span>
+            </h2>
+
+            {/* The content is sample; the mechanism is not. Stated before the list, not
+                after it, because a caveat under a checklist is read second. */}
+            {kase.content_is_sample && (
+              <p className="muted">
+                <strong>Sample content.</strong> {kase.content_note}
+              </p>
+            )}
+
+            <div className="row" role="group" aria-label="View the checklist as">
+              {['operator', 'technician', 'supervisor'].map((c) => (
+                <button
+                  key={c}
+                  className="chip"
+                  aria-pressed={viewAs === c}
+                  onClick={() => setViewAs(c)}
+                >
+                  as {c}
+                </button>
+              ))}
+            </div>
+
+            <ul className="checks">
+              {kase.my_items.map((i) => (
+                <li key={i.id} className={`row-check ${i.finding}`} data-blocking={i.blocking}>
+                  <span className="mark" aria-hidden="true">
+                    {i.finding === 'measured' ? '✓' : i.finding === 'cannot_check' ? '–' : '○'}
+                  </span>
+                  <span>
+                    {i.text}
+                    {i.blocking && <span className="badge warn">blocking</span>}
+                    {i.stored_reading && (
+                      <span className="stored">{i.stored_reading}</span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="muted">{kase.advance_reason}</p>
+
+            {kase.for_others.length > 0 && (
+              <p className="muted">
+                {kase.for_others.length} check(s) belong to another capability and are not in
+                this list — a check you cannot perform collapses out of your tasks rather
+                than greying out at you. They stay on the case:{' '}
+                {kase.for_others.map((i) => i.capability).join(', ')}.
+              </p>
+            )}
+
+            {!kase.operator_can_start && (
+              <p className="muted">
+                Nothing here can be started by an operator, which should not happen — every
+                fault class must leave one check somebody at the machine can do.
+              </p>
+            )}
           </section>
         )}
 

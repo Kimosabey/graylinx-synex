@@ -145,6 +145,15 @@ class ChecklistItem:
     """**Defaults to False.** No refrigeration engineer has reviewed the 131-item library,
     and an unreviewed instruction directing physical work is the risk constraint 1 names."""
 
+    is_sample: bool = False
+    """**Illustrative content, not the curated library.**
+
+    A separate flag from `sme_reviewed` on purpose. To show a case screen at all, some item
+    has to be visible — and setting `sme_reviewed=True` on invented content to achieve that
+    would be claiming a refrigeration engineer had read it. This flag lets sample content be
+    visible *and* labelled as sample, so the mechanism can be demonstrated without the
+    content pretending to be the library."""
+
     stored_reading: str | None = None
     """`RC18`. Where the database already holds a value this item asks for, it is offered as
     *"the stored reading was X — confirm at the panel"*. A stored value is not a gauge

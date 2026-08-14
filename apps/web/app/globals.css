@@ -1036,3 +1036,58 @@ a.navitem {
   color: var(--ok);
   border-color: var(--ok);
 }
+
+/* ── checklist rows — done / open / cannot check ────────────────────────────
+ *
+ * The mock's `row done / row open / row cant` vocabulary. The third state is the one that
+ * matters: *cannot check* is not *not applicable*, and six "N/A" presses once opened a
+ * blocking gate with zero evidence behind it. It is marked with a dash rather than a cross
+ * — the person could not do it, which is not the same as the check failing.
+ */
+
+ul.checks {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+}
+
+.row-check {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14px;
+}
+
+.row-check:last-child {
+  border-bottom: 0;
+}
+
+.row-check .mark {
+  font-family: var(--mono);
+  flex: none;
+  width: 14px;
+  color: var(--muted);
+}
+
+.row-check.measured .mark {
+  color: var(--ok);
+}
+
+.row-check.cannot_check .mark {
+  color: var(--warn);
+}
+
+.row-check[data-blocking='true'] {
+  background: var(--sunken);
+  border-radius: 6px;
+}
+
+.stored {
+  display: block;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-style: italic;
+  margin-top: 2px;
+}

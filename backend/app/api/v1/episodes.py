@@ -29,6 +29,7 @@ from app.db.plant import RESIDUAL_COLUMNS
 from app.domain import equipment as eq
 from app.domain.answer import AnswerState
 from app.services import audit_log, work_orders
+from app.services import cases as case_svc
 from app.services.control_plane import Capability, audit_row
 from app.services.evidence import build_pack, window_for
 
@@ -410,6 +411,64 @@ async def episode_verification(
         "post_work_was_diagnosable": diagnosable,
         **result.as_dict(),
     }
+
+
+@router.get("/episodes/{episode_id}/case")
+async def episode_case(
+    episode_id: str,
+    repo: Repo = Depends(get_repo),
+    scope: CurrentScope = Depends(current_scope),
+    settings: Settings = Depends(get_settings),
+    viewing_as: str = Query(
+        "technician",
+        description=(
+            "Which capability's task list to render. RC3 — the list is theirs, "
+            "not everyone's."
+        ),
+    ),
+) -> dict:
+    """`RC1`, `RC3`, `RC5` — the case this episode seeds, for one capability.
+
+    The checklist content is **sample content and says so**. The curated library is 124
+    items and none has been reviewed by a refrigeration engineer, so no real item is shown
+    to anyone — the mechanism is real, the content is illustrative, and the response
+    carries `content_is_sample` so no surface can render it as the library.
+    """
+    if not scope.allows(Capability.VIEW_FAULTS):
+        raise HTTPException(403, "this persona may not view faults")
+
+    try:
+        capability = case_svc.Capability(viewing_as)
+    except ValueError as exc:
+        raise HTTPException(400, f"unknown capability {viewing_as!r}") from exc
+
+    equipment_key, label, day_str = _parse_episode_id(episode_id)
+    day = date.fromisoformat(day_str)
+    rows = await repo.residuals_for_day(equipment_key, datetime(day.year, day.month, day.day))
+    matching = tuple(r for r in rows if r.fault_label == label)
+    bands = await repo.residual_bands()
+    band = next(
+        (b for b in bands if b.equipment_key == equipment_key
+         and b.residual_name == "chiller_current_residual"),
+        None,
+    )
+    signal_values = dict(matching[-1].residuals) if matching else {}
+    gates = GateOutcome(
+        (
+            check_running(signal_values),
+            check_band_available(band, _display(equipment_key)),
+        )
+    )
+    pack = build_pack(
+        rows=matching,
+        bands=bands,
+        gates=gates,
+        window=window_for(day, settings.synex_measured_window_end),
+        equipment_key=equipment_key,
+        fault_label=label,
+        day=day,
+    )
+    return case_svc.case_from_pack(pack).as_dict(capability)
 
 
 def _parse_episode_id(episode_id: str) -> tuple[str, str, str]:
