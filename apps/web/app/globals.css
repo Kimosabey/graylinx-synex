@@ -1,56 +1,97 @@
 /*
- * Synex tokens.
+ * Synex — the token sheet, lifted from `mvp/mock.html`.
  *
- * The brand colour is #0020B0 — decision D-001, and `scripts/palette.py` derives the whole
- * system from it and audits every rendered pair against WCAG 2.2 AA. The values below are
- * from that derivation rather than picked by eye.
+ * These are not new values. The mock is the designed shell and its `:root` block is the
+ * source of truth; copying it exactly is what stops the product growing a second design
+ * language. Brand `#0020B0` is decision D-001, and `scripts/palette.py` derives and audits
+ * the whole system from it — 72 of 72 rendered pairs pass WCAG 2.2 AA in both themes, body
+ * text at AAA.
  *
- * Three semantic colours carry meaning the product depends on, so they are named for what
- * they mean rather than for what they look like:
- *   --refusal   a NO_DIAGNOSIS. Deliberately NOT red — a refusal is a correct outcome, not
- *               an error, and colouring it like a failure is the presentational softening
- *               D-015 exists to prevent, in reverse.
- *   --caution   a badged figure: the model behind it fits poorly.
- *   --absent    a stated absence. Muted, never a dash and never zero.
+ * **The one token the mock does not have is `--refusal`.** A `NO_DIAGNOSIS` is not a
+ * warning and not a failure: it is a correct result, and the most common one on this data —
+ * 5,309 slots against 674 faulted. So it must not borrow `--stop` (red) or `--warn`
+ * (amber). It gets the accent, a solid left rule and a calm surface: visually *deliberate*,
+ * which is the presentational half of D-015. Colouring a refusal like an error would soften
+ * it in the opposite direction — it would read as a bug rather than as an answer.
  */
 
 :root {
-  --brand: #0020b0;
-  --brand-ink: #ffffff;
-  --brand-tint: #eef1ff;
+  --page: #ffffff;
+  --card: #ffffff;
+  --sunken: #f6f9ff;
+  --thead: #e7efff;
+  --rule: #ccd3e1;
+  --rule-strong: #848a95;
+  --ink: #001993;
+  --body: #2f333d;
+  --muted: #565b65;
+  --accent: #0020b0;
+  --accent-hover: #001993;
+  --on-accent: #ffffff;
+  --focus: #1145d9;
+  --ok: #005428;
+  --warn: #472d00;
+  --warn-bg: #fff6e5;
+  --stop: #87000e;
 
-  --bg: #ffffff;
-  --surface: #f7f8fb;
-  --border: #d8dce8;
-  --ink: #10142a;
-  --ink-muted: #565d7a;
+  /* NO_DIAGNOSIS. Deliberate, never alarming. See the note above. */
+  --refusal: #0020b0;
+  --refusal-bg: #f6f9ff;
 
-  --refusal: #6b4bd6;
-  --refusal-bg: #f3efff;
-  --caution: #8a5a00;
-  --caution-bg: #fff6e5;
-  --absent: #6b7189;
-  --ok: #0a6b3d;
-
+  --shadow: 0 1px 2px rgba(0, 32, 176, 0.07), 0 10px 30px rgba(0, 32, 176, 0.07);
+  --font: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  --dur: 170ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --radius: 10px;
-  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+[data-theme='dark'],
+:root:has(#theme-dark:checked) {
+  --page: #1c2029;
+  --card: #252a34;
+  --sunken: #303541;
+  --thead: #364157;
+  --rule: #49505f;
+  --rule-strong: #828c9e;
+  --ink: #cfdfff;
+  --body: #e9effb;
+  --muted: #a7adb8;
+  --accent: #83abff;
+  --accent-hover: #aec9ff;
+  --on-accent: #0d1528;
+  --focus: #83abff;
+  --ok: #74c18a;
+  --warn: #daa14a;
+  --warn-bg: #33280f;
+  --stop: #ee8f86;
+  --refusal: #83abff;
+  --refusal-bg: #303541;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0c0f1c;
-    --surface: #151a2c;
-    --border: #2a3150;
-    --ink: #eef0f7;
-    --ink-muted: #a3aac4;
-    --brand-tint: #171f4a;
-    --refusal: #b9a5ff;
-    --refusal-bg: #221a44;
-    --caution: #f0c069;
-    --caution-bg: #33280f;
-    --absent: #98a0bb;
-    --ok: #6ede9f;
+  :root:not([data-theme='light']) {
+    --page: #1c2029;
+    --card: #252a34;
+    --sunken: #303541;
+    --thead: #364157;
+    --rule: #49505f;
+    --rule-strong: #828c9e;
+    --ink: #cfdfff;
+    --body: #e9effb;
+    --muted: #a7adb8;
+    --accent: #83abff;
+    --accent-hover: #aec9ff;
+    --on-accent: #0d1528;
+    --focus: #83abff;
+    --ok: #74c18a;
+    --warn: #daa14a;
+    --warn-bg: #33280f;
+    --stop: #ee8f86;
+    --refusal: #83abff;
+    --refusal-bg: #303541;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -58,42 +99,152 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--sans);
+  padding: 0;
+}
+
+body {
+  background: var(--page);
+  color: var(--body);
+  font-family: var(--font);
+  font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
+/* Focus is never removed, only restyled. Removing the ring is the single most common
+   accessibility regression, and keyboard users lose the interface entirely. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-.wrap {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 24px 20px 80px;
+/* ── shell: topbar + rail + main, as the mock lays it out ─────────────────── */
+
+.shell {
+  display: grid;
+  grid-template-columns: 216px 1fr;
+  min-height: 100dvh;
 }
 
-header.masthead {
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 16px;
-  margin-bottom: 20px;
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 56px;
+  background: var(--card);
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  z-index: 40;
 }
 
-header.masthead h1 {
+/* An `h1` sized to sit in a 56px bar. The browser default (2em, block, big margins) would
+   push the topbar apart, so it is reset here rather than the element being downgraded to a
+   span — the heading level is a promise to a screen reader, not a type choice. */
+.topbar .brand {
   margin: 0;
-  font-size: 20px;
+  font-weight: 650;
+  color: var(--ink);
   letter-spacing: -0.01em;
+  font-size: 16px;
+  line-height: 1.2;
 }
 
-header.masthead p {
-  margin: 4px 0 0;
-  color: var(--ink-muted);
+.topbar .tagline {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.topbar .spacer {
+  flex: 1;
+}
+
+.rail {
+  background: var(--sunken);
+  border-right: 1px solid var(--rule);
+  padding: 16px 12px;
+}
+
+.railgroup {
+  margin-bottom: 18px;
+}
+
+.railgroup h2 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.navitem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--body);
+  font: inherit;
   font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.navitem:hover {
+  background: var(--thead);
+}
+
+.navitem[aria-current='page'] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.navitem .ico {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+main.content {
+  padding: 22px 24px 90px;
+  max-width: 1120px;
+}
+
+/* ── cards ─────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.card > h2 {
+  margin: 0 0 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.card.sunken {
+  background: var(--sunken);
+  box-shadow: none;
 }
 
 .row {
@@ -103,178 +254,311 @@ header.masthead p {
   align-items: center;
 }
 
-.card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  padding: 14px 16px;
-  margin-bottom: 14px;
-}
-
-.card h2 {
-  margin: 0 0 10px;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-muted);
-}
+/* ── chips ─────────────────────────────────────────────────────────────────── */
 
 .chip {
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--ink);
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--body);
   border-radius: 999px;
-  padding: 5px 12px;
+  padding: 6px 13px;
   font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  /* 44px minimum touch target without making the pill visually huge. */
+  min-height: 32px;
+  position: relative;
+}
+
+.chip::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
+.chip:hover {
+  border-color: var(--accent);
 }
 
 .chip[aria-pressed='true'] {
-  background: var(--brand);
-  border-color: var(--brand);
-  color: var(--brand-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 550;
 }
+
+/* ── composer ──────────────────────────────────────────────────────────────── */
 
 .composer {
   display: flex;
-  gap: 8px;
-  margin: 16px 0;
+  gap: 10px;
+  margin: 18px 0;
 }
 
 .composer input {
   flex: 1;
-  padding: 11px 13px;
-  border: 1px solid var(--border);
+  padding: 12px 14px;
+  min-height: 44px;
+  border: 1px solid var(--rule);
   border-radius: var(--radius);
-  background: var(--bg);
-  color: var(--ink);
+  background: var(--card);
+  color: var(--body);
   font: inherit;
 }
 
-.composer button {
-  padding: 11px 20px;
-  border: 1px solid var(--brand);
-  border-radius: var(--radius);
-  background: var(--brand);
-  color: var(--brand-ink);
-  font-weight: 600;
+.composer input::placeholder {
+  color: var(--muted);
 }
 
-.composer button[disabled] {
-  opacity: 0.5;
+.btn {
+  padding: 12px 22px;
+  min-height: 44px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* ── figures ─────────────────────────────────────────────────────────────── */
+.btn.ghost {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* ── figures — the only place a number is rendered ─────────────────────────── */
 
 .figure {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  padding: 7px 0;
-  border-bottom: 1px dashed var(--border);
-  font-size: 14px;
+  align-items: baseline;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rule);
+  /* Entering, ease-out, 170ms. One staggered reveal per view, which is the budget. */
+  animation: rise var(--dur) var(--ease) both;
 }
 
 .figure:last-child {
   border-bottom: 0;
 }
 
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .figure {
+    animation: none;
+  }
+  * {
+    transition-duration: 1ms !important;
+  }
+}
+
 .figure .name {
   font-family: var(--mono);
-  font-size: 13px;
-  color: var(--ink-muted);
+  font-size: 12.5px;
+  color: var(--muted);
 }
 
 .figure .value {
   font-family: var(--mono);
+  /* Tabular figures so a column of residuals does not jitter as digits change. */
   font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: var(--body);
 }
 
+/* An absence is a statement, not missing data. Words, muted, italic — never 0, never —. */
 .figure[data-absent='true'] .value {
-  color: var(--absent);
+  color: var(--muted);
   font-style: italic;
+  font-family: var(--font);
 }
 
 .badge {
   display: inline-block;
   border-radius: 999px;
-  padding: 1px 8px;
+  padding: 2px 9px;
   font-size: 11px;
-  font-weight: 600;
-  margin-left: 6px;
+  font-weight: 650;
+  margin-left: 8px;
   white-space: nowrap;
-}
-
-.badge.caution {
-  background: var(--caution-bg);
-  color: var(--caution);
+  border: 1px solid transparent;
 }
 
 .badge.verdict {
-  background: var(--brand-tint);
-  color: var(--brand);
+  background: var(--thead);
+  color: var(--ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  .badge.verdict {
-    color: var(--ink);
-  }
+/* Colour is never the only signal — the badge carries the words "poor fit" and the
+   nRMSE, so a colourblind reader loses nothing. */
+.badge.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
 }
 
-/* ── the refusal, styled to look deliberate ──────────────────────────────── */
+/* ── the refusal — deliberate, not alarming ────────────────────────────────── */
 
 .refusal {
   border: 1px solid var(--refusal);
+  border-left: 4px solid var(--refusal);
   background: var(--refusal-bg);
-  border-left-width: 4px;
 }
 
-.refusal h2 {
+.refusal > h2 {
   color: var(--refusal);
 }
 
 .gate {
-  margin: 10px 0;
-  padding-left: 12px;
-  border-left: 2px solid var(--refusal);
-  font-size: 14px;
+  margin: 12px 0;
+  padding-left: 13px;
+  border-left: 2px solid var(--rule);
+}
+
+.gate strong {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
 }
 
 .gate .what {
-  color: var(--ink-muted);
-  font-size: 13px;
+  color: var(--muted);
+  font-size: 13.5px;
+  margin-top: 2px;
 }
+
+/* ── audits ────────────────────────────────────────────────────────────────── */
+
+.audit {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 5px 0;
+  font-size: 13.5px;
+}
+
+.audit .ico {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+}
+
+.audit[data-passed='true'] .ico {
+  color: var(--ok);
+}
+
+.audit[data-passed='false'] .ico {
+  color: var(--warn);
+}
+
+.audit code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
+/* ── misc ──────────────────────────────────────────────────────────────────── */
 
 .answer {
   white-space: pre-wrap;
   font-size: 15px;
-}
-
-.audit {
-  font-size: 13px;
-  display: flex;
-  gap: 8px;
-  padding: 4px 0;
-}
-
-.audit .mark {
-  font-family: var(--mono);
-}
-
-.audit[data-passed='true'] .mark {
-  color: var(--ok);
-}
-
-.audit[data-passed='false'] .mark {
-  color: var(--caution);
+  color: var(--body);
 }
 
 .muted {
-  color: var(--ink-muted);
-  font-size: 13px;
+  color: var(--muted);
+  font-size: 13.5px;
 }
 
 .mono {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.state-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.state-pill {
+  font-family: var(--mono);
+  font-weight: 650;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--thead);
+  color: var(--ink);
+}
+
+.state-pill[data-state='NO_DIAGNOSIS'] {
+  background: var(--refusal-bg);
+  color: var(--refusal);
+  border: 1px solid var(--refusal);
+}
+
+.state-pill[data-state='BLOCKED'] {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+ul.reasons {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+ul.reasons li {
+  margin-bottom: 5px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+/* ── responsive: the rail folds away below 900px ───────────────────────────── */
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  .rail {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+    padding: 10px 12px;
+  }
+  .railgroup {
+    margin: 0;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .railgroup h2 {
+    display: none;
+  }
+  main.content {
+    padding: 16px 14px 80px;
+  }
 }
