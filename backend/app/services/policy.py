@@ -368,6 +368,13 @@ def _row_for(risk: Risk, holders: dict[str, tuple[str, ...]]) -> ApprovalRow:
     reproduce the engine's table without its rules — the raise-to-`HIGH` on an irreversible
     action, the never-approvable refusal — and a matrix that disagreed with the engine on a
     corner would be worse than no matrix, because a reader would trust it.
+
+    **Three ways a row can name nobody, kept apart.** No approval is required; the required
+    capability is defined and ungranted; the required capability is a name the Control Plane
+    has never defined. They send a reader to three different files, and the repair for the
+    third is not *grant it to somebody* — it is that the approval engine and the capability map
+    have drifted. `domain` imports nothing (contract 4), so the two tables are joined by a
+    plain string and nothing structural keeps them agreeing.
     """
     ruling = rule(Action(name=f"any {risk.value} action", risk=risk), frozenset())
     requirement = _DECISION_REQUIREMENT.get(ruling.decision, Requirement.UNSTATED)
@@ -397,7 +404,36 @@ def _row_for(risk: Risk, holders: dict[str, tuple[str, ...]]) -> ApprovalRow:
             ),
         )
 
-    who_holds = holders.get(ruling.required_capability, ())
+    if requirement is Requirement.UNSTATED:
+        return ApprovalRow(
+            risk=risk,
+            requirement=requirement,
+            required_capability=ruling.required_capability,
+            holders=(),
+            who=(
+                f"The approval engine returned {ruling.decision.value!r} for this level and "
+                f"this matrix has no row shape for it, so what clears it is unstated. Shown as "
+                f"a gap rather than as an ordinary named-capability row: a level nobody has "
+                f"answered for must not read like one somebody has. TBD (Q76)."
+            ),
+        )
+
+    if ruling.required_capability not in holders:
+        return ApprovalRow(
+            risk=risk,
+            requirement=requirement,
+            required_capability=ruling.required_capability,
+            holders=(),
+            who=(
+                f"Cleared by the {ruling.required_capability!r} capability, which the Control "
+                f"Plane does not define at all. No persona can hold it and granting it to "
+                f"somebody is not the repair — the approval engine asks for a capability the "
+                f"capability map has never heard of, and the two have drifted apart. This is a "
+                f"different finding from a capability nobody has been granted."
+            ),
+        )
+
+    who_holds = holders[ruling.required_capability]
     if who_holds:
         named = ", ".join(who_holds)
         who = (
@@ -406,9 +442,10 @@ def _row_for(risk: Risk, holders: dict[str, tuple[str, ...]]) -> ApprovalRow:
         )
     else:
         who = (
-            f"Cleared by the {ruling.required_capability!r} capability, which no persona "
-            f"currently holds. Every action at this level would wait for an approval nobody "
-            f"can give — a gap in the capability map, not a refusal."
+            f"Cleared by the {ruling.required_capability!r} capability, which the Control Plane "
+            f"defines and which no persona currently holds. Every action at this level would "
+            f"wait for an approval nobody can give — an ungranted capability, not a refusal and "
+            f"not a name the capability map is missing."
         )
     return ApprovalRow(
         risk=risk,

@@ -93,9 +93,24 @@ _NUMBER_RE = re.compile(r"-?\d[\d,]*\.?\d*")
 _ALLOWED_BARE = frozenset(str(n) for n in range(0, 13))
 
 
+#: Every character that means "minus" in text a human or a model might write. The evidence
+#: uses U+2212 MINUS SIGN because it is typeset prose; a model replies with an ASCII hyphen.
+#:
+#: **This is the bug this constant exists for, found on the first real box run.** The pack
+#: said `−273.2` and the answer said `-273.2`. The tokeniser read the first as *positive*
+#: 273.2, so the same figure appeared on the two sides as two different numbers and the audit
+#: reported the model had invented one. It had not — it had quoted the evidence correctly,
+#: and the honesty layer withheld a truthful answer.
+#:
+#: That failure is worse than the one the audit guards against. A fabricated number is caught
+#: by a reader who checks; a *false accusation of fabrication* silently suppresses correct
+#: answers, and nobody looks at what was withheld.
+_MINUS_SIGNS = str.maketrans({"−": "-", "–": "-", "—": "-", "‒": "-"})
+
+
 def _numbers_in(text: str) -> list[str]:
     out: list[str] = []
-    for m in _NUMBER_RE.finditer(text):
+    for m in _NUMBER_RE.finditer(text.translate(_MINUS_SIGNS)):
         token = m.group(0).rstrip(".").replace(",", "")
         if not token or token in ("-",):
             continue

@@ -186,6 +186,17 @@ STATUS_SILENCE: dict[SignalStatus, Silence] = {
     SignalStatus.DERIVED: Silence.VALUE_WAS_COMPUTED,
 }
 
+#: What a `SUSPECT` status actually **is** on a given column. One word in `SignalStatus` covers
+#: two different failures, and they send a reader to two different places: `chiller_flow`'s
+#: transmitter *died* on a date this module already knows, which is a work order somebody
+#: raises; `cond_leaving_temp` is *contradicted* by its own circuit, which is `F16` and a
+#: mislabelled column. Without this map `Silence.INSTRUMENT_STOPPED` is defined, ordered and
+#: unreachable, and a dead instrument renders as a contradiction — the exact collapse the
+#: twelve kinds exist to refuse, hidden one layer further down than the enum that names them.
+SUSPECT_SILENCE: dict[str, Silence] = {
+    "chiller_flow": Silence.INSTRUMENT_STOPPED,
+}
+
 #: What each unusable signal costs this page, in the words a reader acts on. Keyed by signal,
 #: because the consequence of a dead condenser-flow meter and a frozen `dpt` are different
 #: questions for different people — and a generic *"unavailable"* would hide both.
@@ -447,9 +458,7 @@ class AssetStory:
                 self._section(
                     "Diagnosed with",
                     [d.render() for d in self.diagnoses],
-                    "Nothing was read for this asset in this window. That is not a clean "
-                    "machine — it is an absence of evidence, and a blind window once read as "
-                    "a clean plant.",
+                    self._nothing_diagnosed(),
                 ),
                 "",
                 self._section(
@@ -467,6 +476,26 @@ class AssetStory:
                     "rather than a property of the machine.",
                 ),
             )
+        )
+
+    def _nothing_diagnosed(self) -> str:
+        """*Nobody looked* and *we looked and found nothing* are two different absences.
+
+        `build` keeps them apart — `episodes=None` against `episodes=()` — and records the
+        first as `Silence.NOTHING_WAS_READ`. This section printed the *nobody looked* sentence
+        for both, so an asset whose history had genuinely been read was told, in words, that it
+        had not been. Neither reading means the machine is clean; they differ in what the reader
+        should do next, which is the whole reason the two are kept apart upstream.
+        """
+        if self.silences_of(Silence.NOTHING_WAS_READ):
+            return (
+                "Nothing was read for this asset in this window. That is not a clean machine — "
+                "it is an absence of evidence, and a blind window once read as a clean plant."
+            )
+        return (
+            "The fault history was read and this asset carried no label in this window. That "
+            "is a different statement from nobody having looked, and it is still not a clean "
+            "machine — a NULL means not diagnosed, never healthy."
         )
 
     def _no_models(self) -> str:
@@ -699,6 +728,8 @@ def _signal_silence(
     silence = STATUS_SILENCE.get(status)
     if silence is None:
         return None
+    if status is SignalStatus.SUSPECT:
+        silence = SUSPECT_SILENCE.get(column, silence)
 
     if column == "cond_flow":
         blocked = blocked_models(equipment_key)
@@ -796,8 +827,14 @@ def _model_silences(equipment_key: str) -> tuple[CannotSay, ...]:
                 )
             )
 
+    # Only on an asset that actually carries that fit. `widest_fit_gap` is a fleet-level fact
+    # and takes no equipment key, so appending it unconditionally put *"no figure on this page
+    # may be compared with the same figure on the other"* onto a condenser pump's page — an
+    # asset with no models, no fits and nothing to compare. That is a claim about a machine
+    # invented from another machine's data, which is the failure this whole section exists to
+    # refuse.
     gap = widest_fit_gap()
-    if gap is not None:
+    if gap is not None and residuals.fit_for(equipment_key, gap.model_name) is not None:
         found.append(
             CannotSay(
                 subject=f"{gap.model_name} across assets",

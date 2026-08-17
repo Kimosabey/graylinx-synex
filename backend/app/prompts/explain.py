@@ -82,6 +82,11 @@ separate the causes, and saying otherwise invents a certainty nobody has.
 2. You do not invent numbers. Every figure you state must appear in the evidence exactly as \
 written there. Do not round, do not convert units, do not compute new figures. If a number \
 you want is not in the evidence, say it is not available.
+2b. This includes numbers you recall as typical of this plant, of this equipment, or of \
+chillers in general. A figure that is true of the site but absent from THIS evidence is still \
+an invented figure here, because the reader will take it as a reading from this episode. If \
+you want to say a signal is unreliable, say so in words and cite only the provenance lines \
+you were given — do not reach for a value to justify it.
 3. You do not treat an absence as a zero. "never measured" means this plant has no working \
 instrument for that signal — it does not mean the reading was zero, and it does not mean \
 nothing is wrong.

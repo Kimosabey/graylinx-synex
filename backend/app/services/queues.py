@@ -357,9 +357,17 @@ class ReliabilityWorkspace:
 
     @property
     def is_empty_queue(self) -> bool:
-        """True when there is nothing to work. **Never read this as a clean plant** — the
-        seeding note is what says whether the emptiness has been checked."""
-        return not self.faults
+        """True when there is nothing to work **and the queue was actually read**.
+
+        A withheld queue is not an empty one. Returning `True` for both would collapse *"we
+        looked and there is nothing"* into *"we could not look"* — the same two-absences
+        failure the seeding note exists to prevent, one field along. **Never read even a true
+        answer as a clean plant**: the seeding note is what says whether the emptiness has
+        been checked against the detector.
+        """
+        return not self.faults and not any(
+            a.section is Section.FAULT_QUEUE for a in self.withheld
+        )
 
 
 def reliability_workspace(
@@ -616,8 +624,29 @@ class SupervisorQueue:
     unreadable: tuple[UnreadableCase, ...]
     order_reason: str = QUEUE_ORDER_REASON
 
+    @property
+    def ageing_was_examined(self) -> bool:
+        """Whether anybody read `RC9`'s verdicts at all.
+
+        Derived from the admission rather than stored, so it cannot drift from the reason the
+        section is missing. `RC9`'s rows are gathered under the blocked section, so when that
+        section is withheld nothing looked at ageing — which is not the same fact as nothing
+        having aged.
+        """
+        return not any(a.section is Section.BLOCKED for a in self.withheld)
+
     def render_ageing(self) -> str:
-        """The two kinds, in two clauses. Never one number."""
+        """The two kinds, in two clauses. Never one number, and never a confident nought.
+
+        A withheld section is reported as *not checked*. Saying "no case has aged" to a reader
+        who was never allowed to look is the twenty-two episodes again: the surface reads calm
+        because nothing was examined, not because nothing is wrong.
+        """
+        if not self.ageing_was_examined:
+            return (
+                "not checked: this identity does not hold 'approve_work', so no case's RC9 "
+                "verdict was read. This is not a statement that nothing has aged."
+            )
         parts = []
         if self.condition_cleared:
             parts.append(
@@ -682,10 +711,11 @@ def supervisor_queue(
                           if row.stale_at is not None and not row.condition_cleared)
 
     if Section.UNCLEARED_CLOSURES in granted:
+        checked = verifications or {}
         closures = tuple(
-            _closure(row, verifications or {})
+            _closure(row, checked)
             for row, state in ordered
-            if state is CaseState.ACTIONED
+            if state is CaseState.ACTIONED and not _has_cleared(row, checked)
         )
 
     return SupervisorQueue(
@@ -750,6 +780,18 @@ def _blocked(row: CaseRecord, state: CaseState, reasons: Mapping[str, str]) -> B
     )
 
 
+def _has_cleared(row: CaseRecord, verifications: Mapping[str, Verification]) -> bool:
+    """Whether verification has cleared this closure, which is what keeps it out of `U7`.
+
+    The section is *closures verification has not cleared*. A `PASS` has cleared, so it does
+    not belong here — and it must not be folded into `VERIFIED_UNKNOWN`, because *the check
+    ran and proved it* and *the check ran and could not decide* are the two answers `V1` is
+    built to keep apart. Collapsing them tells a supervisor a proven repair is undecided.
+    """
+    result = verifications.get(row.seed_key)
+    return result is not None and result.outcome is Outcome.PASS
+
+
 def _closure(row: CaseRecord, verifications: Mapping[str, Verification]) -> ClosureRow:
     """One closure verification has not cleared, and which of the three it is."""
     result = verifications.get(row.seed_key)
@@ -768,6 +810,15 @@ def _closure(row: CaseRecord, verifications: Mapping[str, Verification]) -> Clos
             outcome="no verification has been run against this case",
         )
 
+    if result.outcome is Outcome.PASS:
+        # Unreachable through `supervisor_queue`, which filters these out. Raising rather than
+        # rendering, because there is no honest row for a cleared closure in a section of
+        # uncleared ones — and the previous `else` arm printed "could not decide" over an
+        # outcome field that said PASS, which is a lie a reader has no way to catch.
+        raise ValueError(
+            f"{row.seed_key} verified PASS; a cleared closure is not an uncleared one and has "
+            f"no row in this section"
+        )
     block = (
         ClosureBlock.VERIFIED_FAIL
         if result.outcome is Outcome.FAIL

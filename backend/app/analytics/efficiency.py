@@ -450,6 +450,18 @@ class PeriodEfficiency:
             f"reported rather than used to suppress the figure"
         )
 
+    def _absence_when_empty(self) -> str:
+        """Which absence an unreportable window carries. **Two facts, not one.**
+
+        `coverage` already says it: a window with no slots at all and a window whose every
+        slot was thrown away are different statements, and only one of them is about the
+        instrument. Both returning `NOT_COMPUTABLE` — *"no valid slot in this window to
+        compute from"* — sends a reader to the transmitters when the true answer may be that
+        they asked about a period the snapshot does not cover. The measured window ends
+        2026-06-23 11:50; everything after it is `NO_DATA`, not a collapsed denominator.
+        """
+        return Absence.NOT_COMPUTABLE if self.slot_count else Absence.NO_DATA
+
     def _basis_note(self) -> str:
         if not self.derived_in_figure:
             return ""
@@ -463,14 +475,15 @@ class PeriodEfficiency:
         """The period figure, carrying its exclusions and its coverage — or a stated absence.
 
         Inherited constraint 14: a figure is a value or a stated absence, never both and never
-        neither. A window in which nothing survived exclusion is `NOT_COMPUTABLE`, which
-        renders as words — never `0`, which would read as a machine consuming nothing.
+        neither. A window in which nothing survived exclusion is `NOT_COMPUTABLE`, and a window
+        that held no slots at all is `NO_DATA` — both render as words, never as `0`, which
+        would read as a machine consuming nothing.
         """
         label = f"mean slot efficiency, {self.equipment_key}"
         note = f"{self.exclusion_note()} {self.coverage_note()}{self._basis_note()}".strip()
         mean = self.mean_of_slot_ratios
         if mean is None:
-            return Figure.absent(label, Absence.NOT_COMPUTABLE, unit="kW/TR", note=note)
+            return Figure.absent(label, self._absence_when_empty(), unit="kW/TR", note=note)
         builder = Figure.derived if self.derived_in_figure else Figure.measured
         return builder(label, mean, "kW/TR", note=note, fmt=".2f")
 
@@ -485,7 +498,7 @@ class PeriodEfficiency:
         note = f"{self.exclusion_note()} {self.coverage_note()}{self._basis_note()}".strip()
 
         if not self.included:
-            return Figure.absent(label, Absence.NOT_COMPUTABLE, unit="kW/TR", note=note)
+            return Figure.absent(label, self._absence_when_empty(), unit="kW/TR", note=note)
         if any(r.kw is None or r.tr is None for r in self.included):
             return Figure.absent(
                 label,
