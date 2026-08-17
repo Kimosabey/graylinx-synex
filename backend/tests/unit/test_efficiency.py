@@ -106,7 +106,7 @@ def test_a_clean_period_does_not_earn_a_baseline() -> None:
     """The temptation is to let a period that survived exclusion become the reference. It
     cannot: a usable tracking figure and a reference are different claims, and the refusal
     says so with that period's own numbers in it."""
-    period = _period([_slot(1.40) for _ in range(31_884 // 31_884 * 3)])
+    period = _period([_slot(1.40), _slot(1.45), _slot(1.38)])
     refusal = baseline(period)
     assert refusal.question == "Q21"
     assert refusal.as_figure().value is None
@@ -229,14 +229,18 @@ def test_exactly_zero_is_a_stopped_machine_and_never_perfect_efficiency() -> Non
 
 def test_invalid_slots_are_excluded_rather_than_averaged_in() -> None:
     """The measured failure, in one assertion. Three real slots at 1.40 alongside the two
-    extremes chiller 1 actually reached: the figure is 1.40, not the arithmetic mean of all
-    five, which would be **4,783** — a number no chiller has ever produced."""
-    period = _period(
-        [_slot(1.40), _slot(1.40), _slot(1.40), _slot(WORST_MEASURED_HIGH), _slot(WORST_MEASURED_LOW)]
-    )
+    extremes chiller 1 actually reached: the figure is 1.40, and the naive mean over all five
+    is in the thousands — wrong by two orders of magnitude, not by a margin."""
+    values = [1.40, 1.40, 1.40, WORST_MEASURED_HIGH, WORST_MEASURED_LOW]
+    period = _period([_slot(v) for v in values])
+
     assert period.included_count == 3
     assert period.mean_of_slot_ratios == pytest.approx(1.40)
     assert len(period.excluded) == 2
+    assert sum(values) / len(values) > 4_000, (
+        "the naive mean this test exists to prevent — if it ever stops being absurd, the "
+        "extremes are no longer the ones chiller 1 measured"
+    )
 
 
 def test_the_count_excluded_travels_with_the_figure() -> None:
@@ -271,7 +275,7 @@ def test_every_excluded_band_has_a_sentence_waiting_for_it() -> None:
     """A guard against a future band joining the excluded set without a phrase. The period note
     looks its band up by name, so the omission would surface as a `KeyError` while rendering a
     monthly figure rather than as a failure here."""
-    assert EXCLUDED_BANDS <= set(EXCLUSION_SUMMARY)
+    assert set(EXCLUSION_SUMMARY) >= EXCLUDED_BANDS
 
 
 def test_coverage_is_reported_because_no_minimum_was_ever_agreed() -> None:
@@ -285,7 +289,7 @@ def test_coverage_is_reported_because_no_minimum_was_ever_agreed() -> None:
     assert "reported rather than used to suppress the figure" in period.coverage_note()
 
 
-def test_the_period_states_its_window(  ) -> None:
+def test_the_period_states_its_window() -> None:
     """Constraint 15. Anomaly counts were once shown on the database wall clock under a heading
     describing a telemetry window that did not overlap it at all."""
     rendered = _period([_slot(1.40)]).render()
@@ -385,7 +389,7 @@ def test_neither_figure_is_silently_substituted_for_the_other() -> None:
     assert "load-weighted efficiency" in period.load_weighted_figure().label
 
 
-def test_the_load_weighted_figure_is_absent_with_a_reason_when_the_totals_cannot_be_summed() -> None:
+def test_the_load_weighted_figure_is_absent_when_the_totals_cannot_be_summed() -> None:
     """The historian sometimes carries the ratio alone. A partial sum over the slots that do
     have both inputs would be a plant figure for a different plant."""
     period = _period([_slot(1.40, kw=140.0, tr=100.0), _slot(1.50)])
@@ -518,6 +522,6 @@ def test_the_healthiest_measured_month_sits_outside_the_design_band() -> None:
     """The single fact that makes `E1` undeliverable as specified. If these ever overlapped,
     `Q21` would have an answer and the refusals above would be over-caution rather than
     honesty."""
-    assert HEALTHIEST_MEASURED_MONTH > DESIGN_BAND[1]
+    assert DESIGN_BAND[1] < HEALTHIEST_MEASURED_MONTH
     assert classify(HEALTHIEST_MEASURED_MONTH).band is not Band.WITHIN_DESIGN_BAND
     assert efficiency.validity.is_poor_but_real(HEALTHIEST_MEASURED_MONTH)

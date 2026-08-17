@@ -390,7 +390,7 @@ def test_the_missing_dry_run_is_named_as_its_own_capability_with_its_source() ->
     missing, so `G8` is on the row rather than in a footnote about the product generally."""
     by_source = {m.source: m for m in NOT_AVAILABLE}
     assert by_source["G8"].reason == NO_DRY_RUN
-    assert "Try a rule change before it goes live" == by_source["G8"].name
+    assert by_source["G8"].name == "Try a rule change before it goes live"
 
 
 def test_three_absences_are_named_separately_rather_than_as_one_disclaimer() -> None:
@@ -492,9 +492,14 @@ def test_the_module_offers_no_way_to_apply_a_change() -> None:
     """`G2` classifies a rule change `SYSTEM_CRITICAL` and `G3` refuses it. An `apply` on this
     object would be the one method that makes every other honesty line on the screen a
     formality."""
-    methods = {name for name in dir(PolicyChange) if not name.startswith("_")}
-    assert methods == {"what_changes", "reason", "supersedes", "becomes", "authored_by",
-                       "tried_first", "risk", "action", "render", "as_dict"}
+    callables = {
+        name
+        for name in dir(PolicyChange)
+        if not name.startswith("_") and callable(getattr(PolicyChange, name, None))
+    }
+    assert callables == {"render", "as_dict"}
+    assert dataclasses.is_dataclass(PolicyChange)
+    assert PolicyChange.__dataclass_params__.frozen, "an intent that can be edited is an edit"
 
 
 def test_holding_edit_policy_does_not_clear_a_rule_change_inside_a_turn() -> None:

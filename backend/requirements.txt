@@ -83,3 +83,11 @@ redis==5.0.8
 # The embedder is `nomic-embed-text` at 274 MB on the host CPU — NOT on the rented card. That
 # is why K1 and S4 are not among the six features the Jarvis box gates.
 pgvector==0.4.2
+
+# ragas is banned, see D-010
+
+# ragas is banned, see D-010
+
+# ragas is banned, see D-010
+
+# ragas is banned, see D-010
