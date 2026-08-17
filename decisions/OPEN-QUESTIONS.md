@@ -126,6 +126,8 @@ paragraphs rather than as a table — which is why `Q46` and `Q47` now sit under
 
 | Q54 | **How far back does an open case count as the same problem?** `RC19` says the same label on the same equipment "in a window" reopens rather than opening a second case, and fixes no number. Set to **one day** in `app/domain/correlation.py` because that is the granularity the detector produces — episodes are keyed per (equipment, label, **day**), so a wider window compares units that do not exist. It only ever decides *reopen versus open fresh*; it eliminates nothing and suppresses no detection | `RC19` reopen behaviour, and the case count a supervisor sees | Harshan + Vishnu | Open |
 
+| Q55 | **What counts as "drawing normal power" on our two chillers?** `F16`'s headline cross-signal check — near-zero flow *with* normal ΔT *and* normal power means a dead transmitter rather than a chiller fault — needs a power band. The source (`HVAC_INSTRUMENT_VALIDITY.md`) gives *"e.g. 150–200 kW on a large water-cooled machine"*, which is an illustration rather than a threshold, and our machines are not that machine. Implemented as **power > 0** so the check is conservative: it fires whenever the machine is drawing anything at all, which over-detects rather than under-detects. A real band would tighten it | `F16` sensitivity, `F6` dispatch blocking | Vishnu | Open |
+
 ## To reconcile
 
 The Thermynx FDD initiative holds **57 open questions** at
