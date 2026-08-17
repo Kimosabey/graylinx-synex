@@ -2,7 +2,7 @@
   "name": "@synex/web",
   "version": "0.18.0",
   "private": true,
-  "description": "Graylinx Synex \u2014 the Copilot shell. Port 3100, not 3000: 3000-3003 are occupied.",
+  "description": "Graylinx Synex — the Copilot shell. Port 3100, not 3000: 3000-3003 are occupied.",
   "scripts": {
     "dev": "next dev -p 3100",
     "build": "next build",
@@ -20,6 +20,8 @@
     "@types/node": "22.10.5",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.1.6",
     "typescript": "5.7.3"
   }
 }

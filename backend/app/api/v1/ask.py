@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 
 from app.agents.answer import answer_turn, build_gates
 from app.agents.sse_contract import FRAMES
-from app.api.deps import CurrentScope, Repo, current_scope, get_repo
+from app.api.deps import CurrentScope, Repo, current_scope, get_optional_repo
 from app.config import Settings, get_settings
 from app.domain.answer import AnswerState
 from app.llm.client import ModelClient
@@ -59,7 +59,7 @@ def _frame(name: str, payload: dict) -> str:
 async def ask(
     body: AskRequest,
     request: Request,
-    repo: Repo = Depends(get_repo),
+    repo: Repo | None = Depends(get_optional_repo),
     scope: CurrentScope = Depends(current_scope),
     settings: Settings = Depends(get_settings),
 ) -> StreamingResponse:
@@ -85,7 +85,7 @@ async def ask(
 async def _stream(
     body: AskRequest,
     request_id: str,
-    repo: Repo,
+    repo: Repo | None,
     scope: CurrentScope,
     settings: Settings,
 ) -> AsyncIterator[str]:
@@ -99,6 +99,23 @@ async def _stream(
 
     pack = None
     if body.equipment_key and body.fault_label and body.day:
+        # Only *this* branch needs telemetry. A question that names no episode never touches
+        # the plant, and refusing it with a database error was the defect CI caught — the
+        # refusal is the modal outcome and must survive MySQL being stopped.
+        if repo is None:
+            yield _frame("state", {"state": AnswerState.BLOCKED.value})
+            yield _frame(
+                "token",
+                {
+                    "text": (
+                        "The plant database is not connected, so the evidence behind this "
+                        "episode cannot be read. This is a stated absence rather than a "
+                        "finding about the equipment — nothing was examined."
+                    )
+                },
+            )
+            yield _frame("done", {"request_id": request_id})
+            return
         yield _frame("stage", {"stage": "assembling evidence", "detail": "no model involved"})
         pack = await _pack_for(body, repo, settings)
 
