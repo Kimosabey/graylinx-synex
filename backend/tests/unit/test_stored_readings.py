@@ -441,3 +441,42 @@ def test_the_module_calls_no_model_and_reaches_nothing() -> None:
         text = handle.read()
     for forbidden in ("app.llm", "app.services", "app.db", "httpx", "sqlalchemy"):
         assert forbidden not in text, f"{forbidden} reached a domain module"
+
+
+# ── added 2026-08-17: RC18 must actually ship on the case surface ──────────────
+
+def test_the_case_surface_routes_stored_readings_through_this_module() -> None:
+    """**The gap this closes: the module had no callers.**
+
+    Found in adversarial review. `app/services/cases.py` rendered `item.stored_reading`
+    directly, so every decision in this file — never measured, derived, constant, suspect,
+    stale — was bypassed by the only path that ships. A raw string cannot be checked against
+    provenance, and `snapshot_derived_slots` marks *slots* rather than columns, so a signal
+    the plant genuinely measures can still hand back a computed number.
+    """
+    from app.domain.cases import CaseState
+    from app.services import cases as case_service
+
+    checklist = case_service.checklist_for("HIGH_HEAD_AMBIGUOUS")
+    rendered = case_service.Case(
+        id="x",
+        equipment_key="chiller_1",
+        equipment_display="Chiller 1",
+        fault_label="HIGH_HEAD_AMBIGUOUS",
+        day="2026-04-15",
+        state=CaseState.DETECTED,
+        checklist=checklist,
+        findings={},
+        may_advance=False,
+        advance_reason="",
+        operator_can_start=True,
+    ).as_dict(Capability.OPERATOR)
+
+    offers = [i["stored_reading"] for i in rendered["my_items"]]
+    assert offers, "the operator has at least one item"
+    for offer in offers:
+        assert offer and offer.strip(), "every item renders words, never a blank"
+        assert "107.0" not in offer, (
+            "the sample string carries a constant dpt value with no timestamp and no "
+            "provenance; rendering it as a reading is the defect this module exists to stop"
+        )

@@ -25,6 +25,7 @@ is tagged with the capability that can answer it, so `RC3`'s routing and constra
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 from app.domain.cases import (
     Capability,
@@ -35,7 +36,27 @@ from app.domain.cases import (
     may_advance,
     operator_can_start,
 )
+from app.domain.stored_readings import StoredReading, offer_for
 from app.services.evidence import EvidencePack
+
+
+def _offer_text(item: ChecklistItem, reading: StoredReading | None = None) -> str:
+    """`RC18`, routed through the module that decides whether a value may be shown.
+
+    **Why this is a function and not `item.stored_reading`.** Found in adversarial review,
+    2026-08-17: this surface rendered the raw string, so `app/domain/stored_readings.py` had
+    no callers at all and the path that actually shipped contradicted it. A raw string cannot
+    be checked against provenance — and `snapshot_derived_slots` marks *slots*, not columns,
+    so a signal the plant genuinely measures can still hand back a computed number.
+
+    **The honest outcome today is a refusal, and that is not a shortcoming.** Every one of the
+    five signals whose provenance has been hand-verified on this plant is unusable — never
+    measured, constant, or contradicted by its neighbours — so the mechanism renders words
+    rather than values. Sample checklist content carries a display string with no timestamp
+    and no provenance, which is not a reading; passing it through as one would fabricate the
+    two things that decide whether it may be shown.
+    """
+    return offer_for(item, reading, now=datetime.now(UTC)).text
 
 
 def _sample(
@@ -176,7 +197,14 @@ class Case:
                     "capability": i.capability.value,
                     "blocking": i.blocking,
                     "is_sample": i.is_sample,
-                    "stored_reading": i.stored_reading,
+                    # `RC18`, routed through `app/domain/stored_readings.py` rather than
+                    # rendered raw. Found in adversarial review, 2026-08-17: this surface
+                    # printed `i.stored_reading` directly, so the module that decides whether
+                    # a stored value may be *shown at all* — never measured, derived, constant,
+                    # suspect or stale — had no callers and the shipping path contradicted it.
+                    # A raw string here would show a computed `tr` value as though an
+                    # instrument had read it.
+                    "stored_reading": _offer_text(i),
                     "finding": self.findings.get(i.id, Finding(i.id)).kind.value,
                 }
                 for i in mine
