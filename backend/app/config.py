@@ -70,6 +70,15 @@ class Settings(BaseSettings):
     ollama_host: str = "http://127.0.0.1:11500"
     ollama_box_label: str = "Jarvis"
 
+    # The embedder is a **different machine**, and that is the design rather than an accident.
+    # `nomic-embed-text` is 274 MB against the roster's ~41 GB at Q4, so it runs on the host
+    # CPU while the four reasoning models run on the one rented card. `CONTEXT.md` §4 marks
+    # embeddings "always local", and the consequence is that retrieval — `K1`, `S4` — works
+    # with the box terminated, like every other gate here.
+    #
+    # Default port 11434 is Ollama's own; `ollama_host` above is the tunnel to the box.
+    embed_host: str = "http://127.0.0.1:11434"
+
     # stub | record | live. The default is `stub` so the honest run is the one that needs
     # nothing: most of M1 is built with the box terminated, and the box is burst once a day.
     synex_model_mode: Literal["stub", "record", "live"] = "stub"

@@ -74,3 +74,12 @@ psycopg[binary,pool]==3.3.4
 # job module — which the offline tests do — never reaches Redis.
 arq==0.28.0
 redis==5.0.8
+
+# ── retrieval: K1, K5, S4 ───────────────────────────────────────────────────────
+# pgvector in the Postgres we already run, rather than a second engine. The corpus is 131
+# checklist items plus a handful of documents, so an exact scan is both faster and correct;
+# an approximate index would trade accuracy for a speedup nobody would measure (Q58).
+#
+# The embedder is `nomic-embed-text` at 274 MB on the host CPU — NOT on the rented card. That
+# is why K1 and S4 are not among the six features the Jarvis box gates.
+pgvector==0.4.2
