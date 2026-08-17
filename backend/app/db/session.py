@@ -104,6 +104,33 @@ async def case_store(settings: Settings) -> AsyncIterator[CaseStore]:
         yield CaseStore(session)
 
 
+@asynccontextmanager
+async def graph_checkpointer(settings: Settings) -> AsyncIterator[object]:
+    """The durable checkpoint store for `RC1`'s graph. **This is what makes a pause real.**
+
+    Two thirds of detected cases pause — 26 of 43 stop at the checks. Until this existed the
+    pause was a value in a response: the case was rebuilt from scratch on every request, so
+    "waiting for a technician" survived exactly as long as the process did.
+
+    Lives here rather than in `app.agents` because contract 6 says only `app.db` opens a
+    connection, and a checkpointer is a connection. `psycopg` rather than `asyncpg` — the
+    LangGraph saver is built on psycopg3, so the URL's SQLAlchemy dialect suffix is stripped.
+    Same database, different client, deliberately.
+    """
+    from langgraph.checkpoint.postgres.aio import (  # noqa: PLC0415 — see below
+        AsyncPostgresSaver,
+    )
+
+    # Imported inside the function on purpose. `app.db.session` is imported by `app.main` at
+    # startup and by every offline test through the plant pool; a module-level LangGraph
+    # import would pull the graph runtime and psycopg into the gate that exists to prove the
+    # product runs with nothing installed and nothing running.
+    dsn = settings.postgres_url.replace("+asyncpg", "").replace("+psycopg", "")
+    async with AsyncPostgresSaver.from_conn_string(dsn) as saver:
+        await saver.setup()
+        yield saver
+
+
 async def create_state_schema(settings: Settings) -> None:
     """Create Synex's tables if they are absent.
 

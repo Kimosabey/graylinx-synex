@@ -16,6 +16,11 @@ from app.api.v1 import ask, episodes, personas, reports, system
 from app.config import get_settings
 from app.db.plant import PlantRepository
 from app.db.session import plant_pool
+from app.runtime import use_psycopg_compatible_event_loop
+
+# Before uvicorn creates its loop, not inside `lifespan` — by then the loop exists and the
+# policy no longer applies to it. See `app/runtime.py`; a no-op off Windows.
+use_psycopg_compatible_event_loop()
 
 
 @asynccontextmanager
