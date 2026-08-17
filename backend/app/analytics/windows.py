@@ -199,6 +199,15 @@ REASSURING_PHRASES: frozenset[str] = frozenset(
         "running normally",
         "within limits",
         "within normal",
+        # Added 2026-08-17 after a test asked the obvious question and the list said no.
+        # "Everything looks normal" is about as reassuring as English gets over a blind
+        # window, and the original twelve phrases all missed it — they were written around
+        # *fault* vocabulary rather than around reassurance. `Q67` is exactly this: which
+        # phrasings count, and a blacklist is a blacklist. The three below are the ones a
+        # model actually writes when it has nothing to say.
+        "looks normal",
+        "looks fine",
+        "no concerns",
     }
 )
 
