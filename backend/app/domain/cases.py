@@ -131,6 +131,35 @@ class FindingKind(StrEnum):
 SETTLING_KINDS: frozenset[FindingKind] = frozenset({FindingKind.MEASURED})
 
 
+class Stage(StrEnum):
+    """`RC6`. What a curated item is *for*. Three stages, and two of them are follow-ups.
+
+    The 124-item library splits **57 RCA · 37 corrective · 30 preventive**. This is not an
+    order of importance and not a priority: an RCA item asks a question, a corrective item
+    repairs the thing that was found, and a preventive item stops it returning. A case that
+    attaches only the second leaves the third as content nobody ever opens.
+    """
+
+    RCA = "rca"
+    """A question asked to establish the cause. These are the checks `RC1` runs *before* a
+    cause exists, so they are never re-attached as follow-up work."""
+
+    CORRECTIVE = "corrective"
+    """The repair for the cause that was confirmed."""
+
+    PREVENTIVE = "preventive"
+    """What stops it coming back — intervals, schedules, trends. `RC11` turns each of these
+    into an owned recurring commitment rather than a line of text."""
+
+
+#: Constraint 24's reasoning, applied to the stage tag rather than to the capability tag.
+#: An untagged item is treated as a **question**, not as an instruction to repair or to
+#: schedule: mis-staging a repair as a question sends somebody to look at the machine, while
+#: the reverse attaches an unasked-for repair to a confirmed cause and puts it in front of a
+#: technician as agreed work. Asking one question too many is the cheap error.
+DEFAULT_STAGE: Stage = Stage.RCA
+
+
 @dataclass(frozen=True)
 class ChecklistItem:
     """One curated instruction. Human-written; never model output."""
@@ -158,6 +187,10 @@ class ChecklistItem:
     """`RC18`. Where the database already holds a value this item asks for, it is offered as
     *"the stored reading was X — confirm at the panel"*. A stored value is not a gauge
     reading now, so it never settles a blocking check on its own."""
+
+    stage: Stage = DEFAULT_STAGE
+    """`RC6`. Which of the three stages this item belongs to. Defaults to `RCA` — see
+    `DEFAULT_STAGE` for why that direction is the safe one."""
 
 
 @dataclass(frozen=True)
@@ -207,6 +240,20 @@ class Checklist:
 
     def blocking_items(self) -> tuple[ChecklistItem, ...]:
         return tuple(i for i in self.visible_items() if i.blocking)
+
+    def at_stage(self, stage: Stage) -> Checklist:
+        """`RC6`. The same class's items, narrowed to one stage.
+
+        Returns a `Checklist` rather than a tuple deliberately, so `visible_items`,
+        `blocking_items`, `for_capability` and `may_advance` all keep working on the
+        follow-up exactly as they work on the diagnostic list. **The SME gate is not applied
+        here** — it stays in `visible_items`, so narrowing by stage can never be the edit
+        that quietly lets unreviewed content through.
+        """
+        return Checklist(
+            fault_label=self.fault_label,
+            items=tuple(i for i in self.items if i.stage is stage),
+        )
 
 
 def may_advance(checklist: Checklist, findings: dict[str, Finding]) -> tuple[bool, str]:

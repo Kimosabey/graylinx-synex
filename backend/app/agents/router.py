@@ -151,9 +151,15 @@ def _extract_equipment(message: str, last_equipment: str | None) -> str | None:
     """
     text = _normalise(message)
 
+    # **Word boundaries, not containment.** `"chiller 1" in "chiller 12"` is `True`, so a
+    # question about a machine that does not exist was answered about chiller 1 — confidently,
+    # and about the wrong asset. Found by the adversarial suite on 2026-08-17, and it is the
+    # same defect shape as `-25.6` sitting inside `-25.645`, which once made the numeric audit
+    # toothless. Containment is the wrong operator for an identifier, twice now.
     for e in eq.all_equipment():
-        if e.key.replace("_", " ") in text or e.display_name.lower() in text:
-            return e.key
+        for name in (e.key.replace("_", " "), e.display_name.lower()):
+            if re.search(rf"\b{re.escape(name)}\b", text):
+                return e.key
 
     # "chiller 1", "chiller-1", "chiller_1", "ch1"
     m = re.search(r"\b(?:chiller|ch)[\s_-]*([12])\b", text)

@@ -285,6 +285,28 @@ _DIAGNOSIS_CLAIMS = (
 )
 
 
+#: Phrases that always assert a diagnosis, whatever else is in the sentence. Naming the pack's
+#: own label does not excuse them, because there is no reading of "I diagnose" in which the
+#: model is relaying somebody else's verdict.
+_NEVER_EXCUSED: tuple[str, ...] = ("definitely", "i diagnose", "i have")
+
+
+def _excused_in_context(lowered: str, phrase: str, label: str) -> bool:
+    """Is this diagnosis phrase explaining the pack's label, or asserting a new one?
+
+    Sentence-scoped. A phrase is excused only where it sits **in the same sentence** as the
+    label — that is the difference between *"HIGH_HEAD_AMBIGUOUS means the head pressure is
+    high"* and *"HIGH_HEAD_AMBIGUOUS was flagged. The root cause is a fouled condenser."*
+    """
+    if any(never in phrase for never in _NEVER_EXCUSED):
+        return False
+
+    # Every sentence carrying the phrase must also carry the label. One that does not is a
+    # claim standing on its own, whatever the rest of the answer said.
+    sentences = re.split(r"(?<=[.!?])\s+|\n+", lowered)
+    return all(label in s for s in sentences if phrase in s)
+
+
 def audit_no_diagnosis_by_model(answer: str, pack: EvidencePack) -> AuditFinding:
     """The separation law, enforced on the output.
 
@@ -296,10 +318,24 @@ def audit_no_diagnosis_by_model(answer: str, pack: EvidencePack) -> AuditFinding
     lowered = answer.lower()
     offending = [p for p in _DIAGNOSIS_CLAIMS if p in lowered]
 
-    # Naming the class the pack already carries is explaining, not diagnosing.
-    if pack.fault_label and pack.fault_label.lower().replace("_", " ") in lowered:
+    # Naming the class the pack already carries is explaining, not diagnosing — but the
+    # exemption is **scoped to the sentence**, not to the answer.
+    #
+    # Found by the adversarial suite on 2026-08-17. It used to be answer-wide, so any answer
+    # that mentioned the pack's own label *anywhere* had every non-"definitely" diagnosis
+    # phrase filtered out. That shipped:
+    #
+    #   "The rules flagged HIGH_HEAD_AMBIGUOUS. The root cause is a fouled condenser."
+    #
+    # The first sentence is explaining; the second is the model narrowing an undecidable class
+    # into a mechanism the trained model explicitly declined to name — which is precisely the
+    # separation law's fourth row, and precisely what this audit exists to catch.
+    if pack.fault_label:
+        label = pack.fault_label.lower().replace("_", " ")
         offending = [
-            p for p in offending if "definitely" in p or "i diagnose" in p or "i have" in p
+            phrase
+            for phrase in offending
+            if not _excused_in_context(lowered, phrase, label)
         ]
 
     return AuditFinding(
