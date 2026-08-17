@@ -21,8 +21,17 @@ from __future__ import annotations
 
 import json
 import re
+from typing import TYPE_CHECKING
 
-from app.services.evidence import EvidencePack
+if TYPE_CHECKING:  # pragma: no cover
+    # Type-only. `app.prompts` sits **below** `app.services` in the spine, so importing the
+    # pack at run time would be a back-edge — and D-012's own preamble is about what happens
+    # when a layering rule becomes unsatisfiable: it gets switched off.
+    #
+    # The guard is honest rather than a dodge: this module never constructs or calls into an
+    # `EvidencePack`, it only renders one it is handed, and the two uses below are annotations.
+    # Caught on 2026-08-17, the first time the contract was able to run at all.
+    from app.services.evidence import EvidencePack
 
 #: Phrases that would be instructions if the model read them as such. Neutralised rather
 #: than removed, so an operator reading the pack still sees that something odd was in the

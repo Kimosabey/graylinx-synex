@@ -28,10 +28,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.knowledge import DocumentChunk
+from app.db.knowledge import DocumentChunk, add_chunk, count_unapproved, nearest_approved
 from app.llm.embeddings import Embedder, EmbeddingUnavailable
 
 #: How many passages a search returns. Small on purpose: a reader who is handed twelve
@@ -95,7 +92,7 @@ class SearchResult:
 class SopIndex:
     """Reads and writes the document store. `K1`'s engine."""
 
-    def __init__(self, session: AsyncSession, embedder: Embedder) -> None:
+    def __init__(self, session, embedder: Embedder) -> None:
         self._session = session
         self._embedder = embedder
 
@@ -127,15 +124,10 @@ class SopIndex:
             is_approved=is_approved,
             is_sample=is_sample,
         )
-        self._session.add(chunk)
-        await self._session.flush()
-        return chunk
+        return await add_chunk(self._session, chunk)
 
     async def unapproved_count(self, kind: str | None = None) -> int:
-        stmt = select(DocumentChunk).where(DocumentChunk.is_approved.is_(False))
-        if kind:
-            stmt = stmt.where(DocumentChunk.kind == kind)
-        return len((await self._session.scalars(stmt)).all())
+        return await count_unapproved(self._session, kind)
 
     async def search(
         self, question: str, *, kind: str | None = None, limit: int = DEFAULT_LIMIT
@@ -152,20 +144,9 @@ class SopIndex:
                 ),
             )
 
-        stmt = (
-            select(
-                DocumentChunk,
-                DocumentChunk.embedding.cosine_distance(list(query.vector)).label("distance"),
-            )
-            .where(DocumentChunk.is_approved.is_(True))
-            .where(DocumentChunk.model == query.model)
-            .order_by("distance")
-            .limit(limit)
+        rows = await nearest_approved(
+            self._session, list(query.vector), query.model, kind, limit
         )
-        if kind:
-            stmt = stmt.where(DocumentChunk.kind == kind)
-
-        rows = (await self._session.execute(stmt)).all()
         return SearchResult(
             passages=tuple(
                 Passage(
