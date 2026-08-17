@@ -41,3 +41,13 @@ uvicorn==0.47.0
 # wrapper would add a dependency without removing a line. `langchain-ollama` arrives with the
 # graph, for per-task model routing, and is a different concern.
 httpx==0.27.2
+
+# ── Synex's own state: PostgreSQL ───────────────────────────────────────────────
+# A second store, and the split is load-bearing rather than tidy. `graylinx_synex` is the
+# plant snapshot and is routinely dropped and re-cloned — it happened on 2026-08-17. A case
+# queue living inside it would be destroyed by the next restore, so Synex writes here.
+#
+# Arrived 2026-08-17 with `app/db/state.py`, not before: a dependency listed ahead of the code
+# that imports it is one CI installs and a reader trusts for nothing.
+sqlalchemy[asyncio]==2.0.49
+asyncpg==0.31.0

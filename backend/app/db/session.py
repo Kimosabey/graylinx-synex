@@ -10,9 +10,17 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import aiomysql
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.config import Settings
+from app.db.case_store import CaseStore
 from app.db.plant import PlantRepository
+from app.db.state import Base
 
 
 @asynccontextmanager
@@ -51,3 +59,62 @@ async def plant_repository(settings: Settings) -> AsyncIterator[PlantRepository]
     """
     async with plant_pool(settings) as pool:
         yield PlantRepository(pool, settings.synex_measured_window_end)
+
+
+# ── Synex's own state ───────────────────────────────────────────────────────────
+# A second store, and the split is deliberate. `graylinx_synex` is the plant snapshot and is
+# routinely dropped and re-cloned — it happened on 2026-08-17. Anything of ours living inside
+# it would be destroyed by the next restore, so Synex writes here and reads there.
+
+
+def state_engine(settings: Settings) -> AsyncEngine:
+    """An engine against Synex's own Postgres.
+
+    `pool_pre_ping` because this runs against a container that a developer stops and starts,
+    and a stale connection surfacing as a request failure is a debugging hour nobody needs.
+    """
+    return create_async_engine(settings.postgres_url, pool_pre_ping=True, future=True)
+
+
+@asynccontextmanager
+async def state_session(settings: Settings) -> AsyncIterator[AsyncSession]:
+    """One session, committed on success and rolled back on anything else.
+
+    The commit is here rather than in the store so a caller cannot half-write a case: the
+    seed, its findings and its audit row land together or not at all.
+    """
+    engine = state_engine(settings)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with factory() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+    finally:
+        await engine.dispose()
+
+
+@asynccontextmanager
+async def case_store(settings: Settings) -> AsyncIterator[CaseStore]:
+    """The case queue, ready to use."""
+    async with state_session(settings) as session:
+        yield CaseStore(session)
+
+
+async def create_state_schema(settings: Settings) -> None:
+    """Create Synex's tables if they are absent.
+
+    **This is the migration path until Alembic, and saying so is the point** — a reader who
+    assumes migrations exist will write one that never runs. It is safe to call repeatedly and
+    it never drops or alters anything, so a column change needs a real migration rather than
+    a restart.
+    """
+    engine = state_engine(settings)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    finally:
+        await engine.dispose()
