@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Request
 
+from app.agents import degraded_mode
 from app.config import Settings, get_settings
 from app.domain import equipment as eq
 from app.domain.answer import ANSWER_STATES
+from app.domain.degradation import DegradationReport
 from app.llm import models as role_table
 from app.services import audit_log
 
@@ -24,10 +26,23 @@ async def health(request: Request, settings: Settings = Depends(get_settings)) -
     The plant connection is reported rather than assumed: the application starts without it
     so it can say *why* it is degraded, which `CONTEXT.md` §13 requires — the platform states
     when it is in degraded mode rather than silently substituting a weaker capability.
+
+    **`status` answers one question and `degraded_mode` answers a different one.** `status` is
+    about the plant connection and has always been; it stays that way because callers depend on
+    it. It is not the whole answer: with MySQL up it reads `ok` while the audit trail is not
+    durable and `G5`'s ledger is in memory. `degraded_mode` is the aggregate over all seven
+    capabilities, with the substitutions named — `/api/v1/degraded` carries it in full.
     """
     repo = getattr(request.app.state, "plant_repo", None)
+    degradation = _degradation(request, settings)
     return {
         "status": "ok" if repo is not None else "degraded",
+        "degraded_mode": {
+            "headline": degradation.headline(),
+            "degraded": [s.capability.value for s in degradation.degraded],
+            "unknown": [s.capability.value for s in degradation.unknown],
+            "detail_at": "/api/v1/degraded",
+        },
         "plant_database": {
             "connected": repo is not None,
             "host": f"{settings.mysql_host}:{settings.mysql_port}",
@@ -47,6 +62,32 @@ async def health(request: Request, settings: Settings = Depends(get_settings)) -
             "scoreable": len(eq.scoreable_equipment()),
         },
     }
+
+
+@router.get("/degraded")
+async def degraded(request: Request, settings: Settings = Depends(get_settings)) -> dict:
+    """`CONTEXT.md` §13 in full — every capability, its standing, and what is standing in.
+
+    Seven capabilities, and the point of the endpoint is that they are *seven*: MySQL down, the
+    box down, the embedder down and PostgreSQL down are four different situations, and until
+    this existed a surface could only ask whether the plant was connected. Every entry carries
+    its reason in words, a substituted one names the substitution, and one that nobody probed
+    says so rather than being counted as working.
+    """
+    return _degradation(request, settings).as_dict()
+
+
+def _degradation(request: Request, settings: Settings) -> DegradationReport:
+    """The observations this process can make without opening a socket.
+
+    Shared by `/health` and `/degraded` so the two can never disagree — a summary computed
+    separately from the detail it summarises is the defect the aggregate exists to remove.
+    """
+    return degraded_mode.assess_platform(
+        plant_repo=getattr(request.app.state, "plant_repo", None),
+        plant_error=getattr(request.app.state, "plant_error", None),
+        model_mode=settings.synex_model_mode,
+    )
 
 
 @router.get("/models")

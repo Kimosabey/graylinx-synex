@@ -156,7 +156,8 @@ def test_an_unclassified_ruling_still_produces_a_request_and_says_it_was_unclass
     """Constraint 24. An action nobody classified is treated as the stricter side, and the
     request reports that distinctly — absorbed into an ordinary approval it would be
     invisible, and the register would stop matching the code."""
-    ruling = rule(Action(name="mystery_action"), frozenset(c.value for c in TECHNICIAN.capabilities))
+    held = frozenset(c.value for c in TECHNICIAN.capabilities)
+    ruling = rule(Action(name="mystery_action"), held)
     assert ruling.decision is Decision.UNCLASSIFIED
 
     request = request_for(ruling, TECHNICIAN)

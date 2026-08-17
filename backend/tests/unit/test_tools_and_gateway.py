@@ -290,3 +290,38 @@ async def test_a_determinate_class_is_refused_a_differential(gateway, engineer) 
 
 class _Unused(BaseModel):
     pass
+
+
+# ── added 2026-08-17 after adversarial review ─────────────────────────────────
+
+def test_a_catalogue_never_offers_a_tool_that_cannot_run(registry: ToolRegistry) -> None:
+    """**The defect this closes: the refused tool was in EVERY catalogue.**
+
+    `set_chiller_setpoint` carries `skill=""` to mean unscoped, and `for_skill` read an empty
+    skill as *available to every skill* — so a model was offered equipment control on every
+    turn, with `G4` the only thing standing behind it. A gate should be the second line of
+    defence, not the first.
+    """
+    for skill in ("", "look_up", "explain", "resolve", "prepare_work", "verify"):
+        names = [t.name for t in registry.for_skill(skill)]
+        assert "set_chiller_setpoint" not in names, f"refused tool offered to {skill!r}"
+
+
+def test_an_unnarrowed_catalogue_is_everything_usable_not_one_refused_tool(
+    registry: ToolRegistry,
+) -> None:
+    """`for_skill("")` used to return exactly one tool — the refused one — so any caller that
+    omitted a skill got a catalogue it could never act on. Five tests ran that path and passed,
+    because each asserted only within the single-element list."""
+    unnarrowed = registry.for_skill("")
+    assert len(unnarrowed) > 1
+    assert all(not t.is_permanently_refused for t in unnarrowed)
+
+
+def test_a_refused_tool_stays_declared_even_though_it_is_never_offered(
+    registry: ToolRegistry,
+) -> None:
+    """`C20` must still show that the capability was declared and denied. Removing it from the
+    registry entirely would make 'we decided against this' indistinguishable from 'nobody
+    thought of it' — which is why it was registered rather than omitted in the first place."""
+    assert "set_chiller_setpoint" in [t.name for t in registry.all()]

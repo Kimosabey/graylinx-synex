@@ -199,6 +199,16 @@ def test_a_fabrication_alleged_over_a_glyph_is_reported_as_a_false_accusation() 
     and the honesty layer would withhold a true answer — which nobody then reads. `postcheck`
     folds four dash characters after the U+2212 incident; this dimension exists because the
     patch fixed a glyph and the class of defect is wider than one glyph.
+
+    **Updated 2026-08-17: the gate now catches this itself, and that is the outcome this
+    dimension was arguing for.** The wider fold was written here, in `app.eval` — one layer
+    ABOVE the honesty gate — so the code that actually withholds an answer structurally could
+    not reach it, and the check only ever ran in an after-the-fact report nobody triggered.
+    The tables moved into `app.agents.postcheck`, so a non-breaking hyphen no longer produces
+    a false accusation at all.
+
+    The dimension stays, and it must now find **nothing**. A false-accusation detector that
+    fires on a live pack means the gate has regressed.
     """
     evidence = _evidence(
         residuals=["cond_leaving_residual: ‑273.2 — rejected, a sensor sentinel"],
@@ -209,12 +219,16 @@ def test_a_fabrication_alleged_over_a_glyph_is_reported_as_a_false_accusation() 
         "absolute zero used as a sensor sentinel and must be rejected."
     )
     case = _score(answer, evidence)
-    assert _result(case, "numbers_are_grounded").judgement.verdict is sc.Verdict.FAILED
+
+    # The gate itself now folds the non-breaking hyphen, so the figure is grounded and no
+    # true answer is withheld over a glyph.
+    assert _result(case, "numbers_are_grounded").judgement.verdict is not sc.Verdict.FAILED
 
     claim = _result(case, "fabrication_claim_survives_normalisation")
-    assert claim.judgement.verdict is sc.Verdict.FAILED
-    assert "-273.2" in claim.judgement.offending
-    assert "withheld over a character" in claim.judgement.detail
+    assert claim.judgement.verdict is not sc.Verdict.FAILED, (
+        "a false-accusation detector firing on a live pack means the gate has regressed"
+    )
+    assert not claim.judgement.offending
 
 
 def test_a_real_fabrication_is_not_excused_by_widening() -> None:

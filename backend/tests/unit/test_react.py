@@ -603,9 +603,22 @@ async def test_the_scope_of_a_skill_narrows_the_tools_offered(loop, engineer) ->
 
 
 async def test_the_catalogue_says_which_capability_is_permanently_refused(loop, engineer) -> None:
-    """`set_chiller_setpoint` is registered rather than omitted, because an absent capability
-    proves nothing — a reader cannot tell *we decided against this* from *nobody thought of it*.
-    The chooser is shown the same fact, so choosing it is an informed refusal."""
+    """**Changed 2026-08-17 after adversarial review, and the change is the point.**
+
+    This used to assert the chooser was *shown* `set_chiller_setpoint` so that choosing it
+    would be an informed refusal. That was wrong: `for_skill` read an empty skill as
+    *available to every skill*, so the permanently-refused equipment-control tool sat in
+    **every** catalogue, with `G4` the only thing standing behind it. A gate should be the
+    second line of defence, not the first — offering a model a tool it may never use is an
+    invitation to try.
+
+    So the catalogue never offers it, and the registry still **declares** it. Both halves
+    matter: an absent capability proves nothing, because a reader cannot tell *we decided
+    against this* from *nobody thought of it*.
+    """
+    from app.tools.plant_tools import register_all
+    from app.tools.registry import ToolRegistry
+
     offered: list[dict] = []
 
     async def _watching(state):
@@ -613,9 +626,14 @@ async def test_the_catalogue_says_which_capability_is_permanently_refused(loop, 
         return ToolChoice.finish("done")
 
     await loop.run(question="q", scope=engineer, choose=_watching)
-    refused = [t for t in offered if t["permanently_refused"]]
-    assert [t["name"] for t in refused] == ["set_chiller_setpoint"]
-    assert refused[0]["control_level"] == "refused"
+    assert offered, "the chooser must be given a usable catalogue"
+    assert not [t for t in offered if t["permanently_refused"]], (
+        "a catalogue must never offer a tool that cannot run"
+    )
+
+    declared = ToolRegistry()
+    register_all(declared)
+    assert "set_chiller_setpoint" in [t.name for t in declared.all()]
 
 
 async def test_the_chooser_is_never_handed_the_handler(loop, engineer) -> None:

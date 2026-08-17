@@ -162,9 +162,29 @@ class ToolRegistry:
         return tuple(self._tools[k] for k in sorted(self._tools))
 
     def for_skill(self, skill: str) -> tuple[ToolSpec, ...]:
-        """The tool scope of one skill. A skill is a named entry with a tool scope and a
-        control level — this is the scope half."""
-        return tuple(t for t in self.all() if not t.skill or t.skill == skill)
+        """The tool scope of one skill — **a catalogue, and a catalogue never offers a tool
+        that cannot run.**
+
+        Two defects found in adversarial review on 2026-08-17, and both were mine:
+
+        1. `set_chiller_setpoint` carries `skill=""` to mean *unscoped*, and this method read
+           an empty skill as *available to every skill*. So the permanently-refused
+           equipment-control tool appeared in **every** catalogue. Offering a model a tool it
+           may never use is not merely wasteful — it is an invitation to try, and the only
+           thing standing behind it was `G4`. A gate should be the second line, not the first.
+        2. `for_skill("")` therefore returned that one tool and nothing else, so any caller
+           that omitted a skill handed the chooser a one-item catalogue it could never act on.
+           Five tests ran that path and passed, because each asserted only within the list.
+
+        So: permanently-refused tools are excluded here always, and an empty skill means *the
+        caller has not narrowed* — it returns everything usable rather than everything
+        unscoped. The refused tool stays in `all()`, because `C20` must still be able to show
+        that the capability was declared and denied.
+        """
+        usable = (t for t in self.all() if not t.is_permanently_refused)
+        if not skill:
+            return tuple(usable)
+        return tuple(t for t in usable if not t.skill or t.skill == skill)
 
     def implemented(self) -> tuple[ToolSpec, ...]:
         return tuple(t for t in self.all() if t.is_implemented)

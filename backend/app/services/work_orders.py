@@ -27,13 +27,14 @@ carried through.
 """
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass, field
+from datetime import date
 from enum import StrEnum
 
 from app.db.work_order_store import ConfirmedWorkOrder
 from app.domain import priority as prio
 from app.domain.authority import Action, Risk, Ruling, rule
+from app.domain.idempotency import UNLABELLED, WorkOrderIdentity, WorkOrderKind
 from app.services import approvals
 from app.services.control_plane import Scope
 from app.services.evidence import EvidencePack
@@ -189,8 +190,8 @@ class WorkOrderState(StrEnum):
     one now would give something a route to closed before the gate that guards it exists."""
 
 
-#: The action `G3` rules on. Named once so the ruling, the audit row and the idempotency key
-#: cannot drift apart into three spellings of the same act.
+#: The action `G3` rules on. Named once so the ruling and the audit row cannot drift apart into
+#: two spellings of the same act.
 RAISE_WORK_ORDER: str = "raise_work_order"
 
 
@@ -211,32 +212,35 @@ def raise_action(draft: WorkOrderDraft) -> Action:
     )
 
 
-def natural_key_for(draft: WorkOrderDraft) -> str:
-    """The identity of the job, in a form a person can read.
+#: What `draft_from_pack` renders when the pack carries no fault label. `WorkOrderIdentity`
+#: refuses an empty label rather than defaulting one, so the placeholder is translated to that
+#: module's declared sentinel here — deliberately, and with its consequence inherited: every
+#: unlabelled finding on one machine-day then shares a job. `Q90` carries whether that is right.
+UNLABELLED_DRAFT_TITLE: str = "no label"
 
-    Constraint 35's shape — **one case per equipment, fault and day** — with the action on the
-    front, because a fault and a day can produce an inspection and a corrective job that are
-    genuinely two jobs.
 
-    **Deliberately excludes who confirmed it and when.** Two supervisors confirming the same
-    draft is one visit to one machine, and a key carrying the moment of the press would make
-    two clicks a second apart into two jobs, which is exactly the failure `G5` exists for.
+def identity_for(
+    draft: WorkOrderDraft, kind: WorkOrderKind = WorkOrderKind.CORRECTIVE
+) -> WorkOrderIdentity:
+    """`G5`. The four facts that make two requests the same job.
+
+    **The derivation is not repeated here.** `app/domain/idempotency.py` owns it, including
+    the two things this module would have got wrong on its own: `kind` belongs in the key
+    because `RC7`'s inspection and authorisation artefacts are genuinely two jobs, and the
+    fields are separated by a null byte so no pair of values can be rearranged into the same
+    string. One source of truth per fact — a second SHA in this file is exactly the drift
+    CLAUDE.md §2.8 forbids.
+
+    The draft carries its day as an ISO string because that is what an interface renders; the
+    identity wants a `date`, so it is parsed back rather than re-formatted at the other end.
     """
-    return f"{RAISE_WORK_ORDER}|{draft.equipment_key}|{draft.fault_label}|{draft.day}"
-
-
-def idempotency_key_for(draft: WorkOrderDraft) -> str:
-    """`G5`. The stored key, which the unique index in `app/db/state.py` enforces.
-
-    A SHA-256 hexdigest is **exactly 64 characters**, which is the width of the column, so the
-    full digest fits with nothing truncated. That matters: a truncation length would be a
-    number with no source, and the cost of a collision here is not an error — it is a retry
-    being answered with somebody else's work order.
-
-    The readable form travels into the row under `natural_key`, because a hash nobody can
-    invert is a hash nobody can check.
-    """
-    return hashlib.sha256(natural_key_for(draft).encode("utf-8")).hexdigest()
+    label = draft.fault_label
+    return WorkOrderIdentity(
+        equipment_key=draft.equipment_key,
+        fault_label=UNLABELLED if label == UNLABELLED_DRAFT_TITLE else label,
+        day=date.fromisoformat(draft.day),
+        kind=kind,
+    )
 
 
 @dataclass(frozen=True)
@@ -278,7 +282,7 @@ def confirm(
     requester: Scope,
     *,
     case_id: int | None = None,
-    kind: str = "corrective",
+    kind: WorkOrderKind = WorkOrderKind.CORRECTIVE,
 ) -> ConfirmOutcome:
     """The explicit act. **The only route from a draft to a stored row.**
 
@@ -315,14 +319,16 @@ def confirm(
             ),
         )
 
+    identity = identity_for(draft, kind)
     return ConfirmOutcome(
         ruling=ruling,
         reason=(
-            f"{requester.identity.display_name} confirmed this draft, so it may be stored. "
-            f"A retry with the same key returns that row rather than raising a second job."
+            f"{requester.identity.display_name} confirmed {identity.render()}, so it may be "
+            f"stored. A retry with the same key returns that row rather than raising a second "
+            f"job."
         ),
         record=ConfirmedWorkOrder(
-            idempotency_key=idempotency_key_for(draft),
+            idempotency_key=identity.key,
             equipment_key=draft.equipment_key,
             confirmed_by=requester.identity.persona.value,
             evidence={
@@ -330,13 +336,16 @@ def confirm(
                 # re-derivation — `C8` promises the before looks identical to what is saved,
                 # and the only way to keep that promise is to carry the rendering itself.
                 "shown_as": draft.as_dict(),
-                "natural_key": natural_key_for(draft),
+                # What the key was derived from, in order. A hash nobody can invert is a hash
+                # nobody can check, so the basis travels beside it.
+                "key_basis": list(identity.basis),
+                "identifies": identity.render(),
                 "act": RAISE_WORK_ORDER,
                 "confirmed_by": requester.identity.persona.value,
                 "identity_kind": requester.identity.identity_kind,
                 "authority": ruling.as_dict(),
             },
-            kind=kind,
+            kind=kind.value,
             state=WorkOrderState.CONFIRMED.value,
             priority=draft.priority.band.value,
             priority_is_complete=draft.priority.is_complete,

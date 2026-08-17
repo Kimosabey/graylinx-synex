@@ -24,8 +24,8 @@ and they enumerate rather than sample wherever the space is finite:
   8, 20 | all 6^3 and 6^4 answer vectors — 1,512 in total |
 | No capability set clears a `NEVER_APPROVABLE` risk | `S1`, 13 | the full powerset of the
   Control Plane's seven capabilities, twice |
-| Normalising a Unicode minus does not change which numbers are found | — | 4 minus glyphs
-  over the measured figures plus generated ones |
+| Normalising a Unicode minus does not change which numbers are found | — | every glyph in
+  `postcheck._WIDER_MINUS`, over the measured figures and the generated ones |
 
 **Hypothesis is deliberately not used, and not installed.** `pip show hypothesis` reports
 nothing, and adding a dependency to write a test is a poor trade when three of the four spaces
@@ -46,7 +46,7 @@ from itertools import chain, combinations, product
 
 import pytest
 
-from app.agents.postcheck import _MINUS_SIGNS, _NUMBER_RE, _numbers_in
+from app.agents.postcheck import _NUMBER_RE, _WIDER_MINUS, _numbers_in
 from app.analytics.honesty import Absence, Basis, Figure, Provenance
 from app.domain.authority import NEVER_APPROVABLE, Action, Decision, Risk, rule
 from app.domain.cases import (
@@ -446,9 +446,21 @@ def test_every_ruling_over_the_powerset_states_its_reason(held: frozenset[str]) 
 # accusation of fabrication silently suppresses a correct answer and nobody looks at what was
 # withheld.
 
-#: Every glyph `_MINUS_SIGNS` translates. Read from the table rather than restated, so a new
-#: entry there is covered here without an edit — and a *removed* entry fails this file.
-_MINUS_GLYPHS: tuple[str, ...] = tuple(chr(o) for o in _MINUS_SIGNS)
+#: Every glyph the normaliser folds **to a minus**. Derived from the table rather than
+#: restated, so a new dash added there is covered here without an edit and a removed one fails
+#: this file. Restating it would also rot: the table was renamed and widened from four entries
+#: to eight the same day this suite was written, and a hand-typed list would have gone stale
+#: while still passing.
+_MINUS_GLYPHS: tuple[str, ...] = tuple(
+    chr(codepoint) for codepoint, folded in _WIDER_MINUS.items() if folded == "-"
+)
+
+#: The entries that fold to **nothing** — a soft hyphen renders as no glyph at all and splits
+#: a number in two. They are excluded above because there is no sign for them to preserve, and
+#: they get their own property below rather than being dropped from the file.
+_VANISHING_GLYPHS: tuple[str, ...] = tuple(
+    chr(codepoint) for codepoint, folded in _WIDER_MINUS.items() if folded == ""
+)
 
 #: The figures this actually happened to, from `CONTEXT.md` §10a and the honesty layer.
 _MEASURED_FIGURES: tuple[str, ...] = (
@@ -479,7 +491,7 @@ _NEGATIVE_TOKENS: tuple[str, ...] = _MEASURED_FIGURES + _generated_negatives()
 
 
 def _numbers_without_translation(text: str) -> list[str]:
-    """The tokeniser as it behaved *before* `_MINUS_SIGNS` existed.
+    """The tokeniser as it behaved *before* `_WIDER_MINUS` existed.
 
     Present so the property below cannot pass vacuously. If this shim and the real function
     agreed on every input, the assertions would be proving nothing at all.
@@ -494,10 +506,11 @@ def test_the_minus_glyph_a_figure_is_written_with_does_not_change_which_numbers_
     """The measured incident, generalised: the pack said `−273.2` and the answer said
     `-273.2`, and the tokeniser called them different numbers.
 
-    Asserted over 405 negative figures per glyph rather than over the one that was reported.
-    The repository's typography is deliberate — `ruff.toml` keeps `RUF001`/`RUF002` off
-    because the documents use U+2212 and a docstring quoting a measured fact should quote it
-    exactly — so the pack side of every comparison genuinely carries these characters.
+    Asserted over every negative figure in the generated set rather than over the one that
+    was reported. The repository's typography is deliberate — `ruff.toml` keeps
+    `RUF001`/`RUF002` off because the documents use U+2212 and a docstring quoting a measured
+    fact should quote it exactly — so the pack side of every comparison genuinely carries
+    these characters.
     """
     for ascii_token in _NEGATIVE_TOKENS:
         typeset = glyph + ascii_token[1:]
@@ -530,6 +543,25 @@ def test_a_typeset_range_survives_translation_intact() -> None:
     typeset = "kw_per_tr ranges from −6,265 to +30,183 on this machine"
     ascii_text = "kw_per_tr ranges from -6,265 to +30,183 on this machine"
     assert _numbers_in(typeset) == _numbers_in(ascii_text) == ["-6265", "30183"]
+
+
+@pytest.mark.parametrize("glyph", _VANISHING_GLYPHS)
+def test_a_glyph_that_renders_as_nothing_does_not_split_one_number_into_two(
+    glyph: str,
+) -> None:
+    """A soft hyphen is invisible on screen and inside a token. Left in, `-25.645` tokenises
+    as two numbers, so a figure quoted exactly reads as two the pack never contained — the
+    false-accusation failure again, arriving through a character nobody can see.
+
+    These glyphs are folded away rather than to a minus, which is why they are not in the sign
+    property above. Asserting them here rather than skipping them keeps the whole table
+    covered: an entry nobody tests is an entry that can be deleted without a failure.
+    """
+    for token in _MEASURED_FIGURES:
+        split = token[:3] + glyph + token[3:]
+        assert _numbers_in(split) == [token], (
+            f"an invisible glyph inside {token!r} produced {_numbers_in(split)}"
+        )
 
 
 @pytest.mark.parametrize("glyph", _MINUS_GLYPHS)

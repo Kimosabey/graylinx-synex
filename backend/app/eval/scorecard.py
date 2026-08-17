@@ -89,6 +89,7 @@ from typing import Protocol
 
 from app.agents import postcheck
 from app.domain import signals
+from app.eval import golden
 from app.llm.client import TRANSCRIPT_DIR
 
 # ── what a dimension needs of the evidence ──────────────────────────────────────
@@ -753,7 +754,12 @@ class RunVerdict(StrEnum):
 #: transcripts exist; whether they cover eight distinct golden cases, or fewer, is unknown.
 #: That is `Q78`, and until it is answered `Coverage` reports the count and refuses to turn it
 #: into a percentage of the acceptance set.
-GOLDEN_CASE_COUNT: int = 13
+#:
+#: **Counted rather than restated**, since 2026-08-17. It was the literal `13` while the set
+#: itself lived under `tests/`, which the application could not import — so the denominator in
+#: every coverage sentence was a second copy of a fact, and would have gone stale on the day
+#: somebody added a fourteenth case. `CLAUDE.md` §2.8.
+GOLDEN_CASE_COUNT: int = len(golden.GOLDEN_CASES)
 
 
 @dataclass(frozen=True)

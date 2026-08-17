@@ -93,24 +93,76 @@ _NUMBER_RE = re.compile(r"-?\d[\d,]*\.?\d*")
 _ALLOWED_BARE = frozenset(str(n) for n in range(0, 13))
 
 
-#: Every character that means "minus" in text a human or a model might write. The evidence
-#: uses U+2212 MINUS SIGN because it is typeset prose; a model replies with an ASCII hyphen.
-#:
-#: **This is the bug this constant exists for, found on the first real box run.** The pack
-#: said `−273.2` and the answer said `-273.2`. The tokeniser read the first as *positive*
-#: 273.2, so the same figure appeared on the two sides as two different numbers and the audit
-#: reported the model had invented one. It had not — it had quoted the evidence correctly,
-#: and the honesty layer withheld a truthful answer.
-#:
-#: That failure is worse than the one the audit guards against. A fabricated number is caught
-#: by a reader who checks; a *false accusation of fabrication* silently suppresses correct
-#: answers, and nobody looks at what was withheld.
-_MINUS_SIGNS = str.maketrans({"−": "-", "–": "-", "—": "-", "‒": "-"})
+# ── the number normaliser, and why it lives HERE ────────────────────────────────
+#
+# **This must sit in the layer that withholds answers, not above it.** It was written in
+# `app.eval` first, which is above `app.agents` in the spine — so the honesty layer that
+# actually suppresses a live answer structurally could not reach it, and the wider fold only
+# ever ran in an after-the-fact report nobody triggered. Found in adversarial review the same
+# day it was written.
+#
+# The failure it prevents, from the incident on 2026-08-17: the evidence said `−273.2` with
+# U+2212 because it is typeset prose, the model replied `-273.2` with an ASCII hyphen, and the
+# tokeniser read one as positive and the other as negative. The audit reported the model had
+# invented a figure it had quoted correctly, and a true answer was withheld.
+#
+# **That is the worse of the two failures, and the asymmetry is the whole point.** A fabricated
+# number is caught by any reader who checks it. A false accusation of fabrication silently
+# suppresses correct answers, and there is no reader on that path at all.
+#
+# So the fold is deliberately wide: every dash a human or a model might type, the spaces that
+# split a number in typeset prose, and fullwidth digits. Applied to BOTH sides — widening one
+# side only would make the gate either forgiving of the model or accusing of it, and the point
+# is neither. Two spellings of one figure are one figure.
+
+_WIDER_MINUS = str.maketrans(
+    {
+        "−": "-",  # MINUS SIGN — what typeset prose uses, and what caused the incident
+        "–": "-",  # EN DASH
+        "—": "-",  # EM DASH
+        "‒": "-",  # FIGURE DASH
+        "‑": "-",  # NON-BREAKING HYPHEN — indistinguishable from a hyphen on screen
+        "﹣": "-",  # SMALL HYPHEN-MINUS
+        "－": "-",  # FULLWIDTH HYPHEN-MINUS
+        "­": "",   # SOFT HYPHEN — renders as nothing, and splits a number in two
+    }
+)
+
+#: Spaces that appear *inside* a rendered number. `1 099.6` with a narrow no-break space is
+#: ordinary typography and tokenises as two numbers, so a correctly quoted figure reads as two
+#: fabricated ones.
+_DIGIT_SPACES = str.maketrans(
+    {
+        " ": "",  # NO-BREAK SPACE
+        " ": "",  # FIGURE SPACE — designed for this job, and it splits the token
+        " ": "",  # PUNCTUATION SPACE
+        " ": "",  # THIN SPACE
+        " ": "",  # NARROW NO-BREAK SPACE — the SI thousands separator
+    }
+)
+
+#: Fullwidth digits. Rare in prose and trivial to fold, and a number written in them is not a
+#: different number.
+_FULLWIDTH_DIGITS = str.maketrans({chr(0xFF10 + n): str(n) for n in range(10)})
+
+_SIGN_GAP_RE = re.compile(r"(?<=-)[ \t]+(?=\d)")
+
+
+def widen(text: str) -> str:
+    """Fold every typographic variant of a number down to one spelling.
+
+    Used on **both** sides of the comparison, never on one. Widening only the answer would
+    make the gate more forgiving of the model; widening only the evidence would make it more
+    accusing. The point is not leniency — it is that two spellings of the same figure are the
+    same figure, and a gate that cannot see that withholds correct answers.
+    """
+    folded = text.translate(_WIDER_MINUS).translate(_DIGIT_SPACES)
+    return _SIGN_GAP_RE.sub("", folded.translate(_FULLWIDTH_DIGITS))
 
 
 def _numbers_in(text: str) -> list[str]:
     out: list[str] = []
-    for m in _NUMBER_RE.finditer(text.translate(_MINUS_SIGNS)):
+    for m in _NUMBER_RE.finditer(widen(text)):
         token = m.group(0).rstrip(".").replace(",", "")
         if not token or token in ("-",):
             continue

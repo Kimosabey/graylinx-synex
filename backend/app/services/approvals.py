@@ -31,6 +31,16 @@ first system's question.
 module renders a `NEEDS_APPROVAL` ruling into something a person can act on. It calls no
 model: the separation law's seventh row leaves authorization to plain software, and contract 2
 in `importlinter.ini` makes that a build failure rather than a convention.
+
+**A request does not survive the turn, and that is stated rather than hidden.** There is no
+approval table: `app/db/state.py` holds cases, findings, work orders and audit rows, and a
+request built here exists for as long as the response does. Two consequences follow and
+neither is acceptable long-term — constraint 22 says a case must be able to go stale, and an
+approval nobody can find cannot age at all; and an unassigned request that vanishes on refresh
+is indistinguishable from one that was never raised. **`Q81`** carries it. The likely answer is
+`RC7`'s **authorisation work order** — the artefact that route already produces, in a table
+that already exists — but making a request a work order changes what `W2` means, so it is a
+decision rather than an implementation detail.
 """
 from __future__ import annotations
 
