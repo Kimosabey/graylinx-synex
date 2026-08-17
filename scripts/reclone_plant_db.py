@@ -236,9 +236,19 @@ def main() -> int:
     # The read-only grant is on the database, and dropping the database drops it with the
     # schema. Without this the back end cannot connect after a re-clone — which is the
     # failure that turns a five-minute job into an evening. Q42.
-    cur.execute(f"GRANT SELECT ON `{TARGET}`.* TO 'synex_plant_ro'@'localhost'")
-    cur.execute(f"GRANT SELECT ON `{TARGET}`.* TO 'synex_plant_ro'@'%'")
-    cur.execute("FLUSH PRIVILEGES")
+    # Grant only to hosts the account actually has. MySQL 8 refuses to create a user via
+    # GRANT (error 1410), so naming a host that does not exist raises — and on 2026-08-17 it
+    # did, *after* the clone had succeeded and after the localhost grant had applied. The
+    # traceback went to stderr, the shell pipeline reported exit 0, and a crashed run looked
+    # like a clean one. Read the hosts, grant to those, and report what was done.
+    cur.execute("SELECT host FROM mysql.user WHERE user = 'synex_plant_ro'")
+    hosts = [r[0] for r in cur.fetchall()]
+    if not hosts:
+        print("  WARNING: no synex_plant_ro account exists — the back end cannot connect.")
+        print("  Create it with infra/sql/01-mysql-grants.sql, then re-run the grant.")
+    for host in hosts:
+        cur.execute(f"GRANT SELECT ON `{TARGET}`.* TO 'synex_plant_ro'@'{host}'")
+        print(f"  re-granted SELECT on {TARGET} to synex_plant_ro@{host}")
     conn.commit()
 
     print("\n── after ───────────────────────────────────────────────────────────")

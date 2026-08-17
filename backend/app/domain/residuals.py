@@ -78,12 +78,20 @@ FITTED_MODEL_NAMES: tuple[str, ...] = (
     "Condenser_Leav_Temp",
 )
 
-#: The sixth residual in `gla_model_residuals_wc`, which is 100% NULL. Named so that it can
-#: be rendered as "no model is fitted for this signal" rather than quietly left out.
+#: The sixth residual in `gla_model_residuals_wc`, which is 100% NULL **inside the measured
+#: window**. Named so that it can be rendered as "no model is fitted for this signal" rather
+#: than quietly left out.
+#:
+#: Narrowed on 2026-08-17. Before the re-clone the column was globally NULL; the rebuilt
+#: source holds 4,281 non-null values, every one of them beyond the clip at 2026-06-23. The
+#: rendering is unchanged because the window is unchanged — but the *global* claim is now
+#: false, and `PlantRepository.unfitted_residual_outside_the_window` reports the boundary so
+#: a future restore that moves those values inside fails a test instead of growing a sixth
+#: model in silence.
 ABSENT_RESIDUAL_COLUMN: str = "compressor_power_residual"
 
-#: The design says six models per chiller; five are fitted. Held as data so a document
-#: claiming six fails a test rather than a reading.
+#: The design says six models per chiller; five are fitted over the measured window. Held as
+#: data so a document claiming six fails a test rather than a reading.
 DESIGNED_MODEL_COUNT: int = 6
 FITTED_MODEL_COUNT: int = 5
 

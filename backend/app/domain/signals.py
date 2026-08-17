@@ -46,6 +46,20 @@ class SignalStatus(StrEnum):
     `dpt` is a flat 107.0 on chiller 1 and 112.9 on chiller 2, which is why condenser
     approach temperature cannot be computed at all. That is Q8, unanswerable until fixed."""
 
+    DERIVED = "derived"
+    """No instrument reports it; the value was computed from one that is.
+
+    A third state between `MEASURED` and `NEVER_MEASURED`, added 2026-08-17 when the v2
+    re-clone replaced 156,129 simulated slots with 12,589 **derived** ones carrying the
+    method `derived:tr_from_load_v1`. Derived is not simulated: the rule inherited with the
+    data is *derived may be quoted, simulated may not*, because a derivation is calibrated
+    against real readings rather than invented to fill a gap.
+
+    It is nonetheless **not `is_usable`**, because quoting it requires a label and this
+    product has no rendering path that attaches one yet. Treating "computed" as "measured"
+    the moment the marker arrived would be the same defect that `cond_flow` taught us,
+    entering through a different door."""
+
     SUSPECT = "suspect"
     """Readings exist and are contradicted by other signals.
 

@@ -17,6 +17,12 @@
 secrets/
 infra/sql/*-local.sql
 
+# ── database backups ────────────────────────────────────────────────────────────
+# A pre-migration dump of `graylinx_synex` is ~2 GB and is the rollback path, so it must
+# exist on disk and must never enter git. Added 2026-08-17 when the v2 re-clone was run.
+backups/
+*.sql.gz
+
 # ── Python ──────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]

@@ -212,6 +212,42 @@ chapters. If it is not in this file, it did not happen.
   `backend/app/db/telemetry.py`, `backend/app/analytics/`.
 - **Reflected in docs:** yes.
 
+### D-017 — `graylinx_synex` is re-cloned from the rebuilt `graylinx_v2`, and *derived* becomes a third provenance state
+- **Date:** 2026-08-17
+- **Decided by:** Harshan
+- **Closes:** nothing; raises `Q53`
+- **Decision:** `graylinx_synex` was dropped and restored from the rebuilt `graylinx_v2`.
+  194 tables, **zero** simulated slots in place of 156,129, and **12,589 derived** slots
+  carrying the method `derived:tr_from_load_v1`. `snapshot_derived_slots` is now read by
+  `app/db/provenance.py`, and `SignalStatus.DERIVED` sits between `MEASURED` and
+  `NEVER_MEASURED` — excluded from availability, reported alongside it, and deliberately
+  **not** `is_usable`.
+- **Reason:** the first clone fabricated `cond_flow`, the signal four of six models depend
+  on, and the honesty layer had to explain that away on every figure. Removing the
+  fabrication is better than labelling it. Every number the suite asserts inside the
+  measured window is identical after the restore — all ten label counts, 39 naive cases,
+  12 fault equipment-days, all ten bands, both nRMSE figures — so nothing the demonstration
+  shows moved.
+- **Why `graylinx_v3` was rejected:** it exists and is clean, but it starts 2026-06-18 with
+  14,031 rows. Cloning from it would have destroyed the entire measured window the product
+  and the demonstration script are built on. Checked before the drop, not after.
+- **What the restore did not fix:** `cond_flow` is zero in all three databases. The plant
+  does not meter condenser flow. That is instrumentation, and no restore changes it.
+- **Two things it broke, both narrowings rather than design changes:**
+  `compressor_power_residual` is no longer *globally* NULL — 4,281 non-null values, every
+  one beyond the clip — so the claim is now scoped to the measured window and a second
+  query reports the boundary. And four provenance tests asserted the simulation's
+  *presence*; they now assert its absence and the derivation's arrival.
+- **The risk that justified the derived work:** 7,670 derived slots fall **inside** the
+  measured window, unlike the simulation, which the clip kept out by construction. Without
+  the third state those would have read as instrument readings — the same defect `cond_flow`
+  taught us, through a different door, and no gate would have caught it.
+- **Affects:** `app/db/provenance.py`, `app/db/plant.py`, `app/domain/signals.py`,
+  `app/domain/residuals.py`, `tests/integration/test_provenance.py`,
+  `tests/integration/test_plant_repository.py`, `CONTEXT.md` §9 and §10a, `.gitignore`.
+- **Rollback:** `backups/graylinx_synex_2026-08-17.sql`, 2.06 GB, verified complete.
+- **Reflected in docs:** yes.
+
 ### D-016 — The demonstration runs live on the box; the gate never does
 - **Date:** 2026-08-14
 - **Decided by:** Harshan

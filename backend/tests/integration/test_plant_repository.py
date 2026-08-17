@@ -89,9 +89,24 @@ async def test_the_table_name_does_not_leak_upward(repo: PlantRepository) -> Non
 
 async def test_the_sixth_model_is_entirely_null(repo: PlantRepository) -> None:
     """Every document saying "six models" is a claim the data contradicts. Asserted as a
-    query, not trusted as prose."""
+    query, not trusted as prose.
+
+    **Narrowed at the 2026-08-17 re-clone.** The rebuilt source carries 4,281 non-null
+    values for this column, all beyond the measured window. Inside the window — everything
+    the product shows — it is still entirely NULL, so the honest sentence is now *five
+    models are fitted over the measured window; a sixth appears only in the derived tail.*
+    Both halves are asserted, because a test that checked only the first would pass again
+    the day the tail moved inside the clip.
+    """
     assert await repo.unfitted_residual_is_entirely_null()
     assert UNFITTED_RESIDUAL_COLUMN == "compressor_power_residual"
+
+    count, first = await repo.unfitted_residual_outside_the_window()
+    assert count == 4_281, f"{count} values beyond the clip, expected 4,281 — the source moved"
+    assert first is not None and first > repo._measured_window_end, (
+        "the sixth model's values must stay outside the measured window; if they enter it, "
+        "five-models-are-fitted stops being true of what the product shows"
+    )
 
 
 # ── bands ───────────────────────────────────────────────────────────────────────

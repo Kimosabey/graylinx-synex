@@ -241,16 +241,42 @@ class PlantRepository:
             return tuple(_to_key(r[0]) for r in await cur.fetchall())
 
     async def unfitted_residual_is_entirely_null(self) -> bool:
-        """`compressor_power_residual` is 100% NULL — five models are fitted, not six.
+        """`compressor_power_residual` is 100% NULL **inside the measured window** — five
+        models are fitted there, not six.
 
         Asserted as a query rather than trusted as a document, because every chapter saying
         "six models" is a claim the data contradicts.
+
+        **Narrowed on 2026-08-17, and the narrowing matters.** The claim used to be global.
+        After the re-clone from the rebuilt `graylinx_v2` the column holds 4,281 non-null
+        values — every one of them after 2026-06-23 14:35, which is to say entirely in the
+        derived tail beyond our clip. Inside the window the count is still exactly zero, so
+        the product's behaviour is unchanged and the sixth model still renders as *"no model
+        is fitted for this signal"*. What changed is the scope of the sentence, not the
+        finding, and stating it globally would now be false.
         """
         sql = (
             f"SELECT COUNT(*), SUM(`{UNFITTED_RESIDUAL_COLUMN}` IS NOT NULL) "
-            "FROM gla_model_residuals_wc"
+            "FROM gla_model_residuals_wc WHERE slot_time <= %s"
         )
         async with self._pool.acquire() as conn, conn.cursor() as cur:
-            await cur.execute(sql)
+            await cur.execute(sql, [self._measured_window_end])
             total, non_null = await cur.fetchone()
             return total > 0 and (non_null or 0) == 0
+
+    async def unfitted_residual_outside_the_window(self) -> tuple[int, datetime | None]:
+        """How many values the sixth model has beyond the clip, and where they start.
+
+        Exists so the boundary is a reported number rather than a comment. If a future
+        restore moves those values *into* the window, this is what makes it visible instead
+        of letting a sixth model quietly appear in figures.
+        """
+        sql = (
+            f"SELECT COUNT(`{UNFITTED_RESIDUAL_COLUMN}`), "
+            f"       MIN(CASE WHEN `{UNFITTED_RESIDUAL_COLUMN}` IS NOT NULL THEN slot_time END) "
+            "FROM gla_model_residuals_wc WHERE slot_time > %s"
+        )
+        async with self._pool.acquire() as conn, conn.cursor() as cur:
+            await cur.execute(sql, [self._measured_window_end])
+            count, first = await cur.fetchone()
+            return int(count or 0), first
