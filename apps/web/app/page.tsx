@@ -21,6 +21,7 @@ import {
   IconHalt,
   IconUsers,
 } from '@/components/Icons';
+import { Differential } from '@/components/Differential';
 import { ResidualChart, type SeriesBand, type SeriesPoint } from '@/components/ResidualChart';
 import { useTurn } from '@/lib/useTurn';
 
@@ -229,6 +230,11 @@ export default function Page() {
             />
           </section>
         )}
+
+        {/* RC12-RC14. Mounted after the evidence and before the work order, because the
+            differential is what stands between a named-but-ambiguous class and raising a job
+            against whichever cause happened to be listed first. */}
+        <Differential faultLabel={selected?.fault_label ?? null} />
 
         {wo && (
           <section className="card" aria-labelledby="wo">

@@ -1091,3 +1091,113 @@ ul.checks {
   font-style: italic;
   margin-top: 2px;
 }
+
+/* ── RC12–RC14 · the differential ──────────────────────────────────────────────
+ *
+ * The screen `mvp/DESIGN-HANDOFF.md` calls the product's potential signature: candidate
+ * causes visibly narrowing, eliminated ones struck out with *why* attached.
+ *
+ * Three rules are carried by the styling rather than by the copy, because a reader takes
+ * meaning from appearance before they read a word:
+ *
+ *  - An eliminated cause is struck through and MUTED, never hidden. Constraint 31 — the
+ *    audit travels with the elimination, and a list that silently shrinks is one nobody can
+ *    check. It keeps its full opacity in high-contrast mode for the same reason.
+ *  - `settled` and `exhausted` are visually DIFFERENT (constraint 32). Exhausted is not a
+ *    lesser settled: it is the honest "we cannot separate these with the checks we have",
+ *    so it takes the refusal accent rather than a warning colour — a refusal is not an error.
+ *  - "changes nothing" is a visible badge on the can't-tell answer (constraint 30). The
+ *    interface proves the answer is inert rather than claiming it.
+ */
+
+.differential .differential-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.differential .outcome-text {
+  color: var(--muted);
+  margin: 0.35rem 0 0.9rem;
+}
+
+.differential .badge.outcome[data-settled='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Exhausted takes the refusal treatment: deliberate, calm, never red. A differential that
+   ran out of questions has established a finding, not failed. */
+.differential .badge.outcome[data-exhausted='true'] {
+  background: var(--refusal-bg);
+  color: var(--refusal);
+  border: 1px solid var(--refusal);
+}
+
+.differential .causes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.differential .cause {
+  border-left: 3px solid var(--accent);
+  padding: 0.5rem 0 0.5rem 0.75rem;
+}
+
+.differential .cause[data-eliminated='true'] {
+  border-left-color: var(--border);
+}
+
+.differential .cause[data-eliminated='true'] .cause-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* The reason an elimination happened, never optional. */
+.differential .elimination {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.differential .badge.confirmed {
+  margin-left: 0.5rem;
+  background: var(--refusal-bg);
+  color: var(--refusal);
+}
+
+.differential .next-question h4 {
+  margin: 1rem 0 0.4rem;
+}
+
+.differential .answers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.differential .badge.no-effect {
+  margin-left: 0.5rem;
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px dashed var(--border);
+}
+
+.differential .review-gate {
+  margin-top: 0.9rem;
+}
+
+/* A struck-through cause must stay legible: it is evidence of a decision somebody may need
+   to challenge, and challenging it starts with reading it. */
+@media (prefers-contrast: more) {
+  .differential .cause[data-eliminated='true'] .cause-text {
+    color: var(--fg);
+  }
+}
