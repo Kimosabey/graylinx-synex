@@ -119,7 +119,7 @@ SECTIONS_OF: dict[Surface, tuple[Section, ...]] = {
 
 #: Why both queues sit in the order they do, and what that order deliberately does not claim.
 #:
-#: TBD (Q67): no document says what should order a working queue. Oldest first, because age is
+#: TBD (Q71): no document says what should order a working queue. Oldest first, because age is
 #: a fact the row already carries rather than a judgement about the plant. The three orderings
 #: a reader might expect are all unavailable: residual magnitude is forbidden outright by
 #: inherited constraint 3, since non-faults were measured to deviate *more* than faults;
@@ -138,7 +138,7 @@ QUEUE_ORDER_REASON: str = (
 #: cleared case leaves `CaseStore.open_cases()` because its state becomes `stale`, so without
 #: a row of its own it would simply vanish from the working queue.
 #:
-#: TBD (Q68): nobody has said whether a condition-cleared case needs a named human to confirm
+#: TBD (Q72): nobody has said whether a condition-cleared case needs a named human to confirm
 #: it before it leaves the queue. Until they do, it is surfaced as its own row with its own
 #: action rather than being closed, dropped, or counted alongside the untouched ones.
 CLEARED_NEEDS_A_PERSON: str = (

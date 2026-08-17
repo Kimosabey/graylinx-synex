@@ -76,7 +76,7 @@ class MissingCapability:
 
     name: str
     source: str
-    """The feature or question this absence traces to — `G8`, `Q41`, `Q69`."""
+    """The feature or question this absence traces to — `G8`, `Q41`, `Q76`."""
 
     reason: str
 
@@ -115,14 +115,14 @@ NOT_AVAILABLE: tuple[MissingCapability, ...] = (
     ),
     MissingCapability(
         name="Edit scope or the approval matrix from this surface",
-        source="Q69",
+        source="Q76",
         reason=(
             "The persona-to-capability map is a module-level constant in the Control Plane and "
             "the required capability per risk level is a constant in the authority table, so "
             "authoring either one is a code change reviewed like any other. No document states "
             "whether an Administrator edits capabilities at run time, or which capabilities one "
             "may grant — so this surface reads them and does not offer to write them. "
-            "TBD (Q69)."
+            "TBD (Q76)."
         ),
     ),
 )
@@ -134,10 +134,10 @@ NOT_AVAILABLE: tuple[MissingCapability, ...] = (
 #: states the scheme, what increments it, or who may. Treating it as a number would invite
 #: arithmetic on it — "two versions behind" — which nothing in the programme has defined.
 #:
-#: TBD (Q67): the versioning scheme and the trigger that advances it are both unstated.
+#: TBD (Q74): the versioning scheme and the trigger that advances it are both unstated.
 VERSION_IS_A_STRING: str = (
     "The policy version is an opaque string. Nothing compares two of them for order, because "
-    "no document defines the scheme or what advances it (Q67) — it exists to be stamped on "
+    "no document defines the scheme or what advances it (Q74) — it exists to be stamped on "
     "every audit row and quoted back, so that a decision can be traced to the rules in force "
     "when it was taken."
 )
@@ -146,10 +146,10 @@ VERSION_IS_A_STRING: str = (
 #: this module. Recorded as the identity kind, which is true, instead of a name, which would
 #: not be — an audit row naming an author it cannot verify is worse than one naming none.
 #:
-#: TBD (Q68): who a policy change is attributable to once identity is real.
+#: TBD (Q75): who a policy change is attributable to once identity is real.
 UNATTRIBUTABLE_AUTHOR: str = (
     f"recorded as {IDENTITY_KIND!r} — no person can be named, because nothing authenticates "
-    f"one yet (Q41, Q68)"
+    f"one yet (Q41, Q75)"
 )
 
 
@@ -381,7 +381,7 @@ def _row_for(risk: Risk, holders: dict[str, tuple[str, ...]]) -> ApprovalRow:
             who=NEVER_APPROVABLE_BECAUSE.get(
                 risk,
                 "no approval clears this level, and no reason has been recorded for why — "
-                "which is itself the finding. TBD (Q69).",
+                "which is itself the finding. TBD (Q76).",
             ),
         )
 

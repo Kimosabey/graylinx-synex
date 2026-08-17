@@ -67,7 +67,7 @@ from app.analytics.validity import ValidityFinding, Verdict
 #:
 #: **It is a design expectation, not a target and not a baseline.** Nothing in this module
 #: scores a machine against it, reports a shortfall from it, or treats a reading inside it as
-#: an achievement. `Q68`: no document states whether these two chillers' nameplates carry this
+#: an achievement. `Q70`: no document states whether these two chillers' nameplates carry this
 #: band or whether it is a generic figure for water-cooled centrifugal machines, and the
 #: difference decides whether it may ever anchor a per-asset comparison.
 DESIGN_BAND: tuple[float, float] = (0.65, 0.85)
@@ -89,7 +89,7 @@ DERIVED_SLOTS_IN_MEASURED_WINDOW: int = 7_670
 
 #: The valid-slot coverage below which a period figure should not be offered at all.
 #:
-#: TBD (Q67): no document states one, and none is invented. A fraction chosen here would
+#: TBD (Q69): no document states one, and none is invented. A fraction chosen here would
 #: silently suppress real figures on a threshold nobody agreed, which is the mirror image of
 #: the failure this module exists for — so coverage is **reported** with every figure instead.
 #: `None` rather than `0.0`, so that *"no fraction is agreed"* and *"any coverage will do"*
@@ -125,7 +125,7 @@ class Band(StrEnum):
 
     WITHIN_DESIGN_BAND = "within_design_band"
     """Inside the design expectation. Recorded, and deliberately not called good — see
-    `DESIGN_BAND` and `Q68`."""
+    `DESIGN_BAND` and `Q70`."""
 
     POOR_BUT_REAL = "poor_but_real"
     """Genuinely poor performance rather than a measurement fault. Saying so is what stops an
@@ -218,7 +218,7 @@ def classify(kw_per_tr: float | None, absence_reason: str = "") -> Classificatio
             Band.WITHIN_DESIGN_BAND,
             f"reads {kw_per_tr}, inside the design band of {low}-{high}. Recorded, not scored: "
             f"the band is a nameplate expectation for a class of machine and no document says "
-            f"it is this asset's (Q68).",
+            f"it is this asset's (Q70).",
         )
 
     if validity.is_poor_but_real(kw_per_tr):
@@ -446,7 +446,7 @@ class PeriodEfficiency:
             return "no slots at all fell in this window, so there is no coverage to report"
         return (
             f"the figure rests on {self.included_count:,} of {self.slot_count:,} slots "
-            f"({self.coverage:.0%}); no minimum coverage has been agreed (Q67), so this is "
+            f"({self.coverage:.0%}); no minimum coverage has been agreed (Q69), so this is "
             f"reported rather than used to suppress the figure"
         )
 

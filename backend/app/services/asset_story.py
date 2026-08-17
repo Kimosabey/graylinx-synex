@@ -61,7 +61,7 @@ from app.domain.signals import SignalStatus
 #: `NO_DIAGNOSIS` plus a data-quality work order, by design on day one. That is `Q1`, the
 #: highest-leverage open question in the programme.
 #:
-#: TBD (Q67): §6 names its models DP, SP, DT, Power, Comp Amps and Cond Leaving.
+#: TBD (Q73): §6 names its models DP, SP, DT, Power, Comp Amps and Cond Leaving.
 #: `gla_equipment_model_metrics` names them `Discharge_Pres`, `Suction_Pres`,
 #: `Discharge_Temp`, `Chiller_Current` and `Condenser_Leav_Temp`. **No document states the
 #: correspondence.** The reading taken here is `Chiller_Current` = §6's *Power* (chiller amps
@@ -79,7 +79,7 @@ MODELS_TAKING_COND_FLOW: frozenset[str] = frozenset(
 COND_FLOW_MAPPING_CAVEAT: str = (
     "the source names its models DP, SP, DT, Power, Comp Amps and Cond Leaving and the "
     "metrics table names them differently; Chiller_Current has been read as the Power model "
-    "and Comp Amps as the unfitted compressor residual, which no document confirms (Q67)"
+    "and Comp Amps as the unfitted compressor residual, which no document confirms (Q73)"
 )
 
 #: `dpt`'s constant value per asset, measured and recorded in `CONTEXT.md` §10a. Held per
