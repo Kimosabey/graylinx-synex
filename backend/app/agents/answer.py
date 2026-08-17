@@ -19,7 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
-from app.agents import postcheck
+from app.agents import postcheck, skills
 from app.agents.router import RouteDecision, Skill, route
 from app.analytics.bands import ResidualBand
 from app.analytics.gates import (
@@ -176,6 +176,22 @@ async def answer_turn(
                 "carry telemetry and nothing that can be judged against it."
             ),
             route=decision,
+        )
+
+    # ── the skill decides which question is being answered ──────────────────────
+    # Until 2026-08-17 every skill below `converse` fell through to the explain path, so the
+    # router resolved `look_up`, `prepare_work`, `resolve` and `verify` correctly, carried the
+    # skill into the route frame, and then ignored it. A router whose decision changes nothing
+    # only looks like a router. Four of the five spend no model at all.
+    outcome = skills.dispatch(decision.skill.value, pack)
+    if outcome is not None:
+        return Turn(
+            question=question,
+            state=outcome.state,
+            text=outcome.text,
+            route=decision,
+            pack=pack,
+            used_model=outcome.used_model,
         )
 
     # ── the gates decide before the model is reached ────────────────────────────
