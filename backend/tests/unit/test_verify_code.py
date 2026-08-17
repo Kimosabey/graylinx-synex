@@ -162,32 +162,57 @@ def test_the_dependency_manifests_are_actually_found() -> None:
     assert "backend/requirements-dev.txt" in found
 
 
-def test_a_bare_dependency_line_is_caught() -> None:
+def _manifest_tree(tmp_path, body: str, monkeypatch) -> None:
+    """Point the checker at a throwaway tree holding one manifest.
+
+    **These two tests used to append to the repository's own `backend/requirements.txt` and
+    restore it in a `finally`.** That is destructive by construction, and on 2026-08-17 it
+    did what it was always going to do: several pytest runs overlapped in the same working
+    tree, the read-modify-write raced, and the restores lost. The real manifest ended up
+    carrying four stray comments and a live `ragas` line — the exact dependency the gate
+    exists to keep out, added by the gate's own tests.
+
+    A test that mutates a tracked file is a test that can corrupt the thing it is checking.
+    Isolating it costs three lines.
+    """
+    backend = tmp_path / "backend"
+    backend.mkdir()
+    (backend / "requirements.txt").write_text(body, encoding="utf-8")
+    monkeypatch.setattr(vc, "ROOT", tmp_path)
+
+
+def test_a_bare_dependency_line_is_caught(tmp_path, monkeypatch) -> None:
     """`ragas` alone, unpinned, matches none of the line patterns. It is the trying-it-out
     form, so the manifest rule is looser than the source rule."""
+    _manifest_tree(tmp_path, "fastapi==0.115.0\nragas\n", monkeypatch)
     rep = vc.Report()
-    manifest = ROOT / "backend" / "requirements.txt"
-    original = manifest.read_text(encoding="utf-8")
-    try:
-        manifest.write_text(original + "\nragas\n", encoding="utf-8")
-        vc.check_manifests(rep)
-        assert rep.errors, "a bare banned dependency must fail the gate"
-        assert "DeepEval" in rep.errors[0]
-    finally:
-        manifest.write_text(original, encoding="utf-8")
+    vc.check_manifests(rep)
+
+    assert rep.errors, "a bare banned dependency must fail the gate"
+    assert "DeepEval" in rep.errors[0]
 
 
-def test_a_comment_mentioning_a_banned_dependency_is_not_a_dependency() -> None:
+def test_a_comment_mentioning_a_banned_dependency_is_not_a_dependency(
+    tmp_path, monkeypatch
+) -> None:
     """`requirements.txt` explains why Ragas is absent. Explaining must stay possible."""
+    _manifest_tree(tmp_path, "fastapi==0.115.0\n# ragas is banned, see D-010\n", monkeypatch)
     rep = vc.Report()
-    manifest = ROOT / "backend" / "requirements.txt"
-    original = manifest.read_text(encoding="utf-8")
-    try:
-        manifest.write_text(original + "\n# ragas is banned, see D-010\n", encoding="utf-8")
-        vc.check_manifests(rep)
-        assert rep.errors == [], "\n".join(rep.errors)
-    finally:
-        manifest.write_text(original, encoding="utf-8")
+    vc.check_manifests(rep)
+
+    assert rep.errors == [], "\n".join(rep.errors)
+
+
+def test_the_real_manifest_is_never_written_to(tmp_path, monkeypatch) -> None:
+    """The regression guard for the bug above: this file must leave the repository alone."""
+    real = ROOT / "backend" / "requirements.txt"
+    before = real.read_text(encoding="utf-8")
+
+    _manifest_tree(tmp_path, "ragas\n", monkeypatch)
+    vc.check_manifests(vc.Report())
+
+    assert real.read_text(encoding="utf-8") == before
+    assert "\nragas" not in before, "the gate's own tests once added the banned dependency"
 
 
 def test_the_rule_tables_are_imported_not_copied() -> None:
