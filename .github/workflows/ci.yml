@@ -181,3 +181,66 @@ jobs:
         if: steps.detect.outputs.exists == 'true'
         working-directory: apps/web
         run: npm run build
+
+  # ── 5. Synex's own state ─────────────────────────────────────────────────────
+  # Added 2026-08-17, and the gap it closes was real: 97 `requires_box` tests — persistence,
+  # the durable case graph, retrieval, and every provenance assertion — ran **only on one
+  # laptop**. A test nobody's CI runs is a test that stops being true quietly.
+  #
+  # It runs the subset that needs Postgres and nothing else. It deliberately does NOT run:
+  #
+  #   * anything needing MySQL — the plant snapshot is 3.9 GB and belongs to the existing
+  #     platform. Provisioning it here would make CI depend on a customer's data.
+  #   * anything needing Ollama — the retrieval tests pull a 274 MB model, which is cheap on
+  #     a laptop and wasteful on every push.
+  #
+  # So the split is honest rather than convenient: `-k` names what is covered, and what is
+  # not covered is named above rather than left as an absence somebody assumes is covered.
+  state:
+    name: state — Postgres, the case queue and the durable graph
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # Same image as infra/docker-compose.yml. pgvector is in it because the architecture
+        # needs both stores and one container is cheaper than two.
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: synex
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: synex
+        ports:
+          - 5443:5432
+        options: >-
+          --health-cmd "pg_isready -U synex -d synex"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: pgvector is present
+        run: |
+          PGPASSWORD=dev psql -h 127.0.0.1 -p 5443 -U synex -d synex \
+            -c "CREATE EXTENSION IF NOT EXISTS vector;" \
+            -c "SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';"
+
+      # RC8's idempotency is a unique index rather than a code path, and RC1's pause is a
+      # checkpoint row. Neither can be asserted against a fake, which is why these are not
+      # in the offline suite.
+      - name: Test — the case queue, the durable pause, the audit trail
+        working-directory: backend
+        run: pytest -m requires_box -k "case_store or case_graph_durable"
