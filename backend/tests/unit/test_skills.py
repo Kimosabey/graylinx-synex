@@ -110,10 +110,19 @@ def test_investigate_says_a_determinate_class_gets_no_differential() -> None:
 
 def test_investigate_separates_missing_content_from_no_ambiguity() -> None:
     """The two must never look alike: one says *we have not written it*, the other says
-    *there is nothing to investigate*, and only one of them means stop looking."""
-    outcome = skills.investigate(_pack("HIGH_HEAD_AMBIGUOUS"))
-    assert outcome.payload["qualifies_for_differential"] is True
-    assert "missing content, not an absence of ambiguity" in outcome.text
+    *there is nothing to investigate*, and only one of them means stop looking.
+
+    `HIGH_HEAD_AMBIGUOUS` is now authored, so it reports the third state — narrowable once
+    reviewed. `REFRIGERANT_SIDE_HIGH_HEAD` is the live *qualifies-but-unauthored* case: it
+    names a region, probes five mechanisms and deliberately has no differential (`Q37`)."""
+    authored = skills.investigate(_pack("HIGH_HEAD_AMBIGUOUS"))
+    assert authored.payload["qualifies_for_differential"] is True
+    assert authored.payload["differential_authored"] is True
+    assert "once the discriminators have been reviewed" in authored.text
+
+    determinate = skills.investigate(_pack("CONDENSER_LOW_FLOW"))
+    assert determinate.payload["qualifies_for_differential"] is False
+    assert "does not get a differential" in determinate.text
 
 
 # ── prepare_work: a draft that says it is a draft ─────────────────────────────

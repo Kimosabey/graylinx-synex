@@ -38,6 +38,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from app.domain import faults
+from app.domain.cases import DEFAULT_CAPABILITY, Capability
 
 
 class Effect(StrEnum):
@@ -97,6 +98,19 @@ class Question:
     `Differential.askable` hides anything unreviewed — so no elimination reaches a user
     before review, which is what makes the unreviewed library safe to ship behind."""
 
+    capability: Capability = DEFAULT_CAPABILITY
+    """Who can physically take this reading. `RC3`, and constraint 24 sets the direction of
+    the default: an untagged check is a **technician** check, because mis-tagging a technician
+    task as operator work puts an unqualified person on a pressurised circuit while the
+    reverse merely wastes a callout."""
+
+    source: str = ""
+    """The file and heading this question was copied from.
+
+    A discriminator that cannot name where it came from is indistinguishable from model
+    output, and this content eliminates causes irreversibly — so provenance is a field rather
+    than a comment. Empty only on questions constructed in tests."""
+
     def answer(self, key: str) -> Answer | None:
         return next((a for a in self.answers if a.key == key), None)
 
@@ -126,6 +140,9 @@ class Question:
 class Cause:
     id: str
     text: str
+    source: str = ""
+    """Where this candidate was transcribed from. Same reasoning as `Question.source`: a
+    cause nobody can trace is a cause nobody can review."""
 
 
 @dataclass(frozen=True)
@@ -156,6 +173,8 @@ class Differential:
     fault_label: str
     causes: tuple[Cause, ...]
     questions: tuple[Question, ...]
+    source: str = ""
+    """The file and the fault-class heading the whole candidate set came from."""
 
     @property
     def askable(self) -> tuple[Question, ...]:
@@ -311,18 +330,22 @@ def has_differential(fault_label: str) -> bool:
     return bool(fault and fault.declares_undecidable)
 
 
-#: The authored candidate sets, by fault label. **Empty, and that is the honest state.**
+#: The authored candidate sets, by fault label. Filled from
+#: `app/domain/library/differentials.py` by the import at the foot of this module.
 #:
-#: The reference queue holds 4 differentials, 19 candidate causes, 19 discriminating questions
-#: and about 41 effects — and **not one has been reviewed by a refrigeration engineer**. Thirty-
-#: one causes have already been eliminated on that queue by those unreviewed discriminators.
+#: **The content is here; none of it is askable, and both halves of that are deliberate.**
+#: The four differentials, 19 candidate causes and 19 discriminating questions are transcribed
+#: verbatim from the review pack, with every question carrying the file and heading it came
+#: from — because a discriminator that cannot name its source is indistinguishable from model
+#: output. Every one of the 19 is `sme_reviewed=False`, so `askable` returns nothing, each
+#: differential reports `EXHAUSTED`, and no elimination can reach a user. Thirty-one causes
+#: were eliminated on the reference queue by these same discriminators, none of them read by a
+#: refrigeration engineer; holding the content while refusing to ask it is what keeps that
+#: from happening again here.
 #:
-#: Transcribing them here would put unreviewed engineering judgement behind an irreversible
-#: elimination in the one place nobody re-examines. `Checklist` solved the same problem with
-#: `is_sample`, but a sample *discriminator* is not the same kind of object as a sample
-#: *checklist item*: an illustrative instruction wastes a walk to the machine, while an
-#: illustrative discriminator rules a real cause out for ever. So this stays empty until the
-#: SME hour, and `differential_for` returns `None` with the reason rather than a stub.
+#: **Not `is_sample`.** A sample *checklist item* is invented to demonstrate a mechanism and
+#: wastes a walk to the machine. This is the real library awaiting review, and an illustrative
+#: discriminator would rule a real cause out for ever. Different facts, different flags.
 DIFFERENTIALS: dict[str, Differential] = {}
 
 
@@ -334,3 +357,14 @@ def differential_for(fault_label: str) -> Differential | None:
     the second question; this one answers the first.
     """
     return DIFFERENTIALS.get(fault_label)
+
+
+# The transcribed content, imported for one side effect: it fills `DIFFERENTIALS` above.
+#
+# **The import sits at the foot of the file, and that is structural rather than untidy.** The
+# content is written in terms of the types defined here, so it must import upwards; the
+# registry the rest of the code reads lives here too. Importing the module without touching a
+# name on it is the only wiring that survives either import order — reaching for
+# `differentials.LIBRARY` from this side would fail for anyone who imports the content module
+# first, which the tests do.
+from app.domain.library import differentials as _transcribed  # noqa: E402, F401

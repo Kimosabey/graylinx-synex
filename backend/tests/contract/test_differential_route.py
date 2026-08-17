@@ -63,32 +63,57 @@ def test_an_unknown_label_is_refused_rather_than_guessed(client: TestClient) -> 
 
 # ── missing content is not the same as no ambiguity ───────────────────────────
 
-def test_missing_content_is_reported_as_missing_not_as_settled(client: TestClient) -> None:
-    """**The distinction this route exists to protect.** A class that qualifies but has no
-    authored candidate set must not look like a class with nothing to investigate — those
-    are opposite statements, and one of them is an instruction to stop looking."""
+def test_an_authored_class_exposes_its_candidates(client: TestClient) -> None:
+    """The candidate set was transcribed from the curated library on 2026-08-17. Before that
+    this route reported *missing content* — a state deliberately kept distinct from *no
+    ambiguity*, because one of them is an instruction to stop looking."""
     body = _post(client, "HIGH_HEAD_AMBIGUOUS").json()
 
     assert body["has_differential"] is True
-    assert body["content_available"] is False
-    assert "missing content, not a class without ambiguity" in body["reason"]
+    assert body["content_available"] is True
+    assert body["causes"], "an authored differential must expose its candidates"
+    assert all(c["live"] for c in body["causes"]), "nothing is eliminated before a question"
+
+
+def test_nothing_is_askable_because_nothing_has_been_reviewed(client: TestClient) -> None:
+    """**The content arrived; the review did not.** `Differential.askable` returns only
+    SME-reviewed questions, so every differential reports EXHAUSTED before a single question
+    is put to anyone. Thirty-one causes were eliminated on the reference queue by
+    discriminators nobody had read, and elimination is irreversible."""
+    body = _post(client, "HIGH_HEAD_AMBIGUOUS").json()
+
+    assert body["reviewed_questions_available"] == 0
     assert body["next_question"] is None
+    assert body["exhausted_not_settled"] is True
+    assert "no discriminator" in body["unreviewed_note"].lower()
 
 
-def test_the_registry_is_empty_and_that_is_deliberate() -> None:
-    """A sample *discriminator* is not the same kind of object as a sample *checklist item*.
-    An illustrative instruction wastes a walk to the machine; an illustrative discriminator
-    rules a real cause out for ever."""
-    assert diff.DIFFERENTIALS == {}
-    assert diff.differential_for("HIGH_HEAD_AMBIGUOUS") is None
+def test_the_registry_matches_the_documented_scale() -> None:
+    """`CONTEXT.md` §10b: 4 differentials, 19 candidate causes, 19 discriminating questions.
+    Asserted against the transcription so a paraphrase that dropped or invented one shows up
+    as a count rather than as prose nobody re-reads."""
+    assert len(diff.DIFFERENTIALS) == 4
+    assert sum(len(d.causes) for d in diff.DIFFERENTIALS.values()) == 19
+    assert sum(len(d.questions) for d in diff.DIFFERENTIALS.values()) == 19
 
 
-def test_qualifying_and_being_authored_are_separate_questions() -> None:
+def test_only_undecidable_classes_are_authored() -> None:
+    """Constraint 27. A determinate class with a differential would be inventing ambiguity
+    the trained model never reported."""
+    for label in diff.DIFFERENTIALS:
+        assert diff.has_differential(label), f"{label} is authored but does not qualify"
+
+
+def test_qualifying_and_being_authored_stay_separate_questions() -> None:
     """`has_differential` answers *does this class have ambiguity*; `differential_for` answers
-    *have we written the candidate set*. Collapsing them would report our content gap as a
-    property of the plant."""
+    *have we written the candidate set*. Collapsing them would report a content gap as a
+    property of the plant — and `REFRIGERANT_SIDE_HIGH_HEAD` is the live case: it names a
+    region, probes five mechanisms, and deliberately has no differential (`Q37`)."""
     assert diff.has_differential("HIGH_HEAD_AMBIGUOUS") is True
-    assert diff.differential_for("HIGH_HEAD_AMBIGUOUS") is None
+    assert diff.differential_for("HIGH_HEAD_AMBIGUOUS") is not None
+
+    assert diff.has_differential("REFRIGERANT_SIDE_HIGH_HEAD") is False
+    assert diff.differential_for("REFRIGERANT_SIDE_HIGH_HEAD") is None
 
 
 # ── the shape the screen depends on ───────────────────────────────────────────

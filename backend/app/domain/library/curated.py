@@ -6,7 +6,7 @@ contextualises library content but never authors a field instruction. Both are u
 against a bare string. Six months from now, an item reading *"Read the field device
 directly"* is either a refrigeration engineer's instruction or something a model produced on
 a Tuesday, and nothing in the string says which. So provenance is a field rather than a
-convention: `CuratedItem` carries the file, the part, the heading and the fault label it was
+convention: `TranscribedItem` carries the file, the part, the heading and the fault label it was
 transcribed from, and refuses to be constructed without them.
 
 **Two facts about a transcribed item, kept apart on purpose.**
@@ -32,7 +32,7 @@ from app.domain.cases import ChecklistItem
 
 
 @dataclass(frozen=True)
-class CuratedItem(ChecklistItem):
+class TranscribedItem(ChecklistItem):
     """One item copied verbatim out of a review document, with where it came from.
 
     Extends `ChecklistItem` rather than wrapping it so every existing accessor —
