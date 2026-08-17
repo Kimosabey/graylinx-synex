@@ -309,3 +309,28 @@ def has_differential(fault_label: str) -> bool:
     """Constraint 27: only a class the model itself declares undecidable gets one."""
     fault = faults.by_label(fault_label)
     return bool(fault and fault.declares_undecidable)
+
+
+#: The authored candidate sets, by fault label. **Empty, and that is the honest state.**
+#:
+#: The reference queue holds 4 differentials, 19 candidate causes, 19 discriminating questions
+#: and about 41 effects — and **not one has been reviewed by a refrigeration engineer**. Thirty-
+#: one causes have already been eliminated on that queue by those unreviewed discriminators.
+#:
+#: Transcribing them here would put unreviewed engineering judgement behind an irreversible
+#: elimination in the one place nobody re-examines. `Checklist` solved the same problem with
+#: `is_sample`, but a sample *discriminator* is not the same kind of object as a sample
+#: *checklist item*: an illustrative instruction wastes a walk to the machine, while an
+#: illustrative discriminator rules a real cause out for ever. So this stays empty until the
+#: SME hour, and `differential_for` returns `None` with the reason rather than a stub.
+DIFFERENTIALS: dict[str, Differential] = {}
+
+
+def differential_for(fault_label: str) -> Differential | None:
+    """The authored candidate set for a class, or `None` when none has been authored.
+
+    `None` here means **missing content**, never *"this class has no ambiguity"* — those are
+    different facts and the caller must say which it is reporting. `has_differential` answers
+    the second question; this one answers the first.
+    """
+    return DIFFERENTIALS.get(fault_label)
