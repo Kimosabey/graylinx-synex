@@ -200,21 +200,59 @@ def test_stub_mode_with_no_transcript_is_a_certainty_rather_than_an_unknown(
     assert "no transcript has been recorded" in observation.detail
 
 
-def test_stub_mode_with_transcripts_still_says_an_unrecorded_prompt_raises(
-    tmp_path: Path,
-) -> None:
-    """The transcript key is a hash of the prompt, so a recorded set does not make the prose
-    layer generally available — it makes it available for the prompts that were recorded."""
+def test_stub_mode_is_a_substitution_even_when_it_works(tmp_path: Path) -> None:
+    """A replayed transcript is not the roster answering — it is a recording of the roster
+    answering a prompt somebody asked once. Reporting that as *available* is the silent
+    substitution §13 forbids, however well it works, and the transcript key is a hash of the
+    whole prompt so the replay only ever covers what was recorded."""
     (tmp_path / "abc123.json").write_text("{}", encoding="utf-8")
     observation = observer.observe_answer_prose(model_mode="stub", transcript_dir=tmp_path)
-    assert observation.finding is Finding.REACHED
+
+    assert observation.finding is Finding.NOT_REACHED
+    assert "nothing reaches the roster" in observation.detail
     assert "1 transcript(s)" in observation.detail
-    assert "still raises" in observation.detail
+    assert "still raises" in observation.substitution
+
+
+def test_a_probe_may_narrow_a_substitution_and_may_never_invent_one() -> None:
+    """The roster has two weaker things behind it — a replay, and the deterministic assembly —
+    and a reader told the wrong one looks in the wrong place. But a probe that could supply a
+    substitution where the registry says there is none could report the plant snapshot as stood
+    in for, which is how a fabricated reading gets a respectable name."""
+    narrowed = assess(
+        (
+            Observation(
+                capability=Capability.ANSWER_PROSE,
+                finding=Finding.NOT_REACHED,
+                detail="the mode is 'stub'",
+                substitution="a recorded transcript replays instead",
+            ),
+        )
+    )
+    state = narrowed.state_of(Capability.ANSWER_PROSE)
+    assert state.availability is Availability.SUBSTITUTED
+    assert state.substitution == "a recorded transcript replays instead"
+
+    with pytest.raises(ValueError, match="may never invent one"):
+        assess(
+            (
+                Observation(
+                    capability=Capability.PLANT_TELEMETRY,
+                    finding=Finding.NOT_REACHED,
+                    detail="nothing listens on :3307",
+                    substitution="the last figures we happen to remember",
+                ),
+            )
+        )
 
 
 def test_a_turn_that_already_fell_back_outranks_the_configured_mode(tmp_path: Path) -> None:
     """Evidence beats configuration. A mode claiming the box is reachable does not outrank a
-    call that just failed, and the aggregate has to reflect what happened in this request."""
+    call that just failed, and the aggregate has to reflect what happened in this request.
+
+    It also carries the *right* substitution: this turn got the deterministic assembly, not a
+    replay, so the profile's own wording applies rather than the transcript one.
+    """
     (tmp_path / "abc123.json").write_text("{}", encoding="utf-8")
     observation = observer.observe_answer_prose(
         model_mode="stub",
@@ -223,6 +261,12 @@ def test_a_turn_that_already_fell_back_outranks_the_configured_mode(tmp_path: Pa
     )
     assert observation.finding is Finding.NOT_REACHED
     assert "already fell back" in observation.detail
+    assert observation.substitution == "", "the profile's substitution applies to a fallback"
+
+    report = assess((observation,))
+    assert "deterministic answer assembled from the evidence pack" in report.state_of(
+        Capability.ANSWER_PROSE
+    ).substitution
 
 
 def test_live_mode_is_not_probed_rather_than_assumed_reachable() -> None:
@@ -273,9 +317,10 @@ def test_four_separate_degradations_are_reported_separately(tmp_path: Path) -> N
 
 
 def test_a_healthy_plant_does_not_make_the_platform_fully_available(tmp_path: Path) -> None:
-    """The reason this reporter earns its place: with MySQL up and a transcript recorded, the
-    audit trail is still not durable and `G5`'s ledger is still in memory. A status field
-    computed from the plant connection alone would print `ok` over both."""
+    """The reason this reporter earns its place: with MySQL up and transcripts recorded, three
+    capabilities are still substituted — the roster is being replayed rather than reached, the
+    audit trail is not durable, and `G5`'s ledger is in memory. A status field computed from the
+    plant connection alone prints `ok` over all three."""
     (tmp_path / "abc123.json").write_text("{}", encoding="utf-8")
     report = observer.assess_platform(
         plant_repo=object(),
@@ -285,8 +330,11 @@ def test_a_healthy_plant_does_not_make_the_platform_fully_available(tmp_path: Pa
     )
 
     assert report.state_of(Capability.PLANT_TELEMETRY).availability is Availability.AVAILABLE
-    assert report.state_of(Capability.ANSWER_PROSE).availability is Availability.AVAILABLE
-    assert report.degraded, "the two durability substitutions are still active"
+    assert {s.capability for s in report.degraded} == {
+        Capability.ANSWER_PROSE,
+        Capability.AUDIT_TRAIL,
+        Capability.TOOL_IDEMPOTENCY,
+    }
     assert report.is_fully_available is False
 
 

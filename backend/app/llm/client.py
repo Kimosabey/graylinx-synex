@@ -116,6 +116,19 @@ class ModelClient:
                     "role": completion.role,
                     "task": completion.task,
                     "model": completion.model,
+                    # **Which machine produced this.** Decided 2026-08-17: every transcript is
+                    # recorded on the Jarvis box and nowhere else. An internal 20 GB GPU was
+                    # available and carries `phi4` and `devstral` identically, so a transcript
+                    # from it would have been indistinguishable from a roster one — and
+                    # "indistinguishable" is the property that makes a silent corruption
+                    # possible. One box, one source, and the host on the row so the rule can
+                    # be audited rather than remembered.
+                    #
+                    # Note the model name is already most of the guarantee: the brain is
+                    # `gemma4:26b-a4b-it-qat`, which exists on no other host, so a brain
+                    # transcript could not have come from anywhere else. This field closes the
+                    # gap for the roles whose model is not unique.
+                    "host": self._host,
                     "thinking_enabled": completion.thinking_enabled,
                     "messages": messages,
                     "text": completion.text,

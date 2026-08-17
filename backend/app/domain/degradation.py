@@ -226,6 +226,18 @@ class Observation:
     *"reaching this costs an HTTP call and health does not make one"*. Required: an observation
     without a detail cannot explain itself once it reaches a screen."""
 
+    substitution: str = ""
+    """A **more specific** substitution than the profile's, where the probe knows one.
+
+    The roster has two: a transcript replaying instead of the box is not the same weaker thing
+    as the deterministic answer assembled from the pack, and a reader who is told the wrong one
+    will look in the wrong place. Empty means the profile's own substitution applies.
+
+    A probe may narrow a substitution and may never invent one — see `_state_for`. Otherwise a
+    caller could report the plant snapshot as *substituted* by something of its own choosing,
+    which is how a fabricated reading gets a respectable name.
+    """
+
     def __post_init__(self) -> None:
         if not self.detail.strip():
             raise ValueError(
@@ -383,6 +395,14 @@ def _state_for(profile: CapabilityProfile, observation: Observation) -> Capabili
             probe=observation.detail,
         )
 
+    if observation.substitution and not profile.has_substitute:
+        raise ValueError(
+            f"a probe named a substitution for {profile.capability.value}, and the registry "
+            f"says nothing stands in for it. A probe may narrow a substitution and may never "
+            f"invent one — otherwise anything at all can be reported as standing in for a "
+            f"reading the instruments never took."
+        )
+
     if profile.has_substitute:
         return CapabilityState(
             capability=profile.capability,
@@ -391,7 +411,7 @@ def _state_for(profile: CapabilityProfile, observation: Observation) -> Capabili
                 f"{profile.provides} is not available — {observation.detail}. Something weaker "
                 f"is standing in, and it is named beside this."
             ),
-            substitution=profile.substitute,
+            substitution=observation.substitution or profile.substitute,
             probe=observation.detail,
         )
 

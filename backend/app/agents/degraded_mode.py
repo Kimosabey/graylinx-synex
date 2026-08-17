@@ -77,9 +77,18 @@ def observe_answer_prose(
 ) -> Observation:
     """The roster, or the recording of it — and the turn's own verdict outranks both.
 
-    Order matters. If a turn has already fallen back then the question is settled by evidence
-    rather than by inference, whatever the mode says, so `turn_degraded_reason` is read first.
-    A configuration that claims the box is reachable does not outrank a call that just failed.
+    **`stub` is a substitution, including when it works.** A replayed transcript is not the
+    roster answering; it is a recording of the roster answering a prompt somebody asked once, on
+    a day the code may since have moved. It is the right default and it is also, exactly, a
+    weaker capability standing in — so it is reported as one, with the replay named rather than
+    the deterministic assembly, because a reader told the wrong substitution looks in the wrong
+    place. `SESSION-HANDOFF.md` §3 is blunt about where this stands: *every Copilot answer is
+    still the deterministic fallback and says so.*
+
+    **There is no `REACHED` branch here, deliberately.** Nothing in this process ever confirms
+    the roster answered; only a completion does, and this report makes no call. So a mode that
+    reaches the box is `NOT_PROBED` and a turn that already fell back is `NOT_REACHED` — and the
+    turn is read first, because evidence from a call that just failed outranks configuration.
     """
     if turn_degraded_reason.strip():
         return Observation(
@@ -110,11 +119,16 @@ def observe_answer_prose(
         )
     return Observation(
         capability=Capability.ANSWER_PROSE,
-        finding=Finding.REACHED,
+        finding=Finding.NOT_REACHED,
         detail=(
-            f"the mode is 'stub' and {recorded} transcript(s) are on disk. A prompt that was "
-            f"recorded replays; one that was not still raises, because the key is a hash of "
-            f"the prompt"
+            f"the mode is 'stub', so nothing reaches the roster; {recorded} transcript(s) are "
+            f"on disk to replay from instead"
+        ),
+        substitution=(
+            f"a transcript recorded on the box replays in place of the roster. There are "
+            f"{recorded} of them, and the key is a hash of the whole prompt — so a prompt that "
+            f"was not recorded, or that has changed since it was, still raises and the "
+            f"deterministic answer stands in for that turn"
         ),
     )
 

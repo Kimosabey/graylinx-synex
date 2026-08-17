@@ -37,7 +37,7 @@ approval table: `app/db/state.py` holds cases, findings, work orders and audit r
 request built here exists for as long as the response does. Two consequences follow and
 neither is acceptable long-term — constraint 22 says a case must be able to go stale, and an
 approval nobody can find cannot age at all; and an unassigned request that vanishes on refresh
-is indistinguishable from one that was never raised. **`Q81`** carries it. The likely answer is
+is indistinguishable from one that was never raised. **`Q85`** carries it. The likely answer is
 `RC7`'s **authorisation work order** — the artefact that route already produces, in a table
 that already exists — but making a request a work order changes what `W2` means, so it is a
 decision rather than an implementation detail.
@@ -110,7 +110,7 @@ def identity_ref(identity: Identity) -> str:
     indistinguishable here, and one signing the other's request reads as self-approval and is
     refused. The cost of that is a second person being asked; the cost of the opposite
     asymmetry is a self-approval slipping through. Over-refusing is the cheap error, the same
-    way constraint 24 makes over-escalating the cheap error. `Q80` carries the real fix.
+    way constraint 24 makes over-escalating the cheap error. `Q86` carries the real fix.
     """
     return f"{identity.identity_kind}:{identity.persona.value}"
 

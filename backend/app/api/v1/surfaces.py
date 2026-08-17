@@ -162,7 +162,9 @@ async def asset_story(
             ),
         )
 
-    window = window_for(settings.synex_measured_window_end.date(), settings.synex_measured_window_end)
+    window = window_for(
+        settings.synex_measured_window_end.date(), settings.synex_measured_window_end
+    )
     # `episodes=None` and `episodes=()` mean different things to the story — *nobody read the
     # history* against *the history was read and held nothing*. With no repository we must
     # pass None, or the page would tell a reader the asset was clean when it was never checked.

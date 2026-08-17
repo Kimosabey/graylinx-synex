@@ -138,7 +138,7 @@ def deterministic_refusal(pack: EvidencePack) -> str:
     return "\n".join(lines)
 
 
-async def answer_turn(
+async def answer_turn(  # noqa: PLR0911
     *,
     question: str,
     pack: EvidencePack | None,
@@ -147,7 +147,16 @@ async def answer_turn(
     last_equipment: str | None = None,
 ) -> Turn:
     """Run the turn. Never raises — a failure becomes a state, because a stack trace is not
-    an answer and on a demonstration it reads as a broken product."""
+    an answer and on a demonstration it reads as a broken product.
+
+    **Seven exits, and the `PLR0911` suppression is the same argument `ruff.toml` already
+    records for `PLR0912` and `PLR0913`.** Each return is a distinct answer state — refused,
+    conversational, no scored evidence, settled by a skill, gates failed, corrected by the
+    honesty layer, answered. Funnelling them through one exit would mean carrying the state in
+    a mutable local and deciding it twice, which is how a corrected answer starts shipping as
+    an answered one. The suppression is at this site rather than in the config, so it excuses
+    this function and nothing else.
+    """
     decision = route(question, mode_override=mode_override, last_equipment=last_equipment)
 
     if decision.skill is Skill.REFUSE:
