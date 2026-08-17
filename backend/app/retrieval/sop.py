@@ -28,8 +28,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from app.db.knowledge import DocumentChunk, add_chunk, count_unapproved, nearest_approved
+from app.db.knowledge import (
+    DocumentChunk,
+    add_chunk,
+    count_unapproved,
+    nearest_approved,
+)
+from app.db.knowledge import approved_documents as _approved_documents
 from app.llm.embeddings import Embedder, EmbeddingUnavailable
+from app.retrieval.chunking import ChunkedDocument, chunk_document
 
 #: How many passages a search returns. Small on purpose: a reader who is handed twelve
 #: passages reads none of them, and the top few are what a citation is built from.
@@ -126,8 +133,47 @@ class SopIndex:
         )
         return await add_chunk(self._session, chunk)
 
+    async def index_document(
+        self,
+        *,
+        document: str,
+        text: str,
+        version: str = "",
+        kind: str = "sop",
+        is_approved: bool = False,
+        is_sample: bool = False,
+    ) -> tuple[ChunkedDocument, tuple[DocumentChunk, ...]]:
+        """Split a document on its own structure, then store one row per passage.
+
+        The route `index()` alone cannot take: a whole document is one vector and one citation
+        that names no place inside it, which satisfies `K5`'s document-and-version half while
+        destroying the `locator` that makes a citation checkable.
+
+        Returns the chunking **alongside** the rows, because a caller needs to see what the
+        splitter did and what it was worried about — an empty document stores nothing, an
+        unstructured one stores a single passage that cites no section, and neither of those
+        is visible from a row count.
+        """
+        chunked = chunk_document(text, document=document, version=version)
+        stored = [
+            await self.index(
+                **chunk.index_arguments(document=document, version=version),
+                kind=kind,
+                is_approved=is_approved,
+                is_sample=is_sample,
+            )
+            for chunk in chunked.chunks
+        ]
+        return chunked, tuple(stored)
+
     async def unapproved_count(self, kind: str | None = None) -> int:
         return await count_unapproved(self._session, kind)
+
+    async def approved_documents(self, kind: str | None = None) -> frozenset[str]:
+        """Which documents a search could reach. What `app/retrieval/quality.py` asks before
+        it computes anything, so an empty corpus reports as an empty corpus rather than as a
+        recall of zero."""
+        return await _approved_documents(self._session, kind)
 
     async def search(
         self, question: str, *, kind: str | None = None, limit: int = DEFAULT_LIMIT

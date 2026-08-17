@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import ask, differential, episodes, personas, reports, system
+from app.api.v1 import ask, differential, episodes, personas, reports, surfaces, system
 from app.config import get_settings
 from app.db.plant import PlantRepository
 from app.db.session import plant_pool
@@ -69,3 +69,4 @@ app.include_router(episodes.router)
 app.include_router(ask.router)
 app.include_router(reports.router)
 app.include_router(differential.router)
+app.include_router(surfaces.router)

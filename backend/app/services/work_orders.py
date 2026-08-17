@@ -1,4 +1,4 @@
-"""`W2` create from a fault · `W3` evidence auto-attached · `W4` priority.
+"""`W2` create from a fault · `W3` evidence auto-attached · `W4` priority · `C8` confirm.
 
 **"Work that arrives carrying its own justification."** That is the pillar's promise in
 `CONTEXT.md` §3, and this is where it becomes literal: a work order is built *from* an
@@ -9,16 +9,33 @@ travel with the job rather than being looked up later by whoever opens it.
 software and rules. `W1`, which drafts one from a sentence, is the only Work Order feature
 in the cut that needs the language model, and it is not this.
 
-**A draft, not a work order.** Nothing is persisted: Synex's own state lives in PostgreSQL
-and that is not wired yet. `is_draft` is `True` on every one of these and the interface says
-so, because a work order a technician cannot be dispatched against should not look like one
-they can.
+**`C8` is two halves and the first one is the promise: the action is shown before it is
+saved.** `draft_from_pack` renders; nothing it produces reaches a table. `confirm` is the
+explicit act, and it is the only route from a draft to a row. The two must agree exactly —
+what a person confirmed has to be what got stored, or the showing was a demonstration of a
+different action — so the draft's own rendering travels into storage verbatim under
+`shown_as` and a test compares them rather than trusting the claim.
+
+**The draft rendering has not changed and must not.** Everything below `CLOSE_CONDITIONS` was
+written before persistence existed and still produces the same dict; the confirm step reads it
+and adds nothing to it.
+
+**Confirming asks `G3` first.** Raising a work order dispatches a person, which is `Risk.HIGH`
+by that enum's own definition, so an identity without `approve_work` gets a `C9` approval
+request and no row. That is not this module refusing — it is the Control Plane's answer,
+carried through.
 """
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
+from enum import StrEnum
 
+from app.db.work_order_store import ConfirmedWorkOrder
 from app.domain import priority as prio
+from app.domain.authority import Action, Risk, Ruling, rule
+from app.services import approvals
+from app.services.control_plane import Scope
 from app.services.evidence import EvidencePack
 
 
@@ -45,7 +62,9 @@ class WorkOrderDraft:
     cannot_close_until: tuple[str, ...] = field(default_factory=tuple)
     warnings: tuple[str, ...] = field(default_factory=tuple)
 
-    #: Never persisted yet. See the module docstring.
+    #: Always `True` on this object, and it stays `True` in the copy that gets stored under
+    #: `shown_as`. That copy is a record of the rendering somebody confirmed, not a
+    #: description of the row — the row's own `state` is what says it is no longer a draft.
     is_draft: bool = True
 
     def as_dict(self) -> dict:
@@ -147,4 +166,180 @@ def draft_from_pack(pack: EvidencePack) -> WorkOrderDraft:
         evidence=tuple(lines),
         cannot_close_until=CLOSE_CONDITIONS,
         warnings=tuple(warnings),
+    )
+
+
+# ── C8: the explicit act, and the key that makes a retry harmless ───────────────
+
+
+class WorkOrderState(StrEnum):
+    """Where a job stands. Three, and the third is only reachable through verification."""
+
+    DRAFT = "draft"
+    """Shown, never stored. `C8`: the action is shown before it is saved, and a draft that
+    reached a table would make the showing decorative."""
+
+    CONFIRMED = "confirmed"
+    """Somebody with the `approve_work` capability performed the explicit act. This is the
+    only state `confirm` can produce."""
+
+    CLOSED = "closed"
+    """`W9`. Post-work residuals recomputed against this asset's own band, and the result is
+    PASS. **No transition table lives here**, deliberately: the close gate is M3, and writing
+    one now would give something a route to closed before the gate that guards it exists."""
+
+
+#: The action `G3` rules on. Named once so the ruling, the audit row and the idempotency key
+#: cannot drift apart into three spellings of the same act.
+RAISE_WORK_ORDER: str = "raise_work_order"
+
+
+def raise_action(draft: WorkOrderDraft) -> Action:
+    """What is about to happen, classified for `G2`.
+
+    `HIGH` by that enum's own definition — it *commits Synex to an action in the world:
+    dispatches a person*. And `reverses_cleanly=False`, because deleting the row is not the
+    thing that has to be undone: a technician who has already driven to the plant cannot be
+    un-dispatched, and `classify` raises anything irreversible to `HIGH` regardless of what
+    the caller declared.
+    """
+    return Action(
+        name=RAISE_WORK_ORDER,
+        risk=Risk.HIGH,
+        target=draft.equipment_key,
+        reverses_cleanly=False,
+    )
+
+
+def natural_key_for(draft: WorkOrderDraft) -> str:
+    """The identity of the job, in a form a person can read.
+
+    Constraint 35's shape — **one case per equipment, fault and day** — with the action on the
+    front, because a fault and a day can produce an inspection and a corrective job that are
+    genuinely two jobs.
+
+    **Deliberately excludes who confirmed it and when.** Two supervisors confirming the same
+    draft is one visit to one machine, and a key carrying the moment of the press would make
+    two clicks a second apart into two jobs, which is exactly the failure `G5` exists for.
+    """
+    return f"{RAISE_WORK_ORDER}|{draft.equipment_key}|{draft.fault_label}|{draft.day}"
+
+
+def idempotency_key_for(draft: WorkOrderDraft) -> str:
+    """`G5`. The stored key, which the unique index in `app/db/state.py` enforces.
+
+    A SHA-256 hexdigest is **exactly 64 characters**, which is the width of the column, so the
+    full digest fits with nothing truncated. That matters: a truncation length would be a
+    number with no source, and the cost of a collision here is not an error — it is a retry
+    being answered with somebody else's work order.
+
+    The readable form travels into the row under `natural_key`, because a hash nobody can
+    invert is a hash nobody can check.
+    """
+    return hashlib.sha256(natural_key_for(draft).encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True)
+class ConfirmOutcome:
+    """What the confirm step decided. Exactly one of a record or an approval request, never
+    both and never neither — constraint 14's shape, applied to an act rather than a figure."""
+
+    ruling: Ruling
+    reason: str
+    record: ConfirmedWorkOrder | None = None
+    """Ready to store. `None` means nothing may be stored, and the reason says why."""
+
+    approval: approvals.ApprovalRequest | None = None
+    """`C9`. Present when the identity needs authority it does not hold. Unassigned, addressed
+    to a capability — see `app/services/approvals.py`."""
+
+    @property
+    def will_persist(self) -> bool:
+        return self.record is not None
+
+    @property
+    def needs_approval(self) -> bool:
+        """Not a refusal. Somebody down the corridor can sign this."""
+        return self.approval is not None
+
+    def as_dict(self) -> dict:
+        return {
+            "will_persist": self.will_persist,
+            "needs_approval": self.needs_approval,
+            "reason": self.reason,
+            "ruling": self.ruling.as_dict(),
+            "approval": self.approval.as_dict() if self.approval else None,
+            "idempotency_key": self.record.idempotency_key if self.record else "",
+        }
+
+
+def confirm(
+    draft: WorkOrderDraft,
+    requester: Scope,
+    *,
+    case_id: int | None = None,
+    kind: str = "corrective",
+) -> ConfirmOutcome:
+    """The explicit act. **The only route from a draft to a stored row.**
+
+    Nothing is written here — this returns a record for `WorkOrderStore.confirm` to store, so
+    the decision is testable with Postgres stopped and the write is one statement in one place.
+
+    The draft is read and never mutated: what comes back under `shown_as` is
+    `draft.as_dict()`, unchanged, so *what was shown* and *what was saved* can be compared
+    instead of trusted.
+    """
+    ruling = rule(raise_action(draft), frozenset(c.value for c in requester.capabilities))
+
+    if ruling.is_refusal:
+        return ConfirmOutcome(
+            ruling=ruling,
+            reason=(
+                f"Nothing was stored and no approval was requested. {ruling.reason}"
+            ),
+        )
+
+    if not ruling.may_proceed:
+        return ConfirmOutcome(
+            ruling=ruling,
+            reason=(
+                f"Nothing was stored. {ruling.reason} The draft stands and an approval "
+                f"request has been raised against the {ruling.required_capability} "
+                f"capability."
+            ),
+            approval=approvals.request_for(
+                ruling,
+                requester,
+                target=draft.equipment_key,
+                evidence=draft.evidence,
+            ),
+        )
+
+    return ConfirmOutcome(
+        ruling=ruling,
+        reason=(
+            f"{requester.identity.display_name} confirmed this draft, so it may be stored. "
+            f"A retry with the same key returns that row rather than raising a second job."
+        ),
+        record=ConfirmedWorkOrder(
+            idempotency_key=idempotency_key_for(draft),
+            equipment_key=draft.equipment_key,
+            confirmed_by=requester.identity.persona.value,
+            evidence={
+                # The draft exactly as it was rendered. Not a summary of it, and not a
+                # re-derivation — `C8` promises the before looks identical to what is saved,
+                # and the only way to keep that promise is to carry the rendering itself.
+                "shown_as": draft.as_dict(),
+                "natural_key": natural_key_for(draft),
+                "act": RAISE_WORK_ORDER,
+                "confirmed_by": requester.identity.persona.value,
+                "identity_kind": requester.identity.identity_kind,
+                "authority": ruling.as_dict(),
+            },
+            kind=kind,
+            state=WorkOrderState.CONFIRMED.value,
+            priority=draft.priority.band.value,
+            priority_is_complete=draft.priority.is_complete,
+            case_id=case_id,
+        ),
     )

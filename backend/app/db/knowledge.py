@@ -121,6 +121,20 @@ async def nearest_approved(
     return [(chunk, float(distance)) for chunk, distance in rows]
 
 
+async def approved_documents(session, kind: str | None = None) -> frozenset[str]:
+    """Which documents a search could reach at all.
+
+    Distinct titles rather than a count, because the two questions retrieval evaluation asks
+    are *is there a corpus* and *does the corpus hold the document this question expects* —
+    and a count answers only the first. Scoring a pair whose expected document was never
+    ingested as a miss would blame the retriever for the ingest never having been run.
+    """
+    stmt = select(DocumentChunk.document).where(DocumentChunk.is_approved.is_(True)).distinct()
+    if kind:
+        stmt = stmt.where(DocumentChunk.kind == kind)
+    return frozenset((await session.scalars(stmt)).all())
+
+
 async def count_unapproved(session, kind: str | None = None) -> int:
     """How much of the library exists but may not be shown. Reported, never hidden."""
     stmt = select(DocumentChunk).where(DocumentChunk.is_approved.is_(False))

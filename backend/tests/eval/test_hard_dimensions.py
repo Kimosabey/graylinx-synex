@@ -26,6 +26,7 @@ from app.agents import postcheck
 from app.analytics.bands import ResidualBand
 from app.analytics.gates import GateOutcome, check_running
 from app.db.plant import RESIDUAL_COLUMNS, ResidualRow
+from app.eval.scorecard import did_terminate
 from app.services.evidence import build_pack, window_for
 
 MEASURED_END = datetime(2026, 6, 23, 11, 50)
@@ -52,20 +53,11 @@ def _pack(label: str = "HIGH_HEAD_AMBIGUOUS"):
 # The hard dimensions — each a veto, never a weighted score
 # ════════════════════════════════════════════════════════════════════════════════
 
-_TERMINATORS = ".!?:\"')]`"
-
-
-def did_terminate(answer: str) -> bool:
-    """Did the answer finish, or was it cut off?
-
-    The dimension that exists because nothing asked it. A truncated answer reads as
-    complete until the last line, and a scoring rubric that never checks will happily
-    award full marks to a report ending mid-word.
-    """
-    stripped = answer.rstrip()
-    if not stripped:
-        return False
-    return stripped[-1] in _TERMINATORS
+# `did_terminate` used to be defined here, which meant the **gate** never ran it — only these
+# tests did, and a dimension nothing but its own test can reach is not part of the gate. It now
+# lives in `app.eval.scorecard` as a registered hard dimension and is imported above, so the
+# cases below exercise the implementation that actually judges an answer. CLAUDE.md §2.8: one
+# source of truth per fact.
 
 
 def states_its_window(answer: str, pack) -> bool:
