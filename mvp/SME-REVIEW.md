@@ -295,6 +295,58 @@ sensitive, and the real number of problems on 15 April was one?
 
 ---
 
+## §1a · Five conflicts the transcription found — these are new, and two are costly
+
+Added 2026-08-17. The 124-item library and all four differentials were transcribed verbatim
+into code and machine-verified field by field, twice, against both source documents. The
+transcription itself found five contradictions. **Nothing was corrected** — a wrong item a
+refrigeration engineer can see is far better than a corrected one they cannot, because this
+review is the gate.
+
+**1 · The two documents disagree about which question is asked first, on two classes.**
+This is the expensive one.
+
+For `POWER_HIGH_UNEXPLAINED`, `06-differentials` marks *"actual load vs the current curve"*
+as **asked first**, and says one free panel reading eliminates four of five causes. But
+`05-checklist-library` lists it as check **4**, behind two technician checks including a
+megger test. Following the checklist order **sends a technician out before the free reading
+is taken.** Constraint 39 says the next question is the one that could move the most live
+candidates — these two documents answer that differently.
+
+The same conflict on `STARVED_EVAP_UNDERCHARGE_OR_RESTRICTION`: `05` lists the sight glass
+first and the filter-drier temperature drop second, `06` makes the filter-drier ΔT Q1 — and
+`05`'s own rationale under check 2 calls it *"the single test that separates the two causes"*.
+
+> Which document governs the order, and does the free reading come first?
+
+**2 · Three determinate classes have no blocking item and no discriminator at all.**
+`REFRIGERANT_SIDE_HIGH_HEAD`, `COMPRESSOR_INEFFICIENCY` and `CONDENSER_LOW_FLOW` carry **36
+of the 86 Part 1 items between them and not one blocking check** — so a case can be
+root-caused and closed on any of them **with no measured answer at all**. `CONTEXT.md` §10b
+names this for the first class (`Q37`); the transcription found it holds for three.
+
+> Is that right, or should each carry at least one blocking measurement?
+
+**3 · `[SETTLES IT]` is described as singular and applied to twelve items.**
+The preamble says *"the item marked `[SETTLES IT]` is the one we ask first"*. Four classes
+mark **three items each**.
+
+> Do all three settle it, or is one of them the discriminator?
+
+**4 · The pack's severities are not our severities, and one is not a severity at all.**
+The review pack states high ×4, critical ×1, **warning ×2**. `app/domain/faults.py` records
+six of seven as unrated against `Q49`, with `CONDENSER_LOW_FLOW` the only sourced critical.
+And *warning* is an alert level rather than a severity. Carried as a string and deliberately
+not mapped — choosing either reading would invent a rating in the one place `F17` says must
+be authoritative.
+
+**5 · The `can't tell` option was absent from some questions and was added.**
+Constraint 30 requires every discriminating question to carry an explicit *can't tell* with
+empty effects, or uncertainty silently eliminates something. Where the source omitted one it
+was **added with no effects**, and that addition is reported here rather than buried.
+
+---
+
 ## §2 · The data that does not exist — not your questions to answer, but yours to interpret
 
 Four defects. Three of our checks ask for numbers that are not there. These need the

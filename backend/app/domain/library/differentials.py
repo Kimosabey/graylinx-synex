@@ -592,14 +592,13 @@ LIBRARY: dict[str, Differential] = {
 def register() -> dict[str, Differential]:
     """Fill `app.domain.differential.DIFFERENTIALS` in place, and hand it back.
 
-    **Why the content registers itself instead of being imported by name.** The types live in
-    `app.domain.differential` and the content depends on them, so the content module must
-    import upwards; the registry the rest of the code reads lives in that same module. Filling
-    the existing dict in place is the one wiring that works whichever module is imported first
-    — reading `LIBRARY` from the other side would fail for whoever imports the content module
-    directly, which the tests do.
+    **Why the content registers itself rather than being read from the other side.** The types
+    live in `app.domain.differential` and the content is written in terms of them, so this
+    module must import upwards; the registry the rest of the code reads lives in that same
+    module. Updating the existing dict in place is the one wiring that survives either import
+    order — having `differential.py` reach for `LIBRARY` instead would fail for anyone who
+    imports this module first, which the tests do.
     """
-
     DIFFERENTIALS.update(LIBRARY)
     return DIFFERENTIALS
 

@@ -7,7 +7,8 @@ one that would save it, and nothing in the string says which it is. Inherited co
 makes the library curated content, never model output; constraint 26 lets the language model
 select and contextualise it and nothing further. This module is therefore a **transcription** —
 Part 1 of `05-checklist-library-for-review.md`, the trained model's seven fault classes, 86
-items copied verbatim. 39 RCA, 26 corrective, 21 preventive.
+items copied verbatim. 40 RCA, 25 corrective, 21 preventive — which is the 124-item library's
+57 · 37 · 30 split less Part 2's 17 · 12 · 9.
 
 **Nothing is reworded, reordered, corrected or filled in.** The review is the gate. A wrong
 item a refrigeration engineer can see is far better than a corrected one they cannot, because
