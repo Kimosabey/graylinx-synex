@@ -98,15 +98,23 @@ class ResidualEvidence:
 
 @dataclass(frozen=True)
 class SignalNote:
-    """A signal the answer touched, and what this plant can actually say about it."""
+    """A signal the answer touched, and what this plant can actually say about it.
+
+    `derived` marks a note computed from `snapshot_simulated_slots` rather than read from
+    the hand-written registry. The distinction matters to a reader: a derived verdict was
+    recomputed against this database on this request, and a registry one was written down
+    by a person at some point and has not been checked since.
+    """
 
     key: str
     display_name: str
     status: str
     note: str
+    derived: bool = False
 
     def render(self) -> str:
-        return f"{self.display_name}: {self.status} — {self.note}"
+        suffix = "" if self.derived else " (from the signal registry, not recomputed)"
+        return f"{self.display_name}: {self.status} — {self.note}{suffix}"
 
 
 @dataclass(frozen=True)
@@ -126,6 +134,14 @@ class EvidencePack:
     severity: str
     severity_text: str
     is_undecidable: bool
+
+    never_measured_signals: tuple[str, ...] = field(default_factory=tuple)
+    """Display names of every signal this pack knows to be never-measured.
+
+    The honesty audit reads **this** rather than the global registry, so a pack built with
+    derived availability is audited against what was computed for it — and a pack built
+    without still gets the registry's five. Reading a module-level table from inside an
+    audit made the verdict independent of the evidence it was auditing."""
 
     residual_evidence: tuple[ResidualEvidence, ...] = field(default_factory=tuple)
     gates: GateOutcome = field(default_factory=GateOutcome)
@@ -214,6 +230,7 @@ def build_pack(
     fault_label: str | None,
     day: date,
     other_labels_same_day: tuple[str, ...] = (),
+    availability: tuple = (),
 ) -> EvidencePack:
     """Assemble the pack for one episode. Deterministic, and no model is called.
 
@@ -263,7 +280,8 @@ def build_pack(
         is_undecidable=bool(fault and fault.declares_undecidable),
         residual_evidence=tuple(evidence),
         gates=gates,
-        signal_notes=_signal_notes(),
+        signal_notes=_signal_notes(availability),
+        never_measured_signals=_never_measured(availability),
         sources=(
             SourceRef("gla_model_residuals_wc", len(rows), "residuals and label"),
             SourceRef("gla_residual_stats_wc", len(bands), "per-asset reference bands"),
@@ -295,24 +313,64 @@ def _model_name_for(residual_column: str) -> str:
     return _RESIDUAL_TO_MODEL.get(residual_column, "")
 
 
-def _signal_notes() -> tuple[SignalNote, ...]:
+def _signal_notes(availability: tuple = ()) -> tuple[SignalNote, ...]:
     """Every signal this plant cannot straightforwardly report, with the reason.
 
     Carried on every pack rather than only when a signal is used. `cond_flow` feeds four of
     the six models, so its absence shapes any answer about high head whether or not the
     answer mentions it — and an answer that quietly omits it reads as though the branch were
     fully evidenced.
+
+    **Derived availability wins where it exists.** A verdict recomputed from
+    `snapshot_simulated_slots` on this request beats one written into a registry months ago,
+    and the registry covers five of a normalized table's thirty-eight columns. The registry
+    still supplies the notes for signals the derivation did not cover, so nothing is lost.
     """
-    return tuple(
+    derived = tuple(
         SignalNote(
-            key=s.key,
-            display_name=s.display_name,
-            status=s.status.value,
-            note=s.note,
+            key=a.column,
+            display_name=_display_name(a.column),
+            status=a.status.value,
+            note=a.render(),
+            derived=True,
         )
-        for s in signals.SIGNALS
-        if not s.is_usable
+        for a in availability
+        if not a.is_usable
     )
+    covered = {n.key for n in derived}
+    from_registry = tuple(
+        SignalNote(key=s.key, display_name=s.display_name, status=s.status.value, note=s.note)
+        for s in signals.SIGNALS
+        if not s.is_usable and s.key not in covered
+    )
+    return derived + from_registry
+
+
+def _display_name(column: str) -> str:
+    known = signals.by_key(column)
+    return known.display_name if known else column.replace("_", " ")
+
+
+def _never_measured(availability: tuple = ()) -> tuple[str, ...]:
+    """Display names of signals known to be never-measured, derived first.
+
+    A signal the derivation cleared is **not** re-added from the registry: if this database
+    shows it measured over real slots, a stale registry entry saying otherwise is the thing
+    that is wrong.
+    """
+    derived_names = {
+        _display_name(a.column)
+        for a in availability
+        if a.status is signals.SignalStatus.NEVER_MEASURED
+    }
+    checked = {_display_name(a.column) for a in availability}
+    from_registry = {
+        s.display_name
+        for s in signals.SIGNALS
+        if s.status is signals.SignalStatus.NEVER_MEASURED
+        and s.display_name not in checked
+    }
+    return tuple(sorted(derived_names | from_registry))
 
 
 def window_for(day: date, measured_window_end: datetime) -> DataWindow:

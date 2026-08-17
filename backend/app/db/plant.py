@@ -101,6 +101,16 @@ class PlantRepository:
         self._pool = pool
         self._measured_window_end = measured_window_end
 
+    @property
+    def pool(self) -> aiomysql.Pool:
+        """The shared connection pool.
+
+        Exposed so `ProvenanceRepository` can reuse it. Both live in `app.db` and there is
+        one pool per process on purpose — opening a second to avoid sharing would cost a
+        connection per request against a database Thermynx also uses.
+        """
+        return self._pool
+
     # ── the window clip, in one place ───────────────────────────────────────────
 
     def _window_clause(self, include_simulated: bool) -> tuple[str, list[object]]:

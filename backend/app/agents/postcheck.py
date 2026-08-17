@@ -216,17 +216,28 @@ def audit_never_measured(answer: str, pack: EvidencePack) -> AuditFinding:
     """
     lowered = answer.lower()
     offending: list[str] = []
-    for signal in signals.SIGNALS:
-        if signal.status is not signals.SignalStatus.NEVER_MEASURED:
-            continue
-        name = signal.display_name.lower()
+
+    # Read from the **pack**, not from the module-level registry. A pack built with derived
+    # availability is audited against what was computed for it against this database; one
+    # built without still gets the registry's five, so nothing regresses. Reading a global
+    # table from inside an audit made the verdict independent of the evidence it audited —
+    # which is how a stale registry entry could have vouched for a signal the data had
+    # already contradicted.
+    never_measured = pack.never_measured_signals or tuple(
+        s.display_name
+        for s in signals.SIGNALS
+        if s.status is signals.SignalStatus.NEVER_MEASURED
+    )
+
+    for display_name in never_measured:
+        name = display_name.lower()
         if name not in lowered:
             continue
         # Mentioning it is fine — *"condenser flow has never been measured"* is the correct
         # sentence. Quoting a value for it is not.
         window = lowered[lowered.index(name) : lowered.index(name) + 120]
         if any(re.search(rf"\b{v}\b\s*-?\d", window) for v in _READING_VERBS):
-            offending.append(signal.display_name)
+            offending.append(display_name)
 
     return AuditFinding(
         audit="never_measured_not_quoted",

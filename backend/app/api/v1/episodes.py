@@ -26,6 +26,7 @@ from app.analytics.verification import verify
 from app.api.deps import CurrentScope, Repo, current_scope, get_repo
 from app.config import Settings, get_settings
 from app.db.plant import RESIDUAL_COLUMNS
+from app.db.provenance import ProvenanceRepository
 from app.domain import equipment as eq
 from app.domain.answer import AnswerState
 from app.services import audit_log, work_orders
@@ -34,6 +35,36 @@ from app.services.control_plane import Capability, audit_row
 from app.services.evidence import build_pack, window_for
 
 router = APIRouter(prefix="/api/v1", tags=["episodes"])
+
+
+#: The signals worth recomputing per request. Not all 38 columns — these are the ones an
+#: answer about high head or efficiency can actually lean on, and the ones the simulation
+#: filled. Recomputing every column on every turn would cost 38 round trips to say the same
+#: thing about `id` and `ss_id`.
+_PROVENANCE_COLUMNS: tuple[str, ...] = ("cond_flow", "chiller_flow", "dpt", "kw_per_tr")
+
+
+async def _availability(repo: Repo, equipment_key: str) -> tuple:
+    """Derived signal availability, or nothing if this asset has no table.
+
+    Failures here degrade to the hand-written registry rather than to an error: an answer
+    that cannot be given because a provenance probe timed out is worse than one carrying a
+    registry note, and the note is still true.
+    """
+    known = eq.by_key(equipment_key)
+    if known is None:
+        return ()
+    # Both repositories are owned by the db layer and share one pool by design;
+    # opening a second pool per request to avoid touching the attribute would cost a
+    # connection on every turn to satisfy a naming convention.
+    prov = ProvenanceRepository(repo.pool)
+    out = []
+    for column in _PROVENANCE_COLUMNS:
+        try:
+            out.append(await prov.availability(equipment_key, known.table, column))
+        except Exception:  # a probe failure must not lose the answer
+            continue
+    return tuple(out)
 
 
 @router.get("/equipment")
@@ -185,6 +216,7 @@ async def episode_pack(
         fault_label=label,
         day=day,
         other_labels_same_day=others,
+        availability=await _availability(repo, equipment_key),
     )
 
     state = AnswerState.ANSWERED if pack.may_diagnose else AnswerState.NO_DIAGNOSIS
