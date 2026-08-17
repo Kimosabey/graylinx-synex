@@ -66,3 +66,11 @@ langgraph==1.2.4
 langchain-core==1.4.3
 langgraph-checkpoint-postgres==3.1.2
 psycopg[binary,pool]==3.3.4
+
+# ── the scheduler RC17 needs ────────────────────────────────────────────────────
+# Twenty-two detected episodes never reached the case queue, including the only two rated
+# critical, because the idempotent seed was never scheduled. RC8 made the seed safe to re-run;
+# it did not make it run. `arq` is imported lazily inside `WorkerSettings` so importing the
+# job module — which the offline tests do — never reaches Redis.
+arq==0.28.0
+redis==5.0.8
