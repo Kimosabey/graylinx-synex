@@ -9,7 +9,6 @@ The contracts and the reasoning behind each are in `backend/importlinter.ini`.
 from __future__ import annotations
 
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -29,9 +28,15 @@ def test_import_contracts_hold() -> None:
         "importlinter",
         reason="import-linter is not installed; the CI 'contracts' job runs it regardless",
     )
+    # `python -m importlinter.cli lint-imports` exits 0 having done NOTHING — the package has
+    # no `__main__`, and the arguments are silently discarded. This test therefore passed for
+    # the whole life of the repository while the config was refused as misconfigured by the
+    # real CLI, so all seven contracts went unchecked. Found 2026-08-17 when CI ran it.
+    #
+    # `lint-imports` is the console script the `contracts` job runs, so the test and the gate
+    # now execute the same thing.
     result = subprocess.run(
-        [sys.executable, "-m", "importlinter.cli", "lint-imports",
-         "--config", str(CONFIG)],
+        ["lint-imports", "--config", str(CONFIG)],
         cwd=BACKEND,
         capture_output=True,
         text=True,
@@ -39,6 +44,16 @@ def test_import_contracts_hold() -> None:
         # reports the linter's own output, which names the offending import chain.
         check=False,
     )
+    # A run that checked nothing must not read as a pass. The linter always reports how much
+    # it looked at, and its absence means the config was refused before any contract ran.
+    if "Analyzed" not in result.stdout:
+        pytest.fail(
+            "the linter produced no analysis, so nothing was checked. That is how this test "
+            "passed while every contract was unenforced.\n\n"
+            f"{result.stdout}\n{result.stderr}",
+            pytrace=False,
+        )
+
     if result.returncode != 0:
         # The linter's own output names the offending import chain, which is the useful part.
         pytest.fail(

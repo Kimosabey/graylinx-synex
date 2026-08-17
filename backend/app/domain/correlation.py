@@ -40,9 +40,27 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, timedelta
 from enum import StrEnum
+from typing import Protocol
 
-from app.analytics.episodes import Episode
 from app.domain import faults
+
+
+class Episode(Protocol):
+    """What this module needs of an episode, and nothing more.
+
+    **Structural rather than imported.** `app.domain` imports nothing — contract 4 — and it
+    is what lets every rule here run with the GPU down, MySQL stopped and no configuration
+    loaded. `app.analytics.episodes.Episode` satisfies this shape and is passed straight in;
+    the dependency simply points the other way.
+
+    Caught on 2026-08-17 when the layering contract ran for the first time. The whole config
+    had been refused as misconfigured since it was written, so nothing was checked.
+    """
+
+    equipment_key: str
+    fault_label: str
+    day: date
+    slot_count: int
 
 
 class Relation(StrEnum):

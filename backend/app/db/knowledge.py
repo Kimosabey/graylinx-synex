@@ -27,7 +27,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Boolean, DateTime, Index, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Index, Integer, String, Text, select
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.state import Base, _now
@@ -91,3 +91,45 @@ class DocumentChunk(Base):
             parts.append(self.locator)
         citation = " · ".join(parts)
         return f"{citation} (sample content)" if self.is_sample else citation
+
+
+# ── the queries, kept here because only `app.db` may hold a driver ─────────────
+# Contract 6. `app/retrieval/sop.py` used to build these statements itself, which put
+# `sqlalchemy` and `pgvector` imports one layer too high. Caught on 2026-08-17, the first
+# time the layering config was ever able to run.
+
+
+async def nearest_approved(
+    session, vector: list[float], model: str, kind: str | None, limit: int
+) -> list[tuple[DocumentChunk, float]]:
+    """Approved chunks nearest this vector, closest first.
+
+    The `model` filter is not optional: a table holding vectors from two embedders is
+    silently broken, because every number is a valid float and every distance between them
+    is meaningless.
+    """
+    stmt = (
+        select(DocumentChunk, DocumentChunk.embedding.cosine_distance(vector).label("distance"))
+        .where(DocumentChunk.is_approved.is_(True))
+        .where(DocumentChunk.model == model)
+        .order_by("distance")
+        .limit(limit)
+    )
+    if kind:
+        stmt = stmt.where(DocumentChunk.kind == kind)
+    rows = (await session.execute(stmt)).all()
+    return [(chunk, float(distance)) for chunk, distance in rows]
+
+
+async def count_unapproved(session, kind: str | None = None) -> int:
+    """How much of the library exists but may not be shown. Reported, never hidden."""
+    stmt = select(DocumentChunk).where(DocumentChunk.is_approved.is_(False))
+    if kind:
+        stmt = stmt.where(DocumentChunk.kind == kind)
+    return len((await session.scalars(stmt)).all())
+
+
+async def add_chunk(session, chunk: DocumentChunk) -> DocumentChunk:
+    session.add(chunk)
+    await session.flush()
+    return chunk
