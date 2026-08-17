@@ -59,16 +59,33 @@ agree; the one that cannot be recomputed says so rather than being counted as ag
 
 ---
 
-## 3 · Blocked on Harshan — these gate 22 features
+## 3 · Blocked on Harshan — now **two** things, gating **seven** features
+
+Two of the three cleared themselves on 2026-08-17, and both had the same shape: the thing
+was already provisioned and nobody had started it.
 
 1. **The Jarvis box.** Every Copilot answer is still the deterministic fallback and says so.
-   One `SYNEX_MODEL_MODE=record` run captures transcripts that replay offline for ever, and
-   live mode works after that. Unblocks `W1`, `C6`, `C8`–`C10`. **The single biggest gap
-   between what exists and what demos.**
-2. **PostgreSQL.** Nothing persists — cases, work orders, findings and audit rows are
-   computed and discarded. Not a register feature, but a foundation under roughly 20 of
-   them, and `RC8` idempotent seeding and `RC9` ageing are meaningless without it.
-3. **The SME hour.** `RC2`. The mechanism is built and gated; only content is missing.
+   `backend/tests/fixtures/` holds nothing but `__init__.py` — **no transcript has ever been
+   recorded**, so `stub` mode raises on every call. One `SYNEX_MODEL_MODE=record` burst over
+   the thirteen golden cases makes the explain path replay offline for ever.
+   **Genuinely gates six features:** `C5`, `C12`, `C25`, `R1`, `R3`, `EV2`. Everything else
+   once attributed to the box was attributable to something else.
+2. **The SME hour.** `RC2`. The mechanism is built and gated; only content is missing. It
+   now also gates `S1`/`S6`'s safety mapping, which ships deliberately **empty** — the
+   taxonomy has no safety impact class, and assigning one on our own judgement is the single
+   place a wrong answer costs a person rather than a morning.
+
+### Cleared, and what the lesson was
+
+- **~~PostgreSQL~~.** Never missing. `infra/docker-compose.yml` had been written in full and
+  **never started**. One `docker compose up -d postgres redis` gave Postgres 16, pgvector
+  0.8.2 and Redis on the ports `.env.example` had already reserved. `RC8`, `RC9` and the
+  durable case pause all landed the same day.
+- **~~RAG needs the GPU~~.** It never did. Ollama is installed on the host, and
+  `nomic-embed-text` is **274 MB** against the roster's ~41 GB — `CONTEXT.md` §4 always said
+  embeddings are *"always local"*. `K1`, `K5` and `S4` run with the box terminated.
+
+**Both were assumptions nobody had tested.** Before recording a blocker, start the thing.
 
 ---
 
@@ -179,20 +196,32 @@ covering all eight surfaces, five flows and mobile-first responsive across four 
 
 ---
 
-## 8 · The gap no percentage captures
+## 8 · The gap no percentage captures — **mostly closed on 2026-08-17**
 
-**This is a single-shot pipeline with strong governance, not an agent loop.**
+It used to read: *"a single-shot pipeline with strong governance, not an agent loop."* The
+order named for fixing it was **tools → LangGraph → turn memory → fan-out**, and the first
+three are done.
 
-Built: the role table, reasoning on/off, the eight-layer routing ladder, prompt fencing, six
-postcheck audits, ten resource ceilings, stub/record/live.
+| | Then | Now |
+|---|---|---|
+| Tools | **none at all** | `C20` registry · `G4` gateway · `G5` idempotency · 6 tools |
+| `max_react_steps` | configured, nothing consumed it | still unconsumed — no ReAct loop |
+| LangGraph | not installed | wired where it earns its place: `RC1`'s case graph |
+| A durable pause | the case was rebuilt every request | checkpointed; survives a restart |
+| `C15` turn memory | one `last_equipment` string | equipment · label · day, bounded, with *"the other one"* |
+| Skills | 5 of 7 fell through to explain | **still true** — a dispatch table is the next job |
+| Specialist fan-out | not built | not built |
+| Red team | **nothing** | 143 attacks, offline, two live defects found on day one |
 
-Not built: **LangGraph** (not installed), the **ReAct tool loop** (`max_react_steps` is
-configured and nothing consumes it), **any tools at all**, **five of seven skills** (they
-route correctly then fall into the same explain path), **specialist fan-out**, and **real
-turn memory** — `C15` is a single `last_equipment` string, which is carry-forward, not
-memory. M1's count should honestly read 26 of 27.
+**Where LangGraph was and was not put, deliberately.** Not around the Copilot turn — that is
+single-shot (route, gather, explain, audit, answer) and wrapping it would be ceremony. Around
+the **case**, because two thirds of cases pause: 13 went straight through, 26 stopped at the
+checks, 2 arrived explained by a broken sensor and 2 by a blind model. The checkpointer is
+what turns *"waiting for a technician"* from a value in a response into a state in the world.
 
-That is Harshan's own section 11.1 objection, and it has not moved: **76 of 94 features
-involve no language model at all.** Correctly so under the separation law — but the agentic
-half is the work after the demonstration, and the order is tools → LangGraph → turn memory →
-fan-out.
+**What remains of the objection.** Still **76 of 94 features involve no language model at
+all** — correctly, under the separation law, which governs *authority* rather than capability.
+The honest residue is narrower than it was: five skills route then fall through, there is no
+ReAct loop, and no specialist fan-out. The four decisions marked *under review* in §11.1 —
+`C4` what evidence to gather, `RC12` which question next, `RC19` are these one problem, `RC14`
+have the returns gone — are all still rules rather than judgement.
