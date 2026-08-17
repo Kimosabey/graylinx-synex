@@ -124,6 +124,8 @@ paragraphs rather than as a table — which is why `Q46` and `Q47` now sit under
 
 | Q53 | **Should the measured window now extend past 2026-06-23 11:50?** It ends there because the *simulation* began at 11:55, and the re-clone (D-017) removed every simulated row — real data now runs to 2026-08-05 17:10, so the clip is a boundary against something that no longer exists. Extending it would add roughly 12,400 slots per chiller and **move every count in the demonstration script and the golden set**. Deliberately not changed on 2026-08-17, the day before the demonstration; keeping it is why all ten label counts came through identical. Note the interaction: 4,281 `compressor_power_residual` values and the whole derived tail sit beyond the current clip, so extending the window makes a **sixth model appear** and would need `FITTED_MODEL_COUNT` revisited | the demonstration script, the golden set, `FITTED_MODEL_COUNT`, every asserted count | Harshan | Open |
 
+| Q54 | **How far back does an open case count as the same problem?** `RC19` says the same label on the same equipment "in a window" reopens rather than opening a second case, and fixes no number. Set to **one day** in `app/domain/correlation.py` because that is the granularity the detector produces — episodes are keyed per (equipment, label, **day**), so a wider window compares units that do not exist. It only ever decides *reopen versus open fresh*; it eliminates nothing and suppresses no detection | `RC19` reopen behaviour, and the case count a supervisor sees | Harshan + Vishnu | Open |
+
 ## To reconcile
 
 The Thermynx FDD initiative holds **57 open questions** at
