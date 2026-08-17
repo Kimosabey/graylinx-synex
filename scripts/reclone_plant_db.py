@@ -48,6 +48,12 @@ try:
 except ImportError:  # pragma: no cover
     sys.exit("pymysql is required: pip install pymysql")
 
+# Windows consoles default to cp1252, which cannot encode the box-drawing characters this
+# script prints — and a UnicodeEncodeError while reporting is a crash before the useful
+# output, not after it.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 TARGET = "graylinx_synex"
 MARKER = "snapshot_simulated_slots"
 PROBE_TABLE = "chiller_1_normalized"
