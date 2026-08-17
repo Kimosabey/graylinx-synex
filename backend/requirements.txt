@@ -30,3 +30,14 @@ PyMySQL==1.1.3
 # class of "the web renders a field the API stopped sending".
 fastapi==0.115.0
 uvicorn==0.47.0
+
+# The transport to the model roster. `app/llm/client.py` imports this and has since M1.4 —
+# it was **missing from this file**, so a clean install passed every gate here and failed on
+# first import anywhere else. Found 2026-08-17 while auditing the stack against
+# `docs/20-architecture/01-stack.md`.
+#
+# httpx rather than the `ollama` package deliberately: contract 5 in `importlinter.ini` allows
+# exactly two modules to reach a model client, and the Ollama HTTP API is small enough that a
+# wrapper would add a dependency without removing a line. `langchain-ollama` arrives with the
+# graph, for per-task model routing, and is a different concern.
+httpx==0.27.2
