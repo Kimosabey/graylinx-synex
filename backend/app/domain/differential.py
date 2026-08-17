@@ -19,11 +19,14 @@ Five rules follow from that, and each is a constraint with a real failure behind
 
 | | Rule | Why |
 |---|---|---|
-| 28 | A confirmation **never** eliminates its siblings | A fouled condenser on a machine also low on flow is *two real causes*; collapsing to the first is how the second is missed |
+| 28 | A confirmation **never** eliminates siblings | Fouling on a machine also low on
+  flow is *two real causes*; collapsing to the first is how the second is missed |
 | 29 | Elimination is **final** | An answer never resurrects a ruled-out cause |
-| 30 | *Can't tell* has **no effect at all** | Otherwise uncertainty silently eliminates something |
-| 31 | Every elimination records **the check and the answer** | *"Why did nobody look at the tower?"* deserves better than *"the software decided"* |
-| 32 | **Exhausted** is not **settled** | Running out of questions establishes *"we cannot separate these"*, which is a different statement from a conclusion |
+| 30 | *Can't tell* has **no effect at all** | Otherwise uncertainty silently eliminates |
+| 31 | Every elimination records **the check and the answer** | *"Why did nobody look at
+  the tower?"* deserves better than *"the software decided"* |
+| 32 | **Exhausted** is not **settled** | Running out of questions establishes *"we cannot
+  separate these"* — a different statement from a conclusion |
 
 **Nothing here calls a model.** `RC12` and `RC14` are `R` in the register — rules. The
 language model decides *what to ask*; it never decides *whether* to ask, and it never
