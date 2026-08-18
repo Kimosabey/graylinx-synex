@@ -91,9 +91,18 @@ async def _open_cases():
 async def reliability_workspace(scope: CurrentScope = Depends(current_scope)) -> dict:
     """`U6`. The fault queue, the residuals behind each one, and the case it opens."""
     cases, outage = await _open_cases()
-    view = queue_service.reliability_workspace(
-        cases, frozenset(scope.capabilities), detected_seed_keys=[c.seed_key for c in cases]
-    )
+    # `detected_seed_keys` is deliberately not supplied, and supplying the cases' own keys
+    # would be worse than supplying nothing. Constraint 21 is *detection is not seeding*, so
+    # the list has to come from the detector; derived from the queue it is compared against
+    # itself, `missing` is empty by construction, and the surface reports "All N detected
+    # episode(s) have a case — checked against the detector" while having checked nothing.
+    # With zero cases open against the episodes the detector actually found, that false zero
+    # is exactly the twenty-two-episodes failure the constraint was written for. Omitted, the
+    # service says the check was not run, which is true. Wiring the detector's real output is
+    # `Q87` — and it must reconcile the two encodings of the constraint-35 triple first
+    # (`CaseRow.make_seed_key` joins with a pipe, `list_episodes` with a colon), or every
+    # episode compares as missing.
+    view = queue_service.reliability_workspace(cases, frozenset(scope.capabilities))
     body = _plain(view)
     body["viewing_as"] = scope.identity.persona.value
     body["store_note"] = outage

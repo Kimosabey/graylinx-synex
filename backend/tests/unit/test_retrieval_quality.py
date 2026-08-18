@@ -234,6 +234,75 @@ async def test_an_unreachable_embedder_is_not_a_score_of_zero() -> None:
     assert "fact about the system rather than about the library" in report.reason
 
 
+# ── the corpus has three states, and the verdict cannot carry all three ────────
+# `Verdict` answers *why is there no score*, and the first thing that stops a score is a
+# missing labelled set — which Synex has today. So without `CorpusState`, an ingest that never
+# ran is invisible behind a missing evaluation set. `app/jobs/index_library.py` reads it.
+
+
+async def test_an_empty_corpus_is_reported_as_empty_even_when_the_verdict_is_about_questions(
+) -> None:
+    """The masking case, and the reason `CorpusState` exists. `NO_LABELLED_SET` is a true
+    statement that hides a more urgent one: nobody has run the ingest."""
+    report = await evaluate(_FakeIndex(), quality.NO_LABELLED_SET_YET)
+
+    assert report.verdict is Verdict.NO_LABELLED_SET
+    assert report.corpus_state is quality.CorpusState.EMPTY
+    assert "the corpus is empty" in report.corpus_statement
+
+
+async def test_a_full_but_unapproved_corpus_is_never_reported_as_an_empty_one() -> None:
+    """The state `index_library` leaves behind: every passage written, none approved, search
+    returning nothing. A reader who read that as *empty* would re-run the ingest and duplicate
+    the corpus; a reader who read it as *broken* would approve 124 unreviewed instructions."""
+    report = await evaluate(_FakeIndex(unapproved=131), quality.NO_LABELLED_SET_YET)
+
+    assert report.corpus_state is quality.CorpusState.NOTHING_APPROVED
+    assert report.corpus_state is not quality.CorpusState.EMPTY
+    assert "not one is approved" in report.corpus_statement
+    assert "working as designed rather than failing" in report.corpus_statement
+
+
+async def test_an_approved_corpus_says_how_much_of_it_is_still_out_of_reach() -> None:
+    """The gap between what exists and what may be shown is a number somebody acts on — the
+    same reason `SearchResult` carries `unapproved_in_corpus`."""
+    report = await evaluate(_FakeIndex(documents=frozenset({ISOLATION_DOC}), unapproved=7), SET)
+
+    assert report.corpus_state is quality.CorpusState.APPROVED_AND_SEARCHABLE
+    assert "1 approved document(s)" in report.corpus_statement
+    assert "7 passage(s) still unapproved" in report.corpus_statement
+
+
+@pytest.mark.parametrize(
+    ("approved", "unapproved", "expected"),
+    [
+        (frozenset(), 0, quality.CorpusState.EMPTY),
+        (frozenset(), 131, quality.CorpusState.NOTHING_APPROVED),
+        (frozenset({ISOLATION_DOC}), 0, quality.CorpusState.APPROVED_AND_SEARCHABLE),
+        (frozenset({ISOLATION_DOC}), 131, quality.CorpusState.APPROVED_AND_SEARCHABLE),
+    ],
+)
+async def test_the_corpus_state_can_be_asked_before_anything_is_written(
+    approved: frozenset[str], unapproved: int, expected: quality.CorpusState
+) -> None:
+    """`index_library` has to know whether a corpus is already there **before** it indexes:
+    `synex_document_chunk` carries no idempotency key, so a second pass would duplicate every
+    passage rather than replace it."""
+    index = _FakeIndex(documents=approved, unapproved=unapproved)
+
+    assert await quality.corpus_state(index) is expected
+
+
+async def test_the_corpus_state_and_the_serialised_report_cannot_disagree() -> None:
+    """Two derivations of the same rule is how *empty* and *nothing approved* start diverging
+    across a codebase, which is the collapse the enum exists to prevent."""
+    report = await evaluate(_FakeIndex(unapproved=131), SET)
+
+    assert report.as_dict()["corpus_state"] == report.corpus_state.value
+    assert report.as_dict()["corpus"] == report.corpus_statement
+    assert report.corpus_statement in report.render()
+
+
 # ── never a bare score ─────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("k", [1, 3, 5])

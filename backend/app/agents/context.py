@@ -22,35 +22,28 @@ touched it. A single flag would let a settled enquiry and a forgotten one look i
 only the second needs a person.
 
 **The second: nothing counted what goes into a prompt.** `max_context_chars` is 24,000 and
-`max_input_chars` is 8,000 — both provisional against `Q48` — and before this module nothing
+`max_input_chars` is 8,000 — both provisional against `Q48` — and before the budgeter nothing
 read either of them. They appeared in `config.py`, in a test asserting they exist, and nowhere
 else. Measured on this repository on 2026-08-17: one episode's `to_prompt_data()` renders
-2,936 characters and the whole explain message pair 5,551, so a single-shot turn sits well
-inside the ceiling. A turn that composes several episodes, a task trail and retrieved passages
-does not, and it would fail on an unpredictable turn — the worst possible place to discover a
-limit, which is the same argument `MAX_REMEMBERED_TURNS` makes one module along.
+2,936 characters, and the seven `diagnose` turns recorded on the box carry message pairs of
+5,712 to 5,929. A single-shot turn sits well inside the ceiling; a turn that composes several
+episodes, a task trail and retrieved passages does not, and it would fail on an unpredictable
+turn — the worst possible place to discover a limit, which is the same argument
+`MAX_REMEMBERED_TURNS` makes one module along.
+
+**The budgeter itself now lives in `app/prompts/budget.py`, and this module re-exports it.**
+It spent its first day here with no consumer, and the reason is structural rather than an
+oversight: `app.prompts` sits **below** `app.agents` in the spine, so `build_messages` — the
+one function that assembles a prompt — could not import the thing that fits one. Moving it
+down is what `importlinter.ini`'s preamble prescribes for exactly this shape, in preference to
+an exception that quietly switches a contract off. `C10` and the budget still read as one idea
+from here, because every name is re-exported below and `assemble_turn` is the place the two
+actually meet.
 
 **Dropping is allowed. Dropping silently is the failure.** An answer built on two thirds of
 the evidence and presented as though built on all of it is the reassuring-lie shape constraint
-16 exists to replace outright. So every drop is reported twice — to the caller, and inside the
-context the model reads, so the answer itself can say so. Four things are never dropped, in
-this order:
-
-| | Never dropped | Because |
-|---|---|---|
-| 1 | the gate outcome | `NO_DIAGNOSIS` is the modal outcome, and a turn that lost the failed
-  gate would answer as though the equipment had been fit to judge |
-| 2 | any never-measured or suspect signal note | `cond_flow` has never recorded a non-zero
-  value in 37,430 measured slots and feeds four of the six models |
-| 3 | the data window | constraint 15 — anomaly counts were once shown under a heading
-  describing a telemetry window that did not overlap them at all |
-| 4 | the fault label | the trained model's own output, including the four class names that
-  say `AMBIGUOUS` or `UNSPECIFIED` |
-
-That order is not arbitrary. On the pack measured above, signal provenance alone is 1,552 of
-the 2,936 characters — 53% of the whole, the most expensive thing in the pack and the least
-droppable. A residual dropped to fit costs a reader one line; *"this signal was never
-measured"* dropped to fit costs them the reason the branch cannot be judged at all.
+16 exists to replace outright. The four things that are never dropped, why, and what happens
+when one of them was never supplied in the first place, are all recorded in `app.prompts.budget`.
 
 **Nothing here calls a model, and nothing here decides.** Ordering is a fixed table, the
 ceilings come from configuration, and a task's findings are recorded by whoever established
@@ -59,12 +52,54 @@ is plain software, like the Control Plane one row above it in the separation law
 """
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from enum import StrEnum
 
-from app.config import CONTEXT_TRUNCATION_MARKER, get_settings
+from app.prompts.budget import (
+    DROP_ORDER,
+    HONESTY_PAYLOAD,
+    SECTION_SEPARATOR,
+    AbsentPayload,
+    AssembledContext,
+    ContextSection,
+    ContextTier,
+    DroppedSection,
+    FittedEvidence,
+    absent_payload_in,
+    assemble,
+    fit_prompt_data,
+    fit_question,
+    sections_from_prompt_data,
+)
+
+#: Re-exported so the agent layer reads `C10` and the budget as one idea. The budgeter moved
+#: down to `app.prompts` on 2026-08-18 so that `build_messages` could reach it at all; see the
+#: module docstring above for why an import-linter exception was the wrong fix.
+__all__ = [
+    "DEFAULT_TASK_STALE_AFTER",
+    "DROP_ORDER",
+    "HONESTY_PAYLOAD",
+    "MAX_TASK_STEPS",
+    "SECTION_SEPARATOR",
+    "AbsentPayload",
+    "AssembledContext",
+    "ContextSection",
+    "ContextTier",
+    "DroppedSection",
+    "FittedEvidence",
+    "StepOutcome",
+    "Task",
+    "TaskBook",
+    "TaskState",
+    "TaskStep",
+    "absent_payload_in",
+    "assemble",
+    "assemble_turn",
+    "fit_prompt_data",
+    "fit_question",
+    "sections_from_prompt_data",
+]
 
 # ── C10: a task, its ordered steps, and the two ways it stops ───────────────────
 
@@ -453,426 +488,7 @@ class TaskBook:
         return "\n\n".join(t.where_we_got_to(now) for t in self.tasks)
 
 
-# ── the context budget ─────────────────────────────────────────────────────────
-
-SECTION_SEPARATOR = "\n"
-
-
-class ContextTier(StrEnum):
-    """What a piece of context *is*, which is what decides whether it may be given up.
-
-    Held as a closed set rather than a number so the ordering is inspectable: a priority
-    integer somebody nudges is how *"this signal was never measured"* ends up below a residual.
-    """
-
-    GATE_OUTCOME = "gate_outcome"
-    SIGNAL_NOTE = "signal_note"
-    DATA_WINDOW = "data_window"
-    FAULT_LABEL = "fault_label"
-    EVIDENCE = "evidence"
-    SUPPORTING = "supporting"
-    HISTORY = "history"
-
-
-#: The honesty payload, **in the order the ceiling protects it**. Never dropped, whatever the
-#: budget. Each entry is a measured failure: a lost gate outcome answers as though the machine
-#: was fit to judge; a lost signal note lets `cond_flow` read as a reading rather than as an
-#: instrument the plant does not have; a lost window is constraint 15's mismatched heading; a
-#: lost label invents certainty the trained model never claimed.
-HONESTY_PAYLOAD: tuple[ContextTier, ...] = (
-    ContextTier.GATE_OUTCOME,
-    ContextTier.SIGNAL_NOTE,
-    ContextTier.DATA_WINDOW,
-    ContextTier.FAULT_LABEL,
-)
-
-#: What is given up first when the budget bites. History before supporting detail, supporting
-#: detail before evidence — a residual is the last thing surrendered, and it is surrendered
-#: rather than the note that says a signal was never measured at all.
-DROP_ORDER: tuple[ContextTier, ...] = (
-    ContextTier.HISTORY,
-    ContextTier.SUPPORTING,
-    ContextTier.EVIDENCE,
-)
-
-
-@dataclass(frozen=True)
-class ContextSection:
-    """One labelled piece of what the model will read, and what kind of thing it is."""
-
-    key: str
-    tier: ContextTier
-    text: str
-
-    @property
-    def chars(self) -> int:
-        return len(self.text)
-
-    @property
-    def is_honesty_payload(self) -> bool:
-        return self.tier in HONESTY_PAYLOAD
-
-
-@dataclass(frozen=True)
-class DroppedSection:
-    """Something that did not fit, and why — in words, never a count on its own."""
-
-    key: str
-    tier: ContextTier
-    chars: int
-    reason: str
-
-    def __post_init__(self) -> None:
-        if not self.reason.strip():
-            raise ValueError(
-                f"section {self.key!r} was dropped with no reason. A silent drop is the whole "
-                f"failure this module exists to prevent"
-            )
-
-    def render(self) -> str:
-        return f"{self.key} ({self.chars} characters) — {self.reason}"
-
-
-@dataclass(frozen=True)
-class AssembledContext:
-    """What fitted, what did not, and whether the turn may be sent at all."""
-
-    text: str
-    budget: int
-    included: tuple[ContextSection, ...] = field(default_factory=tuple)
-    dropped: tuple[DroppedSection, ...] = field(default_factory=tuple)
-    must_refuse: bool = False
-    refusal_reason: str = ""
-
-    @property
-    def used_chars(self) -> int:
-        return len(self.text)
-
-    @property
-    def is_complete(self) -> bool:
-        """Nothing was dropped, and the ceiling was not hit. The ordinary case."""
-        return not self.dropped and not self.must_refuse
-
-    @property
-    def dropped_chars(self) -> int:
-        return sum(d.chars for d in self.dropped)
-
-    def render_drop_report(self) -> str:
-        """What a route trace shows. An absence of drops is stated, not left blank."""
-        if self.must_refuse:
-            return self.refusal_reason
-        if not self.dropped:
-            return (
-                f"nothing was dropped — {self.used_chars} of {self.budget} characters used, "
-                f"and every section fitted"
-            )
-        return (
-            f"{len(self.dropped)} section(s) totalling {self.dropped_chars} characters did not "
-            f"fit the {self.budget}-character ceiling: "
-            + "; ".join(d.render() for d in self.dropped)
-        )
-
-    def as_dict(self) -> dict:
-        return {
-            "budget": self.budget,
-            "used_chars": self.used_chars,
-            "is_complete": self.is_complete,
-            "must_refuse": self.must_refuse,
-            "refusal_reason": self.refusal_reason,
-            "included": [s.key for s in self.included],
-            "dropped": [
-                {"key": d.key, "tier": d.tier.value, "chars": d.chars, "reason": d.reason}
-                for d in self.dropped
-            ],
-        }
-
-
-def _joined(sections: Sequence[ContextSection]) -> str:
-    return SECTION_SEPARATOR.join(s.text for s in sections)
-
-
-def _payload_first(sections: Sequence[ContextSection]) -> tuple[ContextSection, ...]:
-    """The honesty payload in the order `HONESTY_PAYLOAD` fixes, original order within a tier."""
-    return tuple(
-        sorted(
-            (s for s in sections if s.is_honesty_payload),
-            key=lambda s: HONESTY_PAYLOAD.index(s.tier),
-        )
-    )
-
-
-def _drop_rank(tier: ContextTier) -> int:
-    """Where a tier sits in the surrender order — lower goes first.
-
-    A tier in neither table is treated as the **last** droppable thing to give up. That is the
-    safe direction for an unclassified piece of context, and it never becomes a quiet default:
-    a test asserts every tier is in exactly one of the two tables, so an unclassified one is a
-    failing build rather than a section that turns out to be protected by accident.
-    """
-    return DROP_ORDER.index(tier) if tier in DROP_ORDER else len(DROP_ORDER)
-
-
-def _keep_order(sections: Sequence[ContextSection]) -> tuple[ContextSection, ...]:
-    """Everything droppable, most-worth-keeping first — the reverse of the drop order."""
-    return tuple(
-        sorted(
-            (s for s in sections if not s.is_honesty_payload),
-            key=lambda s: -_drop_rank(s.tier),
-        )
-    )
-
-
-def _drop_note(dropped: Sequence[DroppedSection], budget: int) -> str:
-    """The note the **model** reads, so the answer can say what it was built on.
-
-    Reporting the drop only to the caller would be half the fix: the caller can log it, but the
-    sentence a reader sees is written by something that still believes it saw everything.
-
-    **Keys only, and one shared reason.** The per-section reasons go to the caller, where they
-    are read once; repeating them here costs about two hundred characters each, which on a
-    tight budget makes the note the thing that pushed the evidence out. A note that grows
-    faster than what it reports would have to be dropped, and then nothing says anything.
-    """
-    keys = ", ".join(d.key for d in dropped)
-    return (
-        f"{CONTEXT_TRUNCATION_MARKER}\n"
-        f"{len(dropped)} section(s) did not fit the {budget}-character context ceiling and are "
-        f"absent entirely rather than shortened: {keys}. This answer rests on what remains — "
-        f"say so if it matters. The gate outcome, the signal provenance notes, the data window "
-        f"and the fault label are never dropped, so those are complete above."
-    )
-
-
-def _dropped_for(section: ContextSection, budget: int, exhausted_at: str) -> DroppedSection:
-    return DroppedSection(
-        key=section.key,
-        tier=section.tier,
-        chars=section.chars,
-        reason=(
-            f"{section.tier.value} content, dropped to fit the {budget}-character context "
-            f"ceiling. The budget was exhausted at {exhausted_at!r}, and everything with an "
-            f"equal or weaker claim to the space went with it. None of it was shortened or "
-            f"paraphrased — it is absent"
-        ),
-    )
-
-
-def assemble(
-    sections: Sequence[ContextSection], *, budget: int | None = None
-) -> AssembledContext:
-    """Fit the evidence into the ceiling and report what did not fit. Never raises.
-
-    **Stop-on-first-miss, not a best packing.** Candidates are walked most-worth-keeping
-    first, and once one does not fit, it and everything with a weaker claim to the space go
-    with it — even where a smaller later section would have squeezed in. That is a deliberate
-    loss of a few hundred characters in exchange for a result somebody can check: *"residuals 1
-    to 4 are here, 5 and 6 are not"* is a sentence a reader can verify against the pack, and
-    the output of a knapsack is not.
-    """
-    limit = budget if budget is not None else get_settings().max_context_chars
-    payload = _payload_first(sections)
-    payload_text = _joined(payload)
-
-    if len(payload_text) > limit:
-        return AssembledContext(
-            text=payload_text,
-            budget=limit,
-            included=payload,
-            dropped=(),
-            must_refuse=True,
-            refusal_reason=(
-                f"the honesty payload alone is {len(payload_text)} characters against a "
-                f"ceiling of {limit}. It is returned whole and unsent rather than trimmed: the "
-                f"gate outcome, the signal notes, the data window and the fault label are the "
-                f"four things that must never be dropped, so there is nothing left to give up. "
-                f"Ask a narrower question, or raise the ceiling deliberately — "
-                f"TBD (Q84) records which of those is correct."
-            ),
-        )
-
-    kept = list(payload)
-    dropped: list[DroppedSection] = []
-    exhausted_at = ""
-    for section in _keep_order(sections):
-        if not exhausted_at and len(_joined([*kept, section])) <= limit:
-            kept.append(section)
-            continue
-        exhausted_at = exhausted_at or section.key
-        dropped.append(_dropped_for(section, limit, exhausted_at))
-
-    return _with_room_for_the_note(kept, dropped, limit)
-
-
-def _with_room_for_the_note(
-    kept: list[ContextSection], dropped: list[DroppedSection], limit: int
-) -> AssembledContext:
-    """Make the note that reports the drops fit too, giving up more sections if it must.
-
-    The note is part of the context, so a budget that leaves no room for it would produce the
-    silent truncation the note exists to prevent — the failure re-entering through the door
-    marked exit. Sections are surrendered from the least-kept end until it fits, and each one
-    surrendered is itself reported.
-    """
-    while dropped:
-        note = _drop_note(_in_drop_order(dropped), limit)
-        body = _joined(kept)
-        if len(body) + len(SECTION_SEPARATOR) + len(note) <= limit:
-            return AssembledContext(
-                text=f"{body}{SECTION_SEPARATOR}{note}",
-                budget=limit,
-                included=tuple(kept),
-                dropped=_in_drop_order(dropped),
-            )
-
-        surrendered = next((s for s in reversed(kept) if not s.is_honesty_payload), None)
-        if surrendered is None:
-            return AssembledContext(
-                text=f"{_joined(kept)}{SECTION_SEPARATOR}{note}",
-                budget=limit,
-                included=tuple(kept),
-                dropped=_in_drop_order(dropped),
-                must_refuse=True,
-                refusal_reason=(
-                    f"the honesty payload fits the {limit}-character ceiling but the note "
-                    f"reporting {len(dropped)} dropped section(s) does not fit beside it. "
-                    f"Sending the payload without the note would hide the drop, which is the "
-                    f"failure this assembler exists to prevent — TBD (Q84)."
-                ),
-            )
-        kept.remove(surrendered)
-        dropped.append(
-            _dropped_for(surrendered, limit, "the note that reports the dropped sections")
-        )
-
-    return AssembledContext(text=_joined(kept), budget=limit, included=tuple(kept))
-
-
-def _in_drop_order(dropped: Sequence[DroppedSection]) -> tuple[DroppedSection, ...]:
-    """Report the drops in the order they were surrendered, not in the order they were walked.
-
-    The selection walks the candidates most-worth-keeping first, so the raw list reads
-    evidence-then-history — the reverse of what happened. A reader checking *"what did this
-    give up first"* against `DROP_ORDER` would find the two disagreeing, and the table is the
-    thing that is supposed to be inspectable.
-    """
-    return tuple(sorted(dropped, key=lambda d: _drop_rank(d.tier)))
-
-
-def fit_question(question: str, *, limit: int | None = None) -> tuple[str, str]:
-    """`max_input_chars`, applied where the text arrives. Returns the text and the reason.
-
-    A pasted wall of text is what the ceiling stops, and clipping it is fine — clipping it
-    without saying so is not, because the model then answers a question it only half received
-    and the answer reads as though it addressed the whole thing.
-
-    At a ceiling shorter than the marker itself the marker is all that comes back, deliberately:
-    a clipped question carrying no marker is the one output this function must never produce.
-    """
-    cap = limit if limit is not None else get_settings().max_input_chars
-    if len(question) <= cap:
-        return question, f"the question fitted the {cap}-character input ceiling whole"
-
-    room = max(cap - len(CONTEXT_TRUNCATION_MARKER), 0)
-    kept = question[:room]
-    lost = len(question) - room
-    return f"{kept}{CONTEXT_TRUNCATION_MARKER}", (
-        f"the question was {len(question)} characters against an input ceiling of {cap}; the "
-        f"last {lost} were not sent, and the text carries a marker saying so"
-    )
-
-
-# ── from the pack the model actually receives ──────────────────────────────────
-
-#: Everything in `to_prompt_data()` that is real but surrenderable, in the order it is given
-#: up. `sources` last because a lineage line is the least useful thing to a reader who has
-#: already lost the residual it describes.
-_SUPPORTING_KEYS: tuple[str, ...] = (
-    "other_labels_same_day",
-    "severity",
-    "slots_in_episode",
-    "sources",
-)
-
-#: Stated rather than omitted. A pack with no window is itself a defect — constraint 15 — and
-#: the model is never left to supply "now" from its own head.
-_NO_WINDOW = (
-    "not stated by the evidence pack, which is itself a defect: every artefact states its "
-    "data window, and this answer covers an unstated span"
-)
-
-
-def sections_from_prompt_data(prompt_data: dict) -> tuple[ContextSection, ...]:
-    """Tier what `EvidencePack.to_prompt_data()` produces. Nothing is reformatted.
-
-    Every value arrives as a display string because the pack carries display strings rather
-    than floats, and this module keeps that true: it labels and orders, and never renders a
-    number. Re-rendering would reintroduce a tolerance, and every tolerance forgives some
-    fabrication.
-
-    **`model_fit_warning` is tiered as a signal note rather than as evidence.** Chiller 1's
-    current model runs at nRMSE 48.03 against chiller 2's 2.65, so a residual quoted without
-    its fit warning is the *suspect* case the never-dropped rule names — the same defect as a
-    never-measured signal reading as a measurement, arriving by a different door.
-    """
-    out: list[ContextSection] = []
-
-    for i, line in enumerate(prompt_data.get("gates") or (), 1):
-        out.append(ContextSection(f"gate.{i}", ContextTier.GATE_OUTCOME, f"gate — {line}"))
-    may_diagnose = prompt_data.get("may_diagnose") or "not stated"
-    out.append(
-        ContextSection(
-            "may_diagnose",
-            ContextTier.GATE_OUTCOME,
-            f"may a fault be named from this evidence: {may_diagnose}",
-        )
-    )
-
-    for i, line in enumerate(prompt_data.get("signal_provenance") or (), 1):
-        out.append(ContextSection(f"signal.{i}", ContextTier.SIGNAL_NOTE, f"signal — {line}"))
-    if prompt_data.get("model_fit_warning"):
-        out.append(
-            ContextSection(
-                "model_fit_warning", ContextTier.SIGNAL_NOTE, prompt_data["model_fit_warning"]
-            )
-        )
-
-    out.append(
-        ContextSection(
-            "data_window",
-            ContextTier.DATA_WINDOW,
-            f"data window — {prompt_data.get('data_window') or _NO_WINDOW}",
-        )
-    )
-    out.append(
-        ContextSection(
-            "fault_label",
-            ContextTier.FAULT_LABEL,
-            f"fault label — {prompt_data.get('fault_label', 'no label on this slot')}; the "
-            f"trained model declares it undecidable: "
-            f"{prompt_data.get('model_declares_undecidable', 'not stated')}",
-        )
-    )
-
-    out.append(
-        ContextSection(
-            "equipment",
-            ContextTier.EVIDENCE,
-            f"equipment — {prompt_data.get('equipment', 'not stated')} on "
-            f"{prompt_data.get('day', 'a day the pack did not state')}",
-        )
-    )
-    for i, line in enumerate(prompt_data.get("residuals") or (), 1):
-        out.append(ContextSection(f"residual.{i}", ContextTier.EVIDENCE, f"residual — {line}"))
-
-    for key in _SUPPORTING_KEYS:
-        value = prompt_data.get(key)
-        if not value:
-            continue
-        rendered = "; ".join(str(v) for v in value) if isinstance(value, list) else str(value)
-        out.append(ContextSection(key, ContextTier.SUPPORTING, f"{key} — {rendered}"))
-
-    return tuple(out)
-
+# ── where the two halves meet ──────────────────────────────────────────────────
 
 def assemble_turn(
     prompt_data: dict,

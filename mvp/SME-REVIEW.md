@@ -562,3 +562,243 @@ deliberately, so a correction never touches the machinery.
 3. Update the affected register rows and `CONTEXT.md`.
 4. Re-run `python scripts/verify.py` and `python scripts/sync_mvp_html.py`.
 5. Append a row to `HANDOFF.md` under Recent changes.
+
+---
+
+## Added 2026-08-18 — content approved on a persona's authority, awaiting Vishnu
+
+**This section did not exist when the agenda above was written, and it is now the most
+time-critical item in it.** The retrieval corpus went live on 2026-08-18. Search returns only
+approved passages, so an unapproved corpus is an invisible one — and to unblock the build
+Harshan delegated the approval decision to the acting personas rather than hold it for this
+hour. **55 documents were approved by a Reliability Engineer and Supervisor acting in persona.
+None of them was read by a refrigeration engineer.**
+
+Every one of those approvals is marked **provisional**, and the words *"approved pending SME
+validation"* are printed inside the citation itself — so a passage that reaches an answer says
+on its face that no engineer stood behind it. `synex_chunk_approval_event` holds all 55 acts
+with the actor and the stated basis, and it survives revocation: withdrawing an approval leaves
+the event, so this review can find every one, read what was claimed for it, and undo it.
+
+### What was approved, and the reasoning offered
+
+| Content | Passages | Reasoning the persona recorded |
+|---|---|---|
+| 51 product & architecture chapters | 242 | Describe how the platform works. No field instruction, so no path to directing physical work. |
+| Water-cooled chiller FDD specification | (in the above) | Same — a specification, not an instruction. |
+| 4 differentials — candidate causes and discriminating questions | 27 | A differential says what to *consider* and what to *ask*. Wrong content yields a hypothesis that evidence then eliminates; it cannot put a spanner on a pressurised circuit. Constraint 26 — the language model selects and contextualises library content — is exactly this use. |
+
+### What was deliberately withheld
+
+| Content | Passages | Why it was not approved |
+|---|---|---|
+| 12 checklist library documents | 48 | These contain field instructions directing physical work on pressurised refrigerant equipment. Inherited constraint 1 exists because an unreviewed procedure once reached a technician. No acting-persona approval substitutes for a refrigeration engineer here. |
+| 9 drafted holding actions | not indexed at all | They sit behind **two** gates — `sme_reviewed` and `switched_on` — and a chunk row has only one. Indexing them would let a single approval open a policy gate that a review deliberately does not clear (constraint 10). |
+
+### What we need from you, in priority order
+
+1. **The 48 withheld checklist passages.** These are the ones that direct physical work, and
+   they are unreachable until you approve them. Read them as instructions you would hand a
+   technician. Approve, amend or reject each.
+2. **Ratify or revoke the 27 differential passages.** The persona's argument — that a candidate
+   cause and a discriminating question cannot themselves cause harm — is the one judgement in
+   this whole set that a non-engineer should not have made alone. If you disagree, it revokes
+   in one command and the trail records that it was withdrawn.
+3. **The 242 chapter passages** need only a glance. If our own written documentation is wrong
+   about the equipment, that is worth knowing, but nothing there instructs anyone to do anything.
+
+To withdraw anything:
+
+```
+cd backend
+python ../scripts/ingest_corpus.py --revoke "<document>" --by "Vishnu" --reason "<why>"
+```
+
+### Two fault classes have no evaluation coverage
+
+Separately, and worth a minute of the same hour: the plant's measured window holds **39 detected
+episodes across 7 fault labels**, and the golden evaluation set covers **5 of the 7**.
+**`COMPRESSOR_INEFFICIENCY` (4 episodes) and `CONDENSER_WATER_SIDE_UNSPECIFIED` (1 episode) have
+no golden case at all** — so nothing asserts what a correct answer for them looks like. We need
+one worked example of each from you: what the evidence should lead a reader to, and what it
+should *not* be allowed to conclude.
+
+---
+## Added 2026-08-18 — the 48 withheld passages, triaged for your hour
+
+**What this is.** I read all 48 and sorted them by what a wrong item would *cost*. I have
+approved none of them: I am not a refrigeration engineer, and inherited constraint 1 exists
+because an unreviewed procedure once reached a technician. This is preparation, not a review.
+
+**A mechanism problem to decide first.** `set_approval` grants per **document**, and each of the
+12 fault classes holds all three stages in one document. So there is currently no way to approve
+a class's harmless scheduling items without also making its corrective actions retrievable. That
+is `Q94` — *is approval per passage, or per document and version?* Until it is answered, approval
+is all-or-nothing per fault class.
+
+### The structure
+
+12 fault classes × 3 stages, plus 12 class headers = 48 passages.
+
+| Stage | Passages | What a wrong item costs |
+|---|---|---|
+| Class header | 12 | Nothing. Label, severity, routing and provenance — no instruction. |
+| Preventive actions | 12 | Nothing physical. Scheduling and trending only. |
+| Root cause analysis | 12 | Mostly a wasted measurement — but see the oil-sampling note. |
+| **Corrective actions** | **12** | **A person acting on a pressurised refrigerant circuit.** This is the stage that needs you. |
+
+### Read these first — every corrective action, in full
+
+These 12 passages carry the whole of the physical risk. Everything else can wait.
+
+
+**Compressor inefficiency**
+
+- Take an oil sample for analysis; change oil and filter if out of spec — *technician* · not blocking
+- Inspect valve plates and unloader mechanism — *technician* · not blocking
+- Vibration survey to confirm mechanical condition — *technician* · not blocking
+- If wear is confirmed, plan a compressor overhaul with the OEM — *vendor* · not blocking
+
+
+**Condenser low flow**
+
+- Restore condenser flow — open valves, clean the strainer, vent trapped air — *maintenance* · not blocking
+- Verify pump performance against its curve — *technician* · not blocking
+- Confirm head pressure and current return to expected after flow is restored — *operator* · not blocking
+
+
+**Condenser water side — cause unspecified**
+
+- Clean strainers and restore design flow — *maintenance* · not blocking
+- Brush-clean condenser tubes if fouling is confirmed — *maintenance* · not blocking
+- Service the cooling tower — fill, distribution, fan, basin — *maintenance* · not blocking
+- Confirm approach temperature returns to design after the fix — *operator* · not blocking
+
+
+**Contradictory readings — measurement fault**
+
+- Recalibrate or replace the faulty transmitter — *technician* · not blocking
+- If it is a tag/comms fault, restore the point mapping in the BMS — *technician* · not blocking
+- Re-verify the derived metric (kW/TR) returns to a plausible band after the fix — *operator* · not blocking
+- Mark the affected date range so efficiency and FDD outputs from it are not trusted — *supervisor* · not blocking
+
+
+**Fault model cannot diagnose this unit**
+
+- Fix the upstream data quality issue before anything else — *technician* · not blocking
+- Only then request a model refit from the platform team, with the window stated — *supervisor* · not blocking
+- Flag that FDD verdicts for this unit are unreliable until diagnosability recovers — *supervisor* · not blocking
+
+
+**High head pressure — cause not isolated**
+
+- Address whichever cause the checks isolate — flow, fouling, tower, air, or charge — *technician* · not blocking
+- Clean condenser tubes if fouling is indicated — *maintenance* · not blocking
+- Verify head pressure returns to expected for the ambient and load — *operator* · not blocking
+
+
+**High head — refrigerant side**
+
+- Recover, weigh and correct the refrigerant charge — *technician* · not blocking
+- Repair any leak found before recharging — *technician* · not blocking
+- Purge non-condensables if indicated — *technician* · not blocking
+- Replace the filter-drier after opening the circuit — *technician* · not blocking
+
+
+**Implausible efficiency — suspect measurement**
+
+- Fix whichever input is wrong — flow, delta-T, or power — *technician* · not blocking
+- Recompute efficiency for the affected period once the input is corrected — *supervisor* · not blocking
+- Exclude the bad period from efficiency reporting and benchmarks — *supervisor* · not blocking
+
+
+**Power draw high — unexplained**
+
+- Correct any voltage or current imbalance found — *technician* · not blocking
+- Complete a motor electrical test; act on the result — *technician* · not blocking
+- Review and correct VFD configuration if fitted — *technician* · not blocking
+
+
+**Signal flatlined — suspect sensor**
+
+- Restore the signal — repair wiring, replace sensor, or fix the BMS point — *technician* · not blocking
+- Confirm the value tracks plant state again after the fix — *operator* · not blocking
+
+
+**Starved evaporator — undercharge or restriction**
+
+- If restricted: isolate, recover, replace the filter-drier, evacuate and recharge to spec — *technician* · not blocking
+- If undercharged: leak-test the circuit, repair, then weigh in charge to nameplate — *technician* · not blocking
+- Verify superheat and subcooling after the fix — *technician* · not blocking
+- Re-check the suction-pressure residual on the next run to confirm the fault cleared — *technician* · not blocking
+
+
+**generic fallback**
+
+- Address the cause identified by inspection — *technician* · not blocking
+- Verify the parameter returns to its expected range — *operator* · not blocking
+
+
+### Three things I could not resolve and you can
+
+1. **Oil sampling appears at two stages.** *"Oil analysis — acid number, moisture, metals"* is a
+   root-cause item, and *"Take an oil sample for analysis; change oil and filter if out of spec"*
+   is a corrective one. A previous pass over the role tags already found an oil analysis — a lab
+   task — being shown to whoever opened a compressor case. Is taking the sample a technician task
+   on a running machine, and does it belong at both stages?
+
+2. **The two sources disagree about routing.** Every class says *"flows straight through"* per
+   `05-checklist-library-for-review.md`, while `17-role-tags-every-check.md` prints no routing for
+   that class at all. The transcription records both rather than picking one, because a missing
+   routing is a different fact from an agreeing one. Which source governs?
+
+3. **`Restore condenser flow — open valves, clean the strainer, vent trapped air`** is tagged
+   *maintenance · not blocking* on a class whose severity the source writes as **critical**. A
+   non-blocking corrective on a critical fault is either right or a tagging slip, and only you
+   can say which.
+
+
+---
+
+## Added 2026-08-18 — the 19 discriminators, and why they outrank everything else here
+
+**Read this before the checklist library.** It is a smaller ask and it unblocks more.
+
+All four differentials — 19 candidate causes and 19 discriminating questions — currently report
+`EXHAUSTED` **the moment they start**, with zero askable questions. Not because the questions
+ran out, but because `askable` returns only `sme_reviewed=True` questions and none of the 19 is.
+So the narrowing flow, which is the whole of `RC12`–`RC14`, cannot run at all.
+
+**Why we did not simply switch them on.** Elimination is irreversible: a discriminator does not
+suggest, it *removes a candidate cause permanently*. On the reference queue **31 causes were
+eliminated by these same discriminators, none of them read by a refrigeration engineer**. A
+retrieved passage is text somebody can disagree with; an elimination is a door that closes. That
+asymmetry is why the corpus could be provisionally approved on a persona's authority and this
+cannot.
+
+### What we need — 19 yes/no answers
+
+Each question is a **reading or a records check**. None directs anyone to open, isolate, adjust
+or vent anything. For each, we need only: *is this a valid discriminator for this fault class?*
+
+**HIGH_HEAD_AMBIGUOUS** — 5 causes, 5 questions
+
+- Q1 How wide is the condenser approach — leaving water vs condensing temperature? *(technician)*
+- Q2 Condenser water flow vs design *(technician)*
+- Q3 Is the tower making its design cold-water temperature? *(operator)*
+- Q4 Is head pressure above saturation for the measured condenser water temperature? *(technician)*
+- Q5 Does the charge log show more refrigerant than nameplate? *(supervisor)*
+
+The other three classes — `POWER_HIGH_UNEXPLAINED` (5), `CONDENSER_WATER_SIDE_UNSPECIFIED` (5)
+and `STARVED_EVAP_UNDERCHARGE_OR_RESTRICTION` (4) — are in
+`backend/app/domain/library/differentials.py`, each carrying the file and heading it was
+transcribed from.
+
+### The order we would ask you to work in
+
+1. **The 19 discriminators** — unblocks the narrowing flow entirely. Yes/no per question.
+2. **The 12 corrective-action sets** — the only content that puts a tool on a pressurised circuit.
+3. **`Q3` the load floor** — you said 30%; we need to know *30% of what*, since no rated capacity
+   column exists in the snapshot.
+4. **Flow as a constant** — you said take it as constant 1. Constant *design* flow normalised, or
+   a literal unit value? It changes every efficiency figure from measured to derived.

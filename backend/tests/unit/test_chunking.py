@@ -5,6 +5,11 @@ holds zero rows, so nothing here has been checked against a real SOP — these t
 *rules* (`Q93` fixes the markers) and, above all, fix the one that costs a person: a numbered
 step never opens a passage, so an instruction is never severed from the condition it applies
 under. Everything else in this file is arithmetic.
+
+The dotted-number block below is the same rule arriving through a second door, and it shipped
+broken: a dotted number opened a chunk unconditionally, so `4.2 bar` split a passage at a
+pressure reading. `app/jobs/index_library.py` is now the first caller of this module that is
+not a test, which is what made the defect worth finding.
 """
 from __future__ import annotations
 
@@ -123,6 +128,117 @@ def test_a_dotted_number_is_a_heading_and_a_flat_number_is_a_step() -> None:
     assert chunk.split_on is Boundary.NUMBERED_HEADING
     assert chunk.locator == "§4.2 Condenser isolation"
     assert chunk.step_count == 1
+
+
+# ── the blocker: a dotted number is as often a pressure as a section ───────────
+# Found by adversarial review. A dotted number opened a chunk unconditionally, so every
+# hierarchically-numbered value in the corpus was read as a heading — and the reference plant's
+# figures are full of them: head pressure at 4.2 bar, condenser ΔT of −3.0 to −3.4, an
+# efficiency proxy whose design band is 0.65–0.85 and whose healthiest measured month hit 1.40.
+
+
+def test_a_value_and_its_unit_never_opens_a_passage() -> None:
+    """`4.2 bar` was read as section 4.2 and split the passage there — which severs a checklist
+    step from the condition it applies under through the *heading* detector rather than the
+    step detector. Same damage, different door."""
+    chunked = chunk_document(
+        "# Head pressure\n\n"
+        "4.2 bar is the commissioned reading for this machine.\n\n"
+        "1. Record the reading before cleaning the condenser.\n",
+        document="SOP",
+    )
+
+    assert chunked.chunk_count == 1
+    assert chunked.chunks[0].locator == "Head pressure"
+    assert "4.2 bar" in chunked.chunks[0].text
+
+
+def test_a_temperature_written_as_a_dotted_number_stays_inside_its_sentence() -> None:
+    """`1.5 C` is the same defect as `4.2 bar` with a different unit, and the unit list is ours
+    and unreviewed — `Q95`. The rule is asserted per unit because that is where it will break.
+    """
+    chunked = chunk_document(
+        "# Superheat\n\nHold the suction at\n1.5 C above saturation while the check runs.\n",
+        document="SOP",
+    )
+
+    assert chunked.chunk_count == 1
+    assert "1.5 C above saturation" in chunked.chunks[0].text
+
+
+def test_a_sentence_that_begins_with_a_number_is_prose_and_not_a_title() -> None:
+    """H3. The efficiency proxy's design band is `0.65–0.85`, so a line reading *"0.65 to 0.85
+    is the design band"* is a statement about the plant, not the title of section 0.65."""
+    chunked = chunk_document(
+        "# Efficiency\n\n0.65 to 0.85 is the design band for the efficiency proxy.\n",
+        document="SOP",
+    )
+
+    assert chunked.chunk_count == 1
+    assert chunked.chunks[0].split_on is Boundary.MARKDOWN_HEADING
+
+
+def test_a_dotted_number_mid_paragraph_continues_the_sentence_above_it() -> None:
+    """H1. A heading begins a block; a measurement that wrapped onto its own line continues one.
+    Without this, every wrapped figure in a real SOP is a false boundary."""
+    chunked = chunk_document(
+        "# Condenser\n\nThe reading recorded before the clean was\n"
+        "3.9 recorded at the panel by the operator on shift\n",
+        document="SOP",
+    )
+
+    assert chunked.chunk_count == 1
+    assert "3.9 recorded at the panel" in chunked.chunks[0].text
+
+
+def test_consecutive_numbered_headings_are_an_outline_not_a_paragraph() -> None:
+    """H1 must not cost a real outline. `4.1` and `4.2` printed on consecutive lines with no
+    blank between is how a numbered SOP is written, and refusing the second would merge two
+    sections that the author separated."""
+    chunked = chunk_document(
+        "4.1 Isolation\n4.2 Cleaning\nBrush the tubes.\n", document="Ops Manual"
+    )
+
+    assert chunked.chunk_count == 2
+    assert [c.locator for c in chunked.chunks] == ["§4.1 Isolation", "§4.2 Cleaning"]
+
+
+def test_every_refused_boundary_is_recorded_with_the_reason_that_refused_it() -> None:
+    """A chunking decision nobody can inspect is indistinguishable from a guess. `Boundary` says
+    why a passage started; only this says why one did not."""
+    chunked = chunk_document(
+        "# Head pressure\n\n4.2 bar is the commissioned reading.\n", document="SOP"
+    )
+    held = chunked.chunks[0].dotted_numbers_held_as_text
+
+    assert len(held) == 1
+    assert held[0].line == "4.2 bar is the commissioned reading."
+    assert "'bar', which is a unit" in held[0].reason
+    assert "Q95" in held[0].reason
+
+
+def test_a_refused_boundary_is_not_a_concern() -> None:
+    """A concern names what a reader would get wrong by trusting the passage. Holding a
+    measurement inside its own paragraph is the splitter succeeding, and listing it beside real
+    defects would train a reader to skip the list."""
+    chunked = chunk_document(
+        "# Head pressure\n\n4.2 bar is the commissioned reading.\n", document="SOP"
+    )
+
+    assert chunked.chunks[0].is_clean
+    assert chunked.concerns == ()
+    assert chunked.dotted_numbers_held_as_text
+
+
+def test_a_section_mark_is_never_second_guessed() -> None:
+    """`§4.2` was typed by an author who meant a section. Applying the measurement rules to it
+    would refuse an explicit marker on the strength of a unit list nobody has reviewed."""
+    chunked = chunk_document(
+        "Preamble text with no blank line after it.\n§4.2 bar\nLock off.\n", document="SOP"
+    )
+
+    assert chunked.chunk_count == 2
+    assert chunked.chunks[1].split_on is Boundary.NUMBERED_HEADING
 
 
 def test_a_section_mark_is_recognised_because_that_is_what_K5_cites() -> None:

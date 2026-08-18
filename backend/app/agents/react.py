@@ -115,6 +115,13 @@ _ROUTING: dict[Outcome, tuple[Routing, str]] = {
         "this tool is declared with no handler bound. Nothing the loop does next binds one, but "
         "a different tool may still answer the question",
     ),
+    Outcome.MISSING_RESOURCE: (
+        Routing.CONTINUE,
+        "the tool is implemented and permitted, and this gateway was built without something it "
+        "declared it needs. Retrying the same call cannot help — nothing about the loop supplies "
+        "a resource — but another tool may answer, and the reason names the wiring gap rather "
+        "than reporting it as a refusal the caller could argue with",
+    ),
     Outcome.REFUSED: (
         Routing.STOP,
         "the Control Plane refused this capability for this caller. Asking again cannot change "
