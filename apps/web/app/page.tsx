@@ -13,31 +13,14 @@
  * framework to fight.
  */
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FigureView } from '@/components/FigureView';
-import {
-  IconAlert,
-  IconCheck,
-  IconHalt,
-  IconUsers,
-} from '@/components/Icons';
-import { Differential } from '@/components/Differential';
-import { ResidualChart, type SeriesBand, type SeriesPoint } from '@/components/ResidualChart';
 import { useTurn } from '@/lib/useTurn';
-
-interface WorkOrder {
-  is_draft: boolean;
-  title: string;
-  priority: {
-    band: string;
-    is_complete: boolean;
-    explanation: string;
-    missing: { input: string; why: string }[];
-  };
-  evidence: { kind: string; text: string; source: string }[];
-  cannot_close_until: string[];
-  warnings: string[];
-}
+import { TurnView } from '@/components/TurnView';
+import { NeverDoes } from '@/components/NeverDoes';
+import { StarterChips } from '@/components/StarterChips';
+import { PageEnter, Pressable, Reveal } from '@/components/motion';
+import { Skeleton } from '@/components/Surface';
 
 interface CaseItem {
   id: string;
@@ -47,39 +30,6 @@ interface CaseItem {
   is_sample: boolean;
   stored_reading: string | null;
   finding: string;
-}
-
-interface CaseView {
-  state: string;
-  content_is_sample: boolean;
-  content_note: string;
-  unreviewed_in_library: number;
-  may_advance: boolean;
-  advance_reason: string;
-  operator_can_start: boolean;
-  viewing_as: string;
-  my_items: CaseItem[];
-  for_others: { id: string; text: string; capability: string }[];
-}
-
-interface VerificationResult {
-  outcome: 'PASS' | 'FAIL' | 'UNKNOWN';
-  reason: string;
-  closes_the_work_order: boolean;
-  post_work_was_diagnosable: boolean;
-  before: { in_band: number; total: number };
-  after: { in_band: number; total: number };
-  blocked_by: string | null;
-  notes: string[];
-}
-
-interface Series {
-  points: SeriesPoint[];
-  band: SeriesBand | null;
-  band_absent_reason: string | null;
-  residual: string;
-  equipment_key: string;
-  null_count: number;
 }
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'http://127.0.0.1:8001';
@@ -93,83 +43,34 @@ interface Episode {
 }
 
 export default function Page() {
-  const { turn, ask, stop } = useTurn();
+  const { turns, turn, ask, stop, clear } = useTurn();
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [selected, setSelected] = useState<Episode | null>(null);
-  const [question, setQuestion] = useState('Why was this flagged, and what does the evidence support?');
+  // Empty. A composer that arrives pre-filled is a script, not a conversation — and the
+  // question it held was the one the demonstration wanted asked.
+  const [question, setQuestion] = useState('');
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [series, setSeries] = useState<Series | null>(null);
-  const [wo, setWo] = useState<WorkOrder | null>(null);
-  const [ver, setVer] = useState<VerificationResult | null>(null);
-  const [kase, setKase] = useState<CaseView | null>(null);
-  const [viewAs, setViewAs] = useState('technician');
 
   useEffect(() => {
     fetch(`${API}/api/v1/episodes`, { credentials: 'include' })
       .then((r) => r.json())
       .then((body) => {
         setEpisodes(body.episodes ?? []);
-        // Open on the critical episode: the only `critical` class, on the day chiller 1
-        // carried five labels at once. It is the strongest single case in the data.
-        setSelected(
-          body.episodes?.find((e: Episode) => e.fault_label === 'CONDENSER_LOW_FLOW') ??
-            body.episodes?.[0] ??
-            null,
-        );
+        // **Nothing is pre-selected.** This used to open on a named fault class —
+        // `CONDENSER_LOW_FLOW`, chosen because it is the strongest single case in the data —
+        // which meant the surface arrived already pointed at the episode that demonstrates
+        // best. That is a demonstration arranging itself, and a reader cannot tell it from
+        // the product deciding. The Copilot now answers questions that need no episode at
+        // all, so an empty context is a real starting state rather than a broken one.
       })
       .catch((e: Error) => setLoadError(e.message));
   }, []);
 
-  // The chart loads with the episode rather than with the turn: the evidence exists whether
-  // or not anyone has asked a question about it, and showing it first is the same argument
-  // the frame order makes — the answer is a reading of the evidence, not the other way round.
-  useEffect(() => {
-    if (!selected) return;
-    setSeries(null);
-    fetch(`${API}/api/v1/episodes/${encodeURIComponent(selected.id)}/series`, {
-      credentials: 'include',
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setSeries)
-      .catch(() => setSeries(null));
-
-    // W2 · W3 · W4 — the job this episode would raise, with its evidence already attached.
-    // Loaded alongside the chart because the whole point of the pillar is that the
-    // justification travels with the work rather than being looked up afterwards.
-    setWo(null);
-    fetch(`${API}/api/v1/episodes/${encodeURIComponent(selected.id)}/work-order`, {
-      credentials: 'include',
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setWo)
-      .catch(() => setWo(null));
-
-    // V1-V4 — did it work? Read the days after the episode as the post-work window. No
-    // repair was ever recorded on this snapshot, so what is verified is a natural
-    // clearing, which is exactly where the honest answer is most easily got wrong.
-    setVer(null);
-    fetch(
-      `${API}/api/v1/episodes/${encodeURIComponent(selected.id)}/verification?after_days=8`,
-      { credentials: 'include' },
-    )
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setVer)
-      .catch(() => setVer(null));
-  }, [selected]);
-
-  // RC1 · RC3 · RC5 — the case this episode seeds, rendered for one capability. Reloaded
-  // when the capability changes, because the task list is *theirs*, not everyone's.
-  useEffect(() => {
-    if (!selected) return;
-    setKase(null);
-    fetch(
-      `${API}/api/v1/episodes/${encodeURIComponent(selected.id)}/case?viewing_as=${viewAs}`,
-      { credentials: 'include' },
-    )
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setKase)
-      .catch(() => setKase(null));
-  }, [selected, viewAs]);
+  // **Four fetches left with the sections they fed.** The series, the work-order draft, the
+  // verification outcome and the case view were all loaded the moment an episode was
+  // selected — four round trips per selection, for five cards that now live on `/case/[id]`.
+  // Removing the render without removing the fetch would have left the network cost and
+  // the API load behind with nothing to show for either.
 
   const send = useCallback(() => {
     if (!question.trim()) return;
@@ -178,221 +79,145 @@ export default function Page() {
       equipment_key: selected?.equipment_key,
       fault_label: selected?.fault_label,
       day: selected?.day,
+      // What "this" and "it" resolve against. The back end remembers six turns and resolves
+      // the pronoun; it can only do that if the client says what the last turn was about.
+      last_equipment: turns.length ? turns[turns.length - 1].equipmentKey : undefined,
     });
-  }, [ask, question, selected]);
+    setQuestion('');
+  }, [ask, question, selected, turns]);
 
   const refused = turn.state?.state === 'NO_DIAGNOSIS' || Boolean(turn.refusal);
   const graded = useMemo(() => turn.audits.find((a) => a.findings), [turn.audits]);
   const notes = useMemo(() => turn.audits.filter((a) => !a.findings), [turn.audits]);
 
   return (
-    <>
+    <PageEnter>
 
-        <p className="muted" style={{ marginTop: 0 }}>
-          The persona switcher is a demonstration affordance, not authentication — anyone
-          here can select any persona. <code className="mono">Q41</code> is unanswered; see
-          D-013.
-        </p>
 
-        <section className="card sunken" aria-labelledby="ep">
-          <h2 id="ep">
-            Detected episodes — measured window only
-            {episodes.length > 0 && <> · {episodes.length} over 12 equipment-days</>}
-          </h2>
+        {/* **The context, not the catalogue.**
+         *
+         * This was a grid of twelve episode chips — a second, truncated copy of `/workspace`,
+         * which now holds all 39 ranked and filterable. Two problems beyond the duplication:
+         * it showed 12 of 39 with nothing saying 27 were hidden, and making a person pick from
+         * a grid before they could ask anything is a router limitation (it needs equipment plus
+         * fault plus day) rendered as furniture.
+         *
+         * So the Copilot carries **what is loaded**, and `/workspace` owns **choosing**. The
+         * picker is still here because a cold visit to `/` needs a way in — but it is a
+         * disclosure behind the chip rather than the first thing on the screen, and it names
+         * the true total rather than silently cutting the list. */}
+        <section className="card sunken context" aria-labelledby="ctx">
+          <h2 id="ctx">Asking about</h2>
+
+          {selected ? (
+            <p className="context-current">
+              <strong>{selected.equipment_key.replace('_', ' ')}</strong>
+              {' · '}
+              {selected.fault_label}
+              {' · '}
+              {selected.day}
+              <span className="muted"> · {selected.slot_count} slot(s)</span>
+            </p>
+          ) : (
+            <p className="muted">
+              Nothing selected — ask about the plant, a machine or a fault class and it will
+              answer. Pick an episode only when you want the evidence behind one specific day.
+            </p>
+          )}
+
           {loadError && (
             <p className="muted">Could not reach the back end on {API}: {loadError}</p>
           )}
-          <div className="row">
-            {episodes.slice(0, 12).map((e) => (
-              <button
-                key={e.id}
-                className="chip"
-                aria-pressed={selected?.id === e.id}
-                onClick={() => setSelected(e)}
-                title={`${e.slot_count} slot(s)`}
-              >
-                {e.equipment_key.replace('_', ' ')} · {e.fault_label} · {e.day}
-              </button>
-            ))}
-          </div>
+
+          {episodes.length === 0 && !loadError && <Skeleton lines={1} label="Loading episodes" />}
+
+          {/* The picker never opens itself. It used to whenever nothing was selected,
+              which put 39 rows between a cold visitor and the composer — on the assumption
+              that selecting was a prerequisite. It is not: the catalogue path answers
+              questions that have no episode at all. */}
+          {episodes.length > 0 && (
+            <details className="context-picker">
+              {/* The count is the true total. A disclosure that says "12" while holding 39 is
+                  the silent cap this replaces. */}
+              <summary>
+                {selected ? 'Change episode' : 'Choose an episode'} · {episodes.length} detected
+                in the measured window
+              </summary>
+              <Reveal className="row" runKey={episodes.length}>
+                {episodes.map((e) => (
+                  <Pressable
+                    key={e.id}
+                    className="chip"
+                    ariaPressed={selected?.id === e.id}
+                    onClick={() => setSelected(e)}
+                    ariaLabel={`${e.equipment_key.replace('_', ' ')}, ${e.fault_label}, ${e.day}, ${e.slot_count} slot(s)`}
+                  >
+                    {e.equipment_key.replace('_', ' ')} · {e.fault_label} · {e.day}
+                  </Pressable>
+                ))}
+              </Reveal>
+              <p className="muted">
+                <Link href="/workspace">Open the reliability workspace</Link> to rank, filter and
+                work the full queue.
+              </p>
+            </details>
+          )}
         </section>
 
-        {series && series.points.length > 0 && (
-          <section className="card" aria-labelledby="ch">
-            <h2 id="ch">Residual against this asset&apos;s own band</h2>
-            <ResidualChart
-              points={series.points}
-              band={series.band}
-              bandAbsentReason={series.band_absent_reason}
-              residual={series.residual}
-              equipment={series.equipment_key.replace('_', ' ')}
-              nullCount={series.null_count}
-            />
-          </section>
+        {/* **The case detail left this surface on 2026-08-18.**
+         *
+         * Everything that used to sit here — the residual chart, the differential, the work
+         * order draft, the verification outcome, the case checklist — is now on `/case/[id]`,
+         * which exists and is built for it. Holding all of it permanently open under the
+         * composer made the Copilot a dashboard that happened to have a text box: a reader
+         * scrolled past five cards of an episode they had not asked about to reach the thing
+         * they came to type into, and every one of those cards was already a whole surface
+         * somewhere else.
+         *
+         * A conversation shows what was said. The detail is one link away, and the link says
+         * which case it opens. */}
+        {selected && (
+          <p className="muted">
+            <Link href={`/case/${encodeURIComponent(selected.id)}`}>
+              Open the full case for {selected.equipment_key.replace('_', ' ')} ·{' '}
+              {selected.fault_label} · {selected.day}
+            </Link>{' '}
+            — evidence, the differential, the work order it would raise, and verification.
+          </p>
         )}
 
-        {/* RC12-RC14. Mounted after the evidence and before the work order, because the
-            differential is what stands between a named-but-ambiguous class and raising a job
-            against whichever cause happened to be listed first. */}
-        <Differential faultLabel={selected?.fault_label ?? null} />
 
-        {wo && (
-          <section className="card" aria-labelledby="wo">
-            <h2 id="wo">
-              Work order — draft{' '}
-              <span className="pri" data-band={wo.priority.band}>
-                {wo.priority.band}
-              </span>
-            </h2>
-            <p className="answer measure">{wo.title}</p>
 
-            <p className="muted">
-              <strong>How this priority was reached:</strong> {wo.priority.explanation}
-            </p>
+        {/* The transcript. Turns append rather than replace, so the exchange the back end
+            already remembers — six turns, with pronoun resolution — is visible to the reader
+            resolving the same pronouns. Newest last, the way a conversation reads. */}
+        {turns.map((t) => (
+          <TurnView key={t.id} turn={t} />
+        ))}
 
-            {!wo.priority.is_complete && wo.priority.missing.length > 0 && (
-              <ul className="reasons">
-                {wo.priority.missing.map((m) => (
-                  <li key={m.input}>
-                    <code className="mono">{m.input}</code> — {m.why}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {wo.warnings.map((w) => (
-              <p className="muted" key={w}>
-                {w}
-              </p>
-            ))}
-
-            <p className="muted">
-              <strong>Cannot close until:</strong>
-            </p>
-            <ul className="reasons">
-              {wo.cannot_close_until.map((c) => (
-                <li key={c}>{c}</li>
-              ))}
-            </ul>
-
-            <p className="muted">
-              {wo.evidence.length} pieces of evidence travel with this job — residuals with
-              their bands and fit, every gate result, and the provenance of each unusable
-              signal. Nothing is fetched again by whoever opens it.
-            </p>
-            <p className="muted">
-              This is a <strong>draft</strong>. Nothing is persisted: Synex&apos;s own state
-              belongs in PostgreSQL and that is not wired yet.
-            </p>
-          </section>
+        {/* Starters before the boundary panel: what you CAN ask, then what it will never do.
+            The other order reads as a list of refusals with an invitation appended. */}
+        {turns.length === 0 && (
+          <StarterChips
+            faultLabels={Array.from(new Set(episodes.map((e) => e.fault_label)))}
+            onPick={(q) => {
+              setQuestion(q);
+              ask({ question: q });
+            }}
+          />
         )}
 
-        {ver && (
-          <section className="card" aria-labelledby="ver">
-            <h2 id="ver">
-              Verification — did it work?{' '}
-              <span className="pri" data-band={ver.outcome}>
-                {ver.outcome}
-              </span>
-            </h2>
-            <p className="answer measure">{ver.reason}</p>
+        {turns.length === 0 && <NeverDoes />}
 
-            <p className="muted">
-              Readings inside this asset&apos;s own band: {ver.before.in_band} of{' '}
-              {ver.before.total} before, {ver.after.in_band} of {ver.after.total} after.
-            </p>
-
-            {!ver.post_work_was_diagnosable && (
-              <p className="muted">
-                The gates did not pass over the post-work window, so nothing was being
-                judged. A NULL means not diagnosed — never healthy.
-              </p>
-            )}
-
-            {ver.notes.map((n) => (
-              <p className="muted" key={n}>
-                {n}
-              </p>
-            ))}
-
-            <p className="muted">
-              {ver.closes_the_work_order
-                ? 'This closes the work order.'
-                : ver.outcome === 'FAIL'
-                  ? 'This does not close the work order — what was measured has not been fixed.'
-                  : 'This does not close the work order. UNKNOWN is a permitted outcome, and an open job is the correct state when the data cannot decide.'}
-              {ver.blocked_by && ` A PASS is unreachable until ${ver.blocked_by} is answered.`}
-            </p>
-          </section>
+        {turns.length === 0 && (
+          <p className="muted">
+            Ask about a detected episode. Every answer states its data window, names the
+            evidence behind it, and says plainly when the data cannot support a diagnosis.
+          </p>
         )}
 
-        {kase && (
-          <section className="card" aria-labelledby="case">
-            <h2 id="case">
-              Case — {kase.state.replace('_', ' ')}{' '}
-              <span className="pri" data-band={kase.may_advance ? 'PASS' : 'FAIL'}>
-                {kase.may_advance ? 'can advance' : 'blocked'}
-              </span>
-            </h2>
-
-            {/* The content is sample; the mechanism is not. Stated before the list, not
-                after it, because a caveat under a checklist is read second. */}
-            {kase.content_is_sample && (
-              <p className="muted">
-                <strong>Sample content.</strong> {kase.content_note}
-              </p>
-            )}
-
-            <div className="row" role="group" aria-label="View the checklist as">
-              {['operator', 'technician', 'supervisor'].map((c) => (
-                <button
-                  key={c}
-                  className="chip"
-                  aria-pressed={viewAs === c}
-                  onClick={() => setViewAs(c)}
-                >
-                  as {c}
-                </button>
-              ))}
-            </div>
-
-            <ul className="checks">
-              {kase.my_items.map((i) => (
-                <li key={i.id} className={`row-check ${i.finding}`} data-blocking={i.blocking}>
-                  <span className="mark" aria-hidden="true">
-                    {i.finding === 'measured' ? '✓' : i.finding === 'cannot_check' ? '–' : '○'}
-                  </span>
-                  <span>
-                    {i.text}
-                    {i.blocking && <span className="badge warn">blocking</span>}
-                    {i.stored_reading && (
-                      <span className="stored">{i.stored_reading}</span>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            <p className="muted">{kase.advance_reason}</p>
-
-            {kase.for_others.length > 0 && (
-              <p className="muted">
-                {kase.for_others.length} check(s) belong to another capability and are not in
-                this list — a check you cannot perform collapses out of your tasks rather
-                than greying out at you. They stay on the case:{' '}
-                {kase.for_others.map((i) => i.capability).join(', ')}.
-              </p>
-            )}
-
-            {!kase.operator_can_start && (
-              <p className="muted">
-                Nothing here can be started by an operator, which should not happen — every
-                fault class must leave one check somebody at the machine can do.
-              </p>
-            )}
-          </section>
-        )}
-
+        {/* The composer is last in the flow and pinned by CSS. A chat where you type
+            above the reply is one where every answer arrives off-screen. */}
         <div className="composer">
           <label htmlFor="q" className="sr-only" style={{ position: 'absolute', left: -9999 }}>
             Your question
@@ -402,104 +227,13 @@ export default function Page() {
             value={question}
             onChange={(ev) => setQuestion(ev.target.value)}
             onKeyDown={(ev) => ev.key === 'Enter' && !turn.streaming && send()}
-            placeholder="Ask why a machine was flagged…"
+            placeholder="Ask about a machine, a fault, a reading — or what this plant has at all"
             aria-label="Your question"
           />
           <button className="btn" onClick={turn.streaming ? stop : send} disabled={!question.trim()}>
             {turn.streaming ? 'Stop' : 'Ask'}
           </button>
         </div>
-
-        {turn.route && (
-          <section className="card supporting" aria-labelledby="rt">
-            <h2 id="rt">Route</h2>
-            <p className="mono">
-              {turn.route.skill} · {turn.route.layer} · {turn.route.reason} ·{' '}
-              {turn.route.used_model ? 'model arbiter used' : 'no model involved'}
-            </p>
-          </section>
-        )}
-
-        {turn.figures.length > 0 && (
-          <section className="card" aria-labelledby="ev">
-            <h2 id="ev">Evidence — every residual against this asset&apos;s own band</h2>
-            {turn.figures.map((f, i) => (
-              <FigureView key={f.name} figure={f} index={i} />
-            ))}
-          </section>
-        )}
-
-        {turn.evidence && (
-          <section className="card supporting" aria-labelledby="pv">
-            <h2 id="pv">Provenance</h2>
-            <p className="muted">
-              Window {turn.evidence.window.start} to {turn.evidence.window.end} · severity{' '}
-              {turn.evidence.severity}
-            </p>
-            {turn.evidence.other_labels_same_day.length > 0 && (
-              <p className="muted">
-                Other labels the same day: {turn.evidence.other_labels_same_day.join(', ')} —
-                one repair may explain several of them.
-              </p>
-            )}
-            <ul className="reasons">
-              {turn.evidence.signal_provenance.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ul>
-            <p className="mono">{turn.evidence.sources.join(' · ')}</p>
-          </section>
-        )}
-
-        {/* D-015. A refusal gets its own card, its own rule and its own heading — and the
-            accent, never red. A NO_DIAGNOSIS is a correct outcome and the most common one
-            on this data; colouring it like an error would soften it in the other
-            direction, making an answer look like a bug. */}
-        {refused && turn.refusal && (
-          <section className="card refusal measure" aria-labelledby="nd">
-            <h2 id="nd">
-              <IconHalt className="ico" style={{ verticalAlign: '-2px', marginRight: 6 }} />
-              No diagnosis — a result, not a failure
-            </h2>
-            <p className="answer">{turn.refusal.text}</p>
-            {turn.refusal.failed_gates.map((g) => (
-              <div className="gate" key={g.gate}>
-                <strong>{g.gate}</strong>
-                <div>{g.why}</div>
-                <div className="what">What would change this: {g.what_would_change_it}</div>
-              </div>
-            ))}
-          </section>
-        )}
-
-        {turn.text && !refused && (
-          <section className="card measure" aria-labelledby="an">
-            <h2 id="an">Answer</h2>
-            <p className="answer">{turn.text}</p>
-          </section>
-        )}
-
-        {(graded || notes.length > 0) && (
-          <section className="card supporting" aria-labelledby="hc">
-            <h2 id="hc">Honesty checks</h2>
-            {graded?.findings?.map((f) => (
-              <div className="audit" key={f.audit} data-passed={f.passed}>
-                {f.passed ? <IconCheck className="ico" /> : <IconAlert className="ico" />}
-                <span>
-                  <code>{f.audit}</code> — {f.detail}
-                </span>
-              </div>
-            ))}
-            {notes.map((a, i) => (
-              <div className="audit" key={`n-${i}`} data-passed={!a.degraded}>
-                {a.degraded ? <IconAlert className="ico" /> : <IconCheck className="ico" />}
-                <span>{a.detail}</span>
-              </div>
-            ))}
-          </section>
-        )}
-
-        {turn.error && <p className="muted">Stream error: {turn.error}</p>}
-    </>
+    </PageEnter>
   );
 }

@@ -60,6 +60,16 @@ export const IconGauge = ({ className, style }: Props) => (
   </svg>
 );
 
+/** Reports. A sheet with a bar series on it — distinct from `IconGauge`, which is a dial and
+ *  belongs to the asset. The two shared a glyph until 2026-08-18, which made the collapsed rail
+ *  ambiguous: collapsed, the icon is the whole of the label. */
+export const IconReport = ({ className, style }: Props) => (
+  <svg {...base} className={className} style={style}>
+    <path d="M6.5 3.5h11A1.5 1.5 0 0 1 19 5v14a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19V5a1.5 1.5 0 0 1 1.5-1.5z" />
+    <path d="M9 16v-3M12 16v-6M15 16v-4" />
+  </svg>
+);
+
 export const IconClipboard = ({ className, style }: Props) => (
   <svg {...base} className={className} style={style}>
     <path d="M9 4h6v3H9zM8 5.5H6.5A1.5 1.5 0 0 0 5 7v12a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19V7a1.5 1.5 0 0 0-1.5-1.5H16" />

@@ -1,0 +1,632 @@
+/*
+ * The technician job pack — the only styles this surface adds.
+ *
+ * **Designed for the plant room first.** A phone, held one-handed, possibly in gloves,
+ * possibly in poor light. That is not a hypothetical persona: `CONTEXT.md` §10d puts the
+ * job pack, its checklists and the explicit *cannot check* in the technician's hands while
+ * they are standing at the machine. So every rule below is small-screen first and the desk
+ * gets what is left over, never the other way round.
+ *
+ * Four rules the layout keeps:
+ *
+ *  1. **Nothing pressable is smaller than 44px**, and the record controls are larger than
+ *     that, because a gloved thumb is not a precise one.
+ *  2. **Nothing scrolls sideways.** Fault labels are long, mono and unbreakable, so every
+ *     surface that can hold one gets `overflow-wrap: anywhere`.
+ *  3. **Colour is never the only signal.** Every state that takes a colour also takes a
+ *     word or a mark, because the reader may be in sunlight or in a dark plant room.
+ *  4. **No colour is written here.** Every value is a token from `globals.css` — the palette
+ *     is audited from the brand at D-001, and a hex typed into a module would leave that
+ *     audit silently.
+ */
+
+/* ── the band that leads ───────────────────────────────────────────────────────
+ *
+ * Safety and any holding action are not one item among others, so this card is first and
+ * carries a rule down its whole leading edge. It takes the WARNING treatment, never the stop
+ * colour: `--stop` is a halt the platform issued, and nothing here has issued one. The
+ * absences inside it stay muted rather than alarming for the same reason — an absence is a
+ * fact about the record, not an alarm.
+ */
+.lead {
+  border-left: 4px solid var(--warn);
+  background: var(--warn-bg);
+}
+
+.leadHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* Sized here rather than borrowing a global `.ico` rule: the global ones are all scoped to a
+   component that is not this surface, and a module class cannot reach them anyway. */
+.leadIco {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--warn);
+  margin-top: 2px;
+}
+
+.foldIco {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.lead h2 {
+  color: var(--warn);
+}
+
+.warnings {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.warnings > li {
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--body);
+  overflow-wrap: anywhere;
+}
+
+/* A stated absence, in the vocabulary the rest of the product uses for one: muted, italic,
+   in the body face. It must not look like a reading and must not look like an alarm. */
+.absences {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.absences > li {
+  padding: 8px 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.absences > li::before {
+  content: "—";
+  font-family: var(--mono);
+  font-style: normal;
+  margin-right: 10px;
+  color: var(--rule-strong);
+}
+
+.because {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--body);
+}
+
+/* ── the one primary action ──────────────────────────────────────────────────
+ *
+ * Full width on a phone, because a thumb reaching across a 360px screen should not have to
+ * find a small target. It is an anchor rather than a button: it moves the reader to the check
+ * that is holding the job, which is a navigation, and an anchor survives with no JavaScript.
+ */
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 620;
+  text-align: center;
+  text-decoration: none;
+}
+
+.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* ── the job identity strip ──────────────────────────────────────────────────── */
+
+.ident {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.faultLabel {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.draftTag {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px dashed var(--rule-strong);
+  color: var(--muted);
+}
+
+.explain {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--body);
+  overflow-wrap: anywhere;
+}
+
+.law {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.missing {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.missing > li {
+  padding: 7px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  border-top: 1px solid var(--rule);
+  overflow-wrap: anywhere;
+}
+
+.missing .input {
+  font-family: var(--mono);
+  color: var(--body);
+  margin-right: 8px;
+}
+
+/* ── the checks ────────────────────────────────────────────────────────────────
+ *
+ * One card per check, never a table row: a table on a 360px screen either scrolls sideways
+ * or shrinks the text, and both of those are how a reading gets misread.
+ */
+.checks {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.check {
+  padding: 14px;
+  margin-top: 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+/* Blocking is carried by a solid leading rule AND by the word, so the distinction survives a
+   screen nobody can read the colour on.
+ *
+ * **The rule is the accent, not the warning colour.** A blocking check is the thing this
+ * person came to do, not a fault in the data — the amber above belongs to the warnings about
+ * the evidence, and spending it here as well would flatten the difference between *be careful*
+ * and *do this next*. `globals.css` already sets a blocking checklist row on `--sunken` for
+ * the same reason. */
+.check[data-blocking="true"] {
+  border-left: 4px solid var(--accent);
+  background: var(--sunken);
+}
+
+.checkTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 650;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--thead);
+  color: var(--ink);
+}
+
+.tag[data-blocking="true"] {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tag[data-sample="true"] {
+  background: transparent;
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.checkText {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--body);
+  overflow-wrap: anywhere;
+}
+
+.storedReading {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ── recording a finding ───────────────────────────────────────────────────────
+ *
+ * Five buttons, wrapping, each at least 44px tall. They are `aria-pressed` toggles in a
+ * labelled group rather than a select: a native select on a phone opens a picker that hides
+ * the check being answered, and the five differences between these answers are the point of
+ * the control.
+ */
+.recordLabel {
+  display: block;
+  margin: 14px 0 8px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.record {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.record button {
+  flex: 1 1 auto;
+  min-height: 46px;
+  min-width: 44px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--body);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 560;
+  cursor: pointer;
+}
+
+.record button:hover {
+  border-color: var(--rule-strong);
+}
+
+.record button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+/* The one answer that settles a blocking check keeps a mark of its own when chosen, so the
+   difference between it and the other four is not carried by colour or position alone. */
+.record button[aria-pressed="true"][data-settles="true"]::after {
+  content: " ✓";
+  font-family: var(--mono);
+}
+
+.chosen {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.chosen strong {
+  font-family: var(--mono);
+  font-weight: 650;
+  color: var(--body);
+}
+
+/* ── the gate line ─────────────────────────────────────────────────────────────
+ *
+ * **A gate that will not advance takes the REFUSAL treatment, never the warning one and never
+ * the stop one.** The case store holding a job because a blocking check has no measured answer
+ * is the mechanism working exactly as designed — the same class of outcome as a
+ * `NO_DIAGNOSIS`, which is why it borrows that token. Amber would say *something has gone
+ * wrong here*, and nothing has: an estimate, a cannot-check and a not-applicable are all
+ * supposed to leave a blocking check open.
+ */
+
+.gateLine {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--sunken);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--body);
+  overflow-wrap: anywhere;
+}
+
+/* The same three declarations `globals.css` gives `.refusal`, in the same order, so the hold
+   on this surface and a refusal on the Copilot surface are visibly one thing. */
+.gateLine[data-may-advance="false"] {
+  border: 1px solid var(--refusal);
+  border-left: 4px solid var(--refusal);
+  background: var(--refusal-bg);
+}
+
+.gateWord {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── collapsed sections ────────────────────────────────────────────────────────
+ *
+ * Constraint 38: a check the reader cannot perform COLLAPSES, it does not grey out. A greyed
+ * row still reads as a demand on whoever is standing there, so items belonging to other
+ * capabilities fold away behind a count and a name — present, reachable, and not in the way
+ * of the work this person can actually do.
+ */
+.fold {
+  margin-top: 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 14.5px;
+  font-weight: 580;
+  color: var(--ink);
+  list-style: none;
+}
+
+.fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fold > summary::after {
+  content: "+";
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 17px;
+  color: var(--muted);
+}
+
+.fold[open] > summary::after {
+  content: "−";
+}
+
+.fold[open] > summary {
+  border-bottom: 1px solid var(--rule);
+}
+
+.foldBody {
+  padding: 4px 14px 14px;
+}
+
+/* ── other capabilities' checks, and the evidence ──────────────────────────── */
+
+.plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.plain > li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--body);
+  overflow-wrap: anywhere;
+}
+
+.plain > li:last-child {
+  border-bottom: 0;
+}
+
+.capability {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.evidence {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.evidence > li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--body);
+  overflow-wrap: anywhere;
+}
+
+.evidence > li:last-child {
+  border-bottom: 0;
+}
+
+.source {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.kindHead {
+  margin: 16px 0 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── the close conditions ──────────────────────────────────────────────────── */
+
+.closers {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  counter-reset: closer;
+}
+
+.closers > li {
+  position: relative;
+  padding: 12px 0 12px 34px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--body);
+  counter-increment: closer;
+  overflow-wrap: anywhere;
+}
+
+.closers > li:last-child {
+  border-bottom: 0;
+}
+
+.closers > li::before {
+  content: counter(closer);
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* ── the job picker ──────────────────────────────────────────────────────────── */
+
+.jobs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.jobs > li {
+  margin-top: 8px;
+}
+
+.jobBtn {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 11px 13px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--body);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.jobBtn[aria-current="true"] {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.jobName {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 620;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.jobMeta {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.chosenNote {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--body);
+}
+
+/* ── the desk, once the plant room is served ─────────────────────────────────── */
+
+@media (min-width: 640px) {
+  .primary {
+    width: auto;
+    min-width: 18rem;
+  }
+  .checkText {
+    font-size: 15.5px;
+  }
+  .record button {
+    flex: 0 1 auto;
+  }
+}
+
+/* Windows High Contrast and forced-colours: the leading rules and the pressed state must not
+   rest on a background the mode replaces. */
+@media (forced-colors: active) {
+  .lead,
+  .check[data-blocking="true"] {
+    border-left-width: 4px;
+  }
+  .record button[aria-pressed="true"] {
+    outline: 2px solid;
+    outline-offset: -3px;
+  }
+}

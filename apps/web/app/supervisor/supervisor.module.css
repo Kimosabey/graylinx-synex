@@ -1,0 +1,521 @@
+/* The supervisor queue's own styling.
+ *
+ * Every colour is a token from `globals.css`. Nothing here names a hex value, and nothing
+ * here uses colour as the only signal — every card that is tinted also prints the word.
+ *
+ * The whole surface is a list of cards rather than a table, at every width. A supervisor
+ * authorizes on a tablet held in one hand, and an approval is a paragraph of reasoning with
+ * one decision at the end of it, which is not a row of cells.
+ */
+
+/* ── the approval queue ─────────────────────────────────────────────────────── */
+
+.queue,
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.rows {
+  gap: 10px;
+}
+
+.item {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  /* The left edge carries the ruling. It is never the only signal — the decision word is
+     printed beside it in the header of every card. */
+  border-left: 4px solid var(--rule-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+
+.item[data-decision='allowed'] {
+  border-left-color: var(--accent);
+}
+
+.item[data-decision='refused'] {
+  border-left-color: var(--refusal);
+}
+
+.item[data-decision='unclassified'] {
+  border-left-color: var(--warn);
+}
+
+/* ── the head of a card ─────────────────────────────────────────────────────── */
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  justify-content: space-between;
+}
+
+/* The fault the FDD rules named. The largest thing on the card, because it is what the
+   authorization is about. */
+.title {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin: 5px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.decision {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 650;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  background: var(--thead);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.decision[data-decision='allowed'] {
+  background: transparent;
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.decision[data-decision='refused'] {
+  background: var(--refusal-bg);
+  color: var(--refusal);
+  border-color: var(--refusal);
+}
+
+.decision[data-decision='unclassified'] {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+/* ── the capability being requested ─────────────────────────────────────────── */
+
+/* Constraint 9, made visible. This block is where a lesser design would put a name, an
+   avatar and a "waiting on" line. There is no such field in the record, and there is no
+   place for one here. */
+.capability {
+  margin-top: 13px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  padding: 11px 13px;
+}
+
+.capLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.capName {
+  display: inline-block;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.capNote {
+  margin: 7px 0 0;
+  max-width: 62ch;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ── the reasoning ──────────────────────────────────────────────────────────── */
+
+.asks {
+  margin: 13px 0 0;
+  max-width: 66ch;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--body);
+}
+
+/* The Control Plane's own words, quoted rather than paraphrased. */
+.ruling {
+  margin: 10px 0 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--rule);
+  max-width: 66ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.evidence {
+  margin-top: 13px;
+}
+
+.evidenceLabel {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── the act ────────────────────────────────────────────────────────────────── */
+
+.actions {
+  margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Doubled class so this beats `.pressable` in `globals.css` regardless of which stylesheet
+   the bundler emits first. `.pressable` is `display: block; width: 100%`, which is right for
+   a whole clickable row and wrong for the one button on a card. */
+.act.act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  min-height: 44px;
+  padding: 12px 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 650;
+  text-align: center;
+}
+
+.act.act:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  box-shadow: var(--lift);
+}
+
+.act.act:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cancel {
+  min-height: 44px;
+  padding: 12px 18px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease);
+}
+
+.cancel:hover {
+  border-color: var(--accent);
+}
+
+/* Why the button is not there, when it is not there. An absence with a reason, never a
+   greyed control with no explanation. */
+.cannot {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ── the confirm step ───────────────────────────────────────────────────────── */
+
+/* Deliberately a second, distinct surface rather than a browser dialog. Authorizing
+   dispatches a person, so the consequence is restated in the product's own words and the
+   confirming control is a different control from the one that opened it. */
+.confirm {
+  margin-top: 13px;
+  border: 1px solid var(--accent);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  padding: 13px 15px;
+}
+
+.confirmTitle {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.confirmBody {
+  margin: 7px 0 0;
+  max-width: 64ch;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--body);
+}
+
+.confirmList {
+  margin: 9px 0 0;
+  padding-left: 18px;
+  max-width: 64ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--body);
+}
+
+.confirmList li + li {
+  margin-top: 4px;
+}
+
+/* ── what the Control Plane actually answered ───────────────────────────────── */
+
+.outcome {
+  margin-top: 13px;
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  padding: 12px 14px;
+}
+
+.outcome[data-ok='true'] {
+  border-color: var(--ok);
+  border-left-color: var(--ok);
+}
+
+/* A write that did not land is a lost capability, not a judgement — so it takes the warning
+   pair and never the refusal pair. */
+.outcome[data-ok='false'] {
+  border-color: var(--warn);
+  border-left-color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.outcomeTitle {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.outcome[data-ok='false'] .outcomeTitle {
+  color: var(--warn);
+}
+
+.outcomeBody {
+  margin: 6px 0 0;
+  max-width: 64ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--body);
+}
+
+.wire {
+  margin: 7px 0 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* ── supporting rows: blocked, closures, ageing, unplaced ───────────────────── */
+
+.row {
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  padding: 12px 14px;
+}
+
+.row[data-tone='warn'] {
+  border-left-color: var(--warn);
+}
+
+.row[data-tone='stop'] {
+  border-left-color: var(--stop);
+}
+
+.row[data-tone='ok'] {
+  border-left-color: var(--ok);
+}
+
+.rowTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.rowWhy {
+  margin: 6px 0 0;
+  max-width: 66ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--body);
+}
+
+.rowAction {
+  margin: 7px 0 0;
+  max-width: 66ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.kind {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 650;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  background: var(--card);
+  color: var(--ink);
+}
+
+/* ── a section that was not shown ───────────────────────────────────────────── */
+
+/* **Must not look like an empty state.** `EmptyState` is dashed and says *we looked and
+   there is nothing*. This says *nobody looked*, which is the opposite claim — so it is a
+   solid panel with a shield on it, and never a dashed box. */
+.withheld {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  border: 1px solid var(--rule-strong);
+  border-left: 4px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding: 14px 16px;
+}
+
+.withheldIcon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.withheldTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.withheldWhy {
+  margin: 6px 0 0;
+  max-width: 64ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* ── section furniture ──────────────────────────────────────────────────────── */
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 10px;
+}
+
+/* Overrides the uppercase micro-label `.card > h2` gives every card heading. These are the
+   surface's real section titles and they carry the reading hierarchy. */
+.sectionTitle.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+/* Sits on the text baseline of a running paragraph rather than on the line box, which is
+   where a 16px icon otherwise lands. */
+.inlineIcon {
+  vertical-align: -3px;
+  margin-right: 6px;
+  color: var(--muted);
+}
+
+.count {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.sectionNote {
+  margin: 0 0 12px;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.subhead {
+  margin: 18px 0 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.subheadFirst {
+  margin-top: 4px;
+}
+
+/* ── narrow screens ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .item {
+    padding: 14px;
+  }
+
+  .actions {
+    /* Below 480px the two confirm controls go full width and stack, so neither is a
+       half-width target beside the other. */
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .act.act,
+  .cancel {
+    width: 100%;
+  }
+}

@@ -43,6 +43,15 @@ export interface AskBody {
 }
 
 export interface TurnState {
+  /** The question that produced this turn. Rendered above the answer in the transcript, so a
+   *  reader scrolling back can see what was asked without inferring it from the reply. */
+  question: string;
+  /** Stable across re-renders, so React keys never collide when two turns ask the same thing. */
+  id: number;
+  /** What this turn was asked *about*. Recorded on the turn rather than read back out of the
+   *  evidence, because a refused turn has no evidence and is exactly the turn a follow-up
+   *  question most often refers to — "why not?" needs the machine the refusal was about. */
+  equipmentKey?: string;
   streaming: boolean;
   stages: StageFrame[];
   route: RouteFrame | null;
@@ -56,6 +65,8 @@ export interface TurnState {
 }
 
 const EMPTY: TurnState = {
+  question: '',
+  id: 0,
   streaming: false,
   stages: [],
   route: null,
@@ -68,8 +79,34 @@ const EMPTY: TurnState = {
   error: null,
 };
 
+/**
+ * **Why a transcript and not a single turn.** `docs/10-product/05-…-levels-and-conversations.md`
+ * §5.3 is written entirely in chained exchanges — *"Create a work order for **this**"*, *"Close
+ * **this** WO"* — and the back end already resolves those pronouns against
+ * `MAX_REMEMBERED_TURNS = 6`. Until 2026-08-18 this hook held one turn and replaced it on every
+ * question, so the memory existed and nothing on screen could reach it: a reader could not see
+ * what "this" referred to, and neither could they check the answer against the question that
+ * produced it. The eighth instance of machinery with no consumer in this repository.
+ *
+ * The live turn is the **last element** rather than a separate field. One array means there is
+ * no second place for a turn to live and no moment where a finished turn has been removed from
+ * one and not yet added to the other.
+ */
 export function useTurn() {
-  const [turn, setTurn] = useState<TurnState>(EMPTY);
+  const [turns, setTurns] = useState<TurnState[]>([]);
+  const nextId = useRef(1);
+  // Every frame folds into the turn being streamed, which is always the last one.
+  const setTurn = useCallback(
+    (update: TurnState | ((previous: TurnState) => TurnState)) =>
+      setTurns((all) => {
+        if (!all.length) return all;
+        const last = all[all.length - 1];
+        const next = typeof update === 'function' ? update(last) : update;
+        return [...all.slice(0, -1), next];
+      }),
+    [],
+  );
+
   const abortRef = useRef<AbortController | null>(null);
   const readingRef = useRef(false);
   const bufferRef = useRef('');
@@ -84,7 +121,7 @@ export function useTurn() {
       flushRef.current = null;
     }
     setTurn((t) => ({ ...t, streaming: false }));
-  }, []);
+  }, [setTurn]);
 
   useEffect(() => stop, [stop]);
 
@@ -97,7 +134,16 @@ export function useTurn() {
       const controller = new AbortController();
       abortRef.current = controller;
       bufferRef.current = '';
-      setTurn({ ...EMPTY, streaming: true });
+      setTurns((all) => [
+        ...all,
+        {
+          ...EMPTY,
+          question: body.question,
+          equipmentKey: body.equipment_key,
+          id: nextId.current++,
+          streaming: true,
+        },
+      ]);
 
       flushRef.current = setInterval(() => {
         if (!bufferRef.current) return;
@@ -152,10 +198,18 @@ export function useTurn() {
         setTurn((t) => ({ ...t, streaming: false }));
       }
     },
-    [],
+    [setTurn],
   );
 
-  return { turn, ask, stop };
+  const turn = turns.length ? turns[turns.length - 1] : EMPTY;
+
+  /** Start over. The back end holds no session, so forgetting here is the whole act. */
+  const clear = useCallback(() => {
+    stop();
+    setTurns([]);
+  }, [stop]);
+
+  return { turns, turn, ask, stop, clear };
 }
 
 /** Parse one `event:`/`data:` pair and fold it into state. */

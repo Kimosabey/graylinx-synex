@@ -12,6 +12,10 @@ const nextConfig = {
   // The chat path streams, so nothing on it may be statically optimised or cached.
   // `useTurn` guards against the double-mount that strict mode causes in development.
   experimental: {},
+  // Overridable so a production build can be verified while the dev server holds `.next`.
+  // Building into a live `.next` corrupts the running server — a trap this repo has hit.
+  //   NEXT_DIST_DIR=.next-verify npx next build
+  distDir: process.env.NEXT_DIST_DIR || '.next',
 };
 
 export default nextConfig;

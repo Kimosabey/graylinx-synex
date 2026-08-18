@@ -1,0 +1,282 @@
+/**
+ * `U6` — the reliability workspace. Only what the shared classes do not already carry.
+ *
+ * Every colour here is a token from `globals.css`. There is not a literal colour in this
+ * file, so the surface inherits the audited contrast pairs and the dark theme for free
+ * rather than being re-checked on its own.
+ */
+
+/* ── the count strip ─────────────────────────────────────────────────────────
+ *
+ * Four facts a reliability engineer needs before reading a single row: how many episodes
+ * the detector found, how many of them have a case, how many do not, and how much of the
+ * queue has actually been read. Mobile-first — one column, then two, then four.
+ */
+
+.tiles {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  margin-bottom: 16px;
+}
+
+@media (min-width: 640px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* The one tile that is a warning rather than a count: episodes the detector fired into
+   nowhere. Warning, never the stop colour — nothing here failed, something was not seeded. */
+.tile[data-attention='true'] {
+  border-color: var(--warn);
+  border-left: 4px solid var(--warn);
+  background: linear-gradient(180deg, var(--warn-bg) 0%, var(--card) 100%);
+}
+
+.tileLabel {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.tileValue {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.7rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 640;
+  color: var(--ink);
+}
+
+/* A tile with nothing to count says so in words, in the same muted italic every other
+   stated absence in this product uses. Never a zero — a zero is a measurement. */
+.tileValue[data-absent='true'] {
+  font-family: var(--font);
+  font-style: italic;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.tileNote {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* ── filters and the sweep control ───────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 12px;
+}
+
+.controlLabel {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+  margin-right: 2px;
+}
+
+/* 44px, because the same queue is read on a phone in a plant room. */
+.tap {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.shown {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── the queue table ─────────────────────────────────────────────────────── */
+
+.fault {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.rowButton {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.caret {
+  display: inline-block;
+  color: var(--muted);
+  transition: transform var(--dur) var(--ease);
+}
+
+.rowButton[aria-expanded='true'] .caret {
+  transform: rotate(90deg);
+}
+
+.judgeCell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ── the expanded row ─────────────────────────────────────────────────────── */
+
+.detailCell {
+  background: var(--sunken);
+  padding: 14px 16px 16px;
+}
+
+/* Below 640px the shared `.stackable` rule turns every cell into a label/value flex row.
+   The detail cell is neither, so it takes its block layout back. */
+:global(.stackable) td.detailCell {
+  display: block;
+}
+
+.detail {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 900px) {
+  .detail {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+}
+
+.panel > h3 {
+  margin: 0 0 7px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.panel > p {
+  margin: 0 0 7px;
+  max-width: 62ch;
+}
+
+.list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.list li {
+  margin-bottom: 3px;
+}
+
+.list li::marker {
+  color: var(--rule-strong);
+}
+
+/* Provenance and source lines: read as a column, so they keep the mono face and wrap
+   rather than pushing the page sideways. */
+.provenance {
+  margin: 0;
+  padding-left: 18px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.rowLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.rowLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--accent);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.rowLink:hover {
+  border-color: var(--accent);
+  box-shadow: var(--lift);
+}
+
+/* ── the open-case cards ─────────────────────────────────────────────────── */
+
+.caseTop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.caseFault {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.caseMeta {
+  margin: 7px 0 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.caseNote {
+  margin: 8px 0 0;
+  max-width: 60ch;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}

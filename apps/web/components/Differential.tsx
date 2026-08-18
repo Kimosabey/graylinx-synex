@@ -35,8 +35,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-const API = process.env.NEXT_PUBLIC_API ?? 'http://127.0.0.1:8001';
+// The one API base, shared with every other surface. This file read `NEXT_PUBLIC_API` while
+// the rest of the app reads `NEXT_PUBLIC_API_BASE`, so pointing the app at another host moved
+// every screen except this one and the differential alone kept asking localhost.
+import { API_BASE as API } from '@/components/useApi';
 
 interface Cause {
   id: string;

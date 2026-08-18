@@ -1,0 +1,387 @@
+/**
+ * The asset story's own styling.
+ *
+ * Every rule here composes a token already defined in `globals.css`. There is no literal
+ * colour in this file and no second palette — a surface that mixes its own hex into an
+ * audited palette is a surface that stops being contrast-checked.
+ *
+ * **The one place this file spends its strongest colour is `NEVER_MEASURED`.** It is not an
+ * error and it is not styled as one; it is the fact that changes how every other number on
+ * the page must be read, so it gets the page's loudest treatment on the *word* and the
+ * warning frame on the card. A reader who takes it for a zero reads the chart wrong.
+ */
+
+/* ── signal provenance ──────────────────────────────────────────────────────── */
+
+/* The lead card. A full-width statement above the grid rather than one tile among several,
+   because on this plant the never-measured signal feeds most of the fitted models. */
+.provLead {
+  border-color: var(--warn);
+  border-left: 4px solid var(--warn);
+  background: linear-gradient(180deg, var(--warn-bg) 0%, var(--card) 100%);
+}
+
+.provHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+}
+
+.status {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.statusLead {
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  color: var(--stop);
+}
+
+.signalKey {
+  font-family: var(--mono);
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* The sentence the whole surface exists to make unmissable. Boxed, so it cannot be skimmed
+   past as another muted note. */
+.notZero {
+  margin: 12px 0 0;
+  padding: 11px 13px;
+  max-width: 64ch;
+  border: 1px solid var(--stop);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--body);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.notZero strong {
+  color: var(--stop);
+}
+
+.because,
+.consequence {
+  margin: 8px 0 0;
+  max-width: 68ch;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.because {
+  color: var(--muted);
+}
+
+.consequence {
+  color: var(--body);
+}
+
+/* One tile per signal that is not usable. The status word is printed in every one of them,
+   so colour is never the only signal — a reader in greyscale loses nothing. */
+.provCard {
+  border-left: 3px solid var(--rule-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 0;
+}
+
+.provCard[data-status='NEVER_MEASURED'] {
+  border-left-color: var(--stop);
+}
+
+.provCard[data-status='NEVER_MEASURED'] .status {
+  color: var(--stop);
+}
+
+.provCard[data-status='SUSPECT'] {
+  border-left-color: var(--warn);
+}
+
+.provCard[data-status='SUSPECT'] .status {
+  color: var(--warn);
+}
+
+/* Present and carrying nothing. Muted is the right weight for it: it is not a hazard, it is
+   an absence wearing a value. */
+.provCard[data-status='CONSTANT'] {
+  border-left-color: var(--rule-strong);
+}
+
+.provCard[data-status='CONSTANT'] .status {
+  color: var(--muted);
+}
+
+/* Derived may be quoted — with its label. The accent, not the warning. */
+.provCard[data-status='DERIVED'] {
+  border-left-color: var(--refusal);
+}
+
+.provCard[data-status='DERIVED'] .status {
+  color: var(--refusal);
+}
+
+.provCard[data-status='MEASURED'] {
+  border-left-color: var(--ok);
+}
+
+.provCard[data-status='MEASURED'] .status {
+  color: var(--ok);
+}
+
+/* The same five colours away from a tile, so the vocabulary card and the provenance cards
+   read as one system rather than two. Colour is never the only signal in either: the word
+   is printed at full strength in both places. */
+.status[data-status='NEVER_MEASURED'] {
+  color: var(--stop);
+}
+
+.status[data-status='SUSPECT'] {
+  color: var(--warn);
+}
+
+.status[data-status='CONSTANT'] {
+  color: var(--muted);
+}
+
+.status[data-status='DERIVED'] {
+  color: var(--refusal);
+}
+
+.status[data-status='MEASURED'] {
+  color: var(--ok);
+}
+
+/* The five-word vocabulary, so a reader meeting it for the first time is not guessing. */
+.legend {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .legend {
+    grid-template-columns: minmax(9rem, 14ch) minmax(0, 1fr);
+  }
+}
+
+/* The pair is one grid row, so the wrapper must not become a box of its own. */
+.legendPair {
+  display: contents;
+}
+
+.legend dt {
+  margin: 0;
+}
+
+.legend dd {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@media (min-width: 640px) {
+  .legend dd {
+    margin-bottom: 0;
+  }
+}
+
+/* ── episodes over time ────────────────────────────────────────────────────── */
+
+/* A real control in the first cell rather than a click handler on the row: a `tr` cannot be
+   a button, and a row that is only clickable is a row a keyboard cannot reach. */
+.pick {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pick:hover {
+  text-decoration: underline;
+}
+
+.epRow[data-selected='true'] {
+  background: var(--thead);
+}
+
+.epRow[data-selected='true'] .pick {
+  color: var(--ink);
+}
+
+.epRow[data-selected='true'] td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Stacked on a phone the row is a card, so the marker moves to the card edge. */
+@media (max-width: 639px) {
+  .epRow[data-selected='true'] {
+    border-color: var(--accent);
+  }
+
+  .epRow[data-selected='true'] td:first-child {
+    box-shadow: none;
+  }
+}
+
+/* ── verification ──────────────────────────────────────────────────────────── */
+
+.verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.verdict .pri {
+  margin-left: 0;
+}
+
+/* ── what this page cannot say ─────────────────────────────────────────────── */
+
+.silences {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.silence {
+  padding: 12px 0 12px 13px;
+  border-left: 2px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.silence:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.kind {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── the asset switcher and the rest of the site ───────────────────────────── */
+
+.switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* The chip for the asset already open. `.chip[aria-pressed='true']` is the pressed-button
+   treatment and these are links, not buttons — a link announced as a pressed toggle is a
+   lie to a screen reader — so the current one carries `aria-current="page"` and takes the
+   same surface from here. */
+.chipCurrent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 550;
+}
+
+.chipCurrent:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.others {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 640px) {
+  .others {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.otherLink {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 13.5px;
+}
+
+.otherLink:hover {
+  background: var(--sunken);
+  text-decoration: underline;
+}
+
+.whyNot {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* ── the service's own rendering ───────────────────────────────────────────── */
+
+.record {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Padding rather than `display: flex` for the 44px target: flex on a `summary` removes the
+   disclosure triangle in Chromium, and the triangle is the only thing telling a reader the
+   control opens rather than navigates. */
+.summary {
+  cursor: pointer;
+  padding: 12px 0;
+  color: var(--accent);
+  font-size: 13.5px;
+}
+
+/* ── small shared pieces ───────────────────────────────────────────────────── */
+
+.note {
+  margin: 0 0 12px;
+  max-width: 70ch;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.retry {
+  margin-top: 10px;
+}
