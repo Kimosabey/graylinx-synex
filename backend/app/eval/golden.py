@@ -74,6 +74,48 @@ class GoldenCase:
 # ── chiller 2 — the hero machine, worst fit 3.77 ────────────────────────────────
 
 CHILLER_2 = (
+    # ── the two classes the set could not grade ──────────────────────────────────
+    #
+    # **An evaluation gate with an unmeasured branch is the honesty gap the platform refuses
+    # to let a report get away with.** The measured window holds seven fault classes and this
+    # set graded five: `COMPRESSOR_INEFFICIENCY` (4 episodes) and
+    # `CONDENSER_WATER_SIDE_UNSPECIFIED` (1) had no case at all, so nothing asserted what a
+    # correct answer for either even looks like — while the scorecard reported a pass rate as
+    # though it covered the plant.
+    #
+    # **Every expectation below is read from the episode, not chosen.** The state, the poor
+    # fit and the undecidability were taken from each pack before the case was written; none
+    # of them is a prediction. What is *not* asserted here is whether the wording is any good
+    # — that is the SME's judgement and it belongs in `mvp/SME-REVIEW.md`, not in a boolean.
+    GoldenCase(
+        name="c1_compressor_inefficiency_10apr",
+        question="Why was chiller 1 flagged on 10 April?",
+        why=(
+            "The compressor class, ungraded until 2026-08-18 despite four episodes. It is "
+            "determinate — the model does not declare it undecidable — and it carries a poor "
+            "fit, so it is the one shape the set was missing: a class that CAN be judged, on "
+            "residuals that must be disclosed as poorly fitted while being judged."
+        ),
+        equipment_key="chiller_1",
+        fault_label="COMPRESSOR_INEFFICIENCY",
+        day="2026-04-10",
+        expect_poor_fit=True,
+    ),
+    GoldenCase(
+        name="c1_condenser_water_side_18apr",
+        question="Why was chiller 1 flagged on 18 April?",
+        why=(
+            "The single episode of the water-side class, and the densest day in the window: "
+            "it carries three other labels at once. Undecidable by the model's own declaration, "
+            "so the answer must keep the ambiguity rather than narrow it — and must say that "
+            "one repair may explain several of the labels rather than implying four jobs."
+        ),
+        equipment_key="chiller_1",
+        fault_label="CONDENSER_WATER_SIDE_UNSPECIFIED",
+        day="2026-04-18",
+        expect_poor_fit=True,
+        forbid_terms=("root cause is", "definitely", "caused by"),
+    ),
     GoldenCase(
         name="c2_refrigerant_side_12apr",
         question="Why was chiller 2 flagged on 12 April?",

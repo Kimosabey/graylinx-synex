@@ -32,7 +32,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.api.deps import CurrentScope, current_scope, get_optional_repo
 from app.config import Settings, get_settings
 from app.db.plant import PlantRepository
-from app.db.session import case_store
+from app.db.session import case_store, work_order_store
 from app.domain import equipment as eq
 from app.services import policy as policy_service
 from app.services import queues as queue_service
@@ -85,6 +85,65 @@ async def _open_cases():
             f"The case store could not be reached ({type(exc).__name__}), so this queue is "
             f"empty because nothing was read — not because nothing is open."
         )
+
+
+async def _raised_work_orders():
+    """Every work order that was actually raised, or an empty list with the reason.
+
+    Same discipline as `_open_cases`: empty because nothing was read and empty because nothing
+    exists are different facts, and a surface that cannot tell them apart shows a clean plant
+    when the store is down.
+    """
+    try:
+        async with work_order_store(get_settings()) as store:
+            return list(await store.all_rows()), ""
+    except Exception as exc:
+        return [], (
+            f"The work order store could not be reached ({type(exc).__name__}), so this list "
+            f"is empty because nothing was read — not because nothing has been raised."
+        )
+
+
+@router.get("/work-orders")
+async def work_orders(scope: CurrentScope = Depends(current_scope)) -> dict:
+    """`W1`. Every work order raised, and what it took to raise it.
+
+    **Raised, not draftable.** A draft exists for every one of the detected episodes — it is
+    computed on demand from the evidence pack and nothing is written until somebody confirms
+    it. Listing drafts here would put 39 jobs on a screen that is meant to show what has
+    actually been committed to, and a planner reading it would schedule against work nobody
+    raised. The drafts live on the case they came from, which is where the evidence to judge
+    them is.
+    """
+    rows, outage = await _raised_work_orders()
+    return {
+        "viewing_as": scope.identity.persona.value,
+        "raised": [
+            {
+                "id": r.id,
+                "equipment_key": r.equipment_key,
+                "kind": r.kind,
+                "state": r.state,
+                "priority": r.priority,
+                "priority_is_complete": r.priority_is_complete,
+                "evidence_lines": len(r.evidence or []),
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "closed_at": r.closed_at.isoformat() if r.closed_at else None,
+            }
+            for r in rows
+        ],
+        "count": len(rows),
+        "store_note": outage,
+        "draft_note": (
+            "Drafts are not listed here. Every detected episode can produce one on demand, and "
+            "nothing is written until it is confirmed — so a draft on this screen would be work "
+            "nobody has committed to, next to work somebody has."
+        ),
+        "priority_note": (
+            "Newest first, not ranked. Severity is agreed for one fault class of nine (Q49), so "
+            "ordering by priority would present a ranking the formula cannot produce."
+        ),
+    }
 
 
 @router.get("/workspace")

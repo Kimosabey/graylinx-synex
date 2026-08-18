@@ -192,6 +192,18 @@ class WorkOrderStore:
         )
         return (await self._session.scalars(stmt)).all()
 
+    async def all_rows(self) -> Sequence[WorkOrderRow]:
+        """Every work order, newest first. The list a Work orders surface reads.
+
+        Newest first rather than by priority: a band is agreed for one fault class of nine
+        (`Q49`), so ordering by it would present a ranking the formula cannot actually produce.
+        Recency is a fact about the record; priority here would be a claim about the plant.
+        """
+        rows = await self._session.scalars(
+            select(WorkOrderRow).order_by(WorkOrderRow.created_at.desc())
+        )
+        return list(rows.all())
+
     async def count(self) -> int:
         return len((await self._session.scalars(select(WorkOrderRow))).all())
 

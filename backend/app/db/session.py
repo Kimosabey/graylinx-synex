@@ -21,6 +21,7 @@ from app.config import Settings
 from app.db.case_store import CaseStore
 from app.db.plant import PlantRepository
 from app.db.state import Base
+from app.db.work_order_store import WorkOrderStore
 
 
 @asynccontextmanager
@@ -102,6 +103,13 @@ async def case_store(settings: Settings) -> AsyncIterator[CaseStore]:
     """The case queue, ready to use."""
     async with state_session(settings) as session:
         yield CaseStore(session)
+
+
+@asynccontextmanager
+async def work_order_store(settings: Settings) -> AsyncIterator[WorkOrderStore]:
+    """The raised work orders, ready to read."""
+    async with state_session(settings) as session:
+        yield WorkOrderStore(session)
 
 
 @asynccontextmanager

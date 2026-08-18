@@ -27,6 +27,7 @@ from app.api.deps import CurrentScope, Repo, current_scope, get_repo
 from app.config import Settings, get_settings
 from app.db.plant import RESIDUAL_COLUMNS
 from app.db.provenance import ProvenanceRepository
+from app.db.session import work_order_store
 from app.domain import equipment as eq
 from app.domain.answer import AnswerState
 from app.services import audit_log, work_orders
@@ -381,6 +382,111 @@ async def episode_work_order(
         other_labels_same_day=others,
     )
     return work_orders.draft_from_pack(pack).as_dict()
+
+
+@router.post("/episodes/{episode_id}/work-order/confirm")
+async def confirm_episode_work_order(
+    episode_id: str,
+    repo: Repo = Depends(get_repo),
+    scope: CurrentScope = Depends(current_scope),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """`C8`/`C9`/`G3`/`G5` — the act that turns a draft into a row, and the only one.
+
+    **A separate route because it is a separate act.** Reading the draft computes it from the
+    evidence and writes nothing; this is where somebody takes responsibility. A single endpoint
+    that returned a draft *and* stored it would make every reader an author.
+
+    **What was shown is what gets saved.** The draft is rebuilt from the same pack the GET
+    returns and travels into the row verbatim under `evidence.shown_as`, so the promise that the
+    stored job matches the one on screen is kept literally rather than by care.
+
+    **Three outcomes, and only one writes.** The identity holds `approve_work`, so the row is
+    stored. It does not, so an approval request comes back — unassigned and addressed to a
+    *capability*, never to a person (constraint 9), which is not a refusal because somebody down
+    the corridor can sign it. Or the action is refused outright, and no approval is offered at
+    all, because an approval against a safety-critical action would imply a sufficiently senior
+    signature exists.
+
+    **`G5`.** A second confirm of the same episode returns the first row unmodified with a reason
+    in words rather than raising a duplicate job. A duplicate dispatch is two visits for one
+    problem; a row whose stored justification is not the one anybody confirmed is worse.
+    """
+    if not scope.allows(Capability.VIEW_FAULTS):
+        raise HTTPException(403, "this persona may not view faults")
+
+    equipment_key, label, day_str = _parse_episode_id(episode_id)
+    day = date.fromisoformat(day_str)
+    rows = await repo.residuals_for_day(equipment_key, datetime(day.year, day.month, day.day))
+    matching = tuple(r for r in rows if r.fault_label == label)
+    bands = await repo.residual_bands()
+    band = next(
+        (b for b in bands if b.equipment_key == equipment_key
+         and b.residual_name == "chiller_current_residual"),
+        None,
+    )
+    signal_values = dict(matching[-1].residuals) if matching else {}
+    gates = GateOutcome(
+        (
+            check_running(signal_values),
+            check_band_available(band, _display(equipment_key)),
+            check_measured_window(
+                matching[-1].slot_time if matching else datetime(day.year, day.month, day.day),
+                settings.synex_measured_window_end,
+            ),
+        )
+    )
+    others = tuple(sorted({r.fault_label for r in rows if r.is_fault and r.fault_label != label}))
+    pack = build_pack(
+        rows=matching,
+        bands=bands,
+        gates=gates,
+        window=window_for(day, settings.synex_measured_window_end),
+        equipment_key=equipment_key,
+        fault_label=label,
+        day=day,
+        other_labels_same_day=others,
+    )
+
+    draft = work_orders.draft_from_pack(pack)
+    outcome = work_orders.confirm(draft, scope)
+
+    body: dict = {
+        "episode_id": episode_id,
+        # The whole ruling, not a label. `G3` always carries its reason in words and the
+        # capability it required, and a surface that shows only "refused" cannot tell somebody
+        # what would let them proceed.
+        "ruling": outcome.ruling.as_dict(),
+        "may_proceed": outcome.ruling.may_proceed,
+        "required_capability": outcome.ruling.required_capability,
+        "reason": outcome.reason,
+        "will_persist": outcome.will_persist,
+        "needs_approval": outcome.needs_approval,
+        "stored": False,
+        "viewing_as": scope.identity.persona.value,
+    }
+
+    if outcome.approval is not None:
+        body["approval"] = outcome.approval.as_dict()
+        return body
+
+    if outcome.record is None:
+        return body
+
+    try:
+        async with work_order_store(settings) as store:
+            write = await store.confirm(outcome.record)
+        body["stored"] = True
+        body["work_order"] = write.as_dict() if hasattr(write, "as_dict") else str(write)
+    except Exception as exc:
+        # The decision stands and the write did not happen. Reporting a store outage as a
+        # refusal would tell somebody they may not raise a job they are entitled to raise.
+        body["stored"] = False
+        body["store_note"] = (
+            f"The decision was made and the row could not be written "
+            f"({type(exc).__name__}). Nothing was stored; the job was not refused."
+        )
+    return body
 
 
 @router.get("/episodes/{episode_id}/verification")
