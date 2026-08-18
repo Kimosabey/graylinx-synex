@@ -44,6 +44,9 @@ interface Health {
     error: string | null;
   };
   model_mode: 'stub' | 'record' | 'live';
+  /** Whether the box answered when asked. `null` in stub, where nothing is meant to be. */
+  box_reachable: boolean | null;
+  box_host: string;
   measured_window_end: string;
   policy_version: string;
   audit_trail: { rows: number; durable: boolean };
@@ -91,12 +94,36 @@ export function SystemHealth() {
   // A stubbed model is not a degraded platform — it is a platform that is deliberately not
   // answering with a model, and saying "degraded" would report a choice as a fault. But it is
   // never "live" either, and the bar has to be able to say which without a third vocabulary.
-  const state = !db.connected ? 'down' : data.model_mode === 'stub' ? 'stub' : 'live';
-  const word = !db.connected ? 'plant database down' : data.model_mode === 'stub' ? 'stub model' : 'live model';
+  // **Configured live and actually answering are different facts, and the bar reports the
+  // second.** A chip reading "live model" while the tunnel to the box is down is the same
+  // untruth as the one that read "stub" for a release while nobody looked — a claim about how
+  // this process was configured, worn as a claim about what it can do. When the mode is live
+  // and the box does not answer, the honest word is that it is unreachable.
+  const boxDown = data.model_mode !== 'stub' && data.box_reachable === false;
+  const state = !db.connected
+    ? 'down'
+    : data.model_mode === 'stub'
+      ? 'stub'
+      : boxDown
+        ? 'down'
+        : 'live';
+  const word = !db.connected
+    ? 'plant database down'
+    : data.model_mode === 'stub'
+      ? 'stub model'
+      : boxDown
+        ? 'model box unreachable'
+        : 'live model';
   // Two labels, one shown per breakpoint — the same pattern the rail uses. A phone bar cannot
   // hold three full chips beside the lockup at 360px, and the half that gives way is the
   // wording rather than the fact. The dot never stands alone in either.
-  const shortWord = !db.connected ? 'db down' : data.model_mode === 'stub' ? 'stub' : 'live';
+  const shortWord = !db.connected
+    ? 'db down'
+    : data.model_mode === 'stub'
+      ? 'stub'
+      : boxDown
+        ? 'no box'
+        : 'live';
 
   return (
     <span className="healthgroup">
@@ -106,7 +133,9 @@ export function SystemHealth() {
         title={
           `Plant database: ${db.connected ? `connected to ${db.database} at ${db.host}` : `not connected — ${db.error ?? 'no reason given'}`}` +
           `${db.read_only_by_grant ? ', read-only by grant' : ''}. ` +
-          `Model mode: ${data.model_mode}. Policy ${data.policy_version}. ` +
+          `Model mode: ${data.model_mode}` +
+          `${data.box_reachable === null ? '' : data.box_reachable ? `, answering at ${data.box_host}` : `, but ${data.box_host} did not answer`}. ` +
+          `Policy ${data.policy_version}. ` +
           `Audit trail ${data.audit_trail.rows} row(s), ${data.audit_trail.durable ? 'durable' : 'not durable'}. ` +
           `${data.equipment.scoreable} of ${data.equipment.total} equipment scoreable.`
         }

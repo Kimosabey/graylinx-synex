@@ -6,6 +6,7 @@ about the build, and a claim you can curl is stronger than one on a slide.
 """
 from __future__ import annotations
 
+import httpx
 from fastapi import APIRouter, Depends, Request
 
 from app.agents import degraded_mode
@@ -52,6 +53,14 @@ async def health(request: Request, settings: Settings = Depends(get_settings)) -
             "error": getattr(request.app.state, "plant_error", None),
         },
         "model_mode": settings.synex_model_mode,
+        # **Configured `live` and actually reachable are two different facts.** The mode says
+        # what this process was told to do; this says whether the box answered when asked. A
+        # bar reporting "live" while the tunnel is down is the same shape of untruth as the
+        # one that reported "stub" while nobody noticed — a claim about intent presented as a
+        # claim about the world. Probed, never assumed, and `null` when the mode is `stub`
+        # because there is nothing to reach.
+        "box_reachable": await _box_answers(settings),
+        "box_host": settings.ollama_host,
         "gpu_required": settings.gpu_required,
         "measured_window_end": settings.synex_measured_window_end.isoformat(),
         "policy_version": settings.policy_version,
@@ -88,6 +97,24 @@ def _degradation(request: Request, settings: Settings) -> DegradationReport:
         plant_error=getattr(request.app.state, "plant_error", None),
         model_mode=settings.synex_model_mode,
     )
+
+
+async def _box_answers(settings: Settings) -> bool | None:
+    """Does the model host answer right now? `None` when nothing is meant to be reached.
+
+    One short request with a short timeout: this runs on every health poll, and a probe that
+    can hang is a health endpoint that can hang. A failure of any kind is reported as *not
+    reachable* rather than raised — the question asked is whether the box answers, and an
+    exception is an answer of "no".
+    """
+    if settings.synex_model_mode == "stub":
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            response = await client.get(f"{settings.ollama_host}/api/tags")
+            return response.status_code == 200
+    except Exception:
+        return False
 
 
 @router.get("/models")
