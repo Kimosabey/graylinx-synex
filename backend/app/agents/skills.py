@@ -933,7 +933,10 @@ async def answer_catalogue(
     # row and the opposite of what was asked. The phrase describes a scope, not a name.
     # A comparison names two machines or asks for one outright, and it is checked before the
     # plant-wide branch because "compare the plant's chillers" contains "the plant".
-    if any(t in text for t in ("compare", "versus", " vs ", "against each other",
+    if any(t in text for t in ("trend", "over time", "timeline", "when did", "getting worse",
+                               "history of", "by day", "each day", "how often")):
+        plan = ("fault_timeline", {})
+    elif any(t in text for t in ("compare", "versus", " vs ", "against each other",
                                "both chillers", "difference between", "side by side")):
         plan = ("compare_equipment", {})
     elif any(
@@ -1003,6 +1006,17 @@ def _render_catalogue(tool: str, value: dict) -> str:  # noqa: PLR0911
     needs share no structure, and funnelling them through a common shape is how a rendering
     starts saying "3 items" where it used to name them.
     """
+    if tool == "fault_timeline":
+        rows = value.get("by_day", [])
+        lines = [
+            f"Faults were detected on {value['days_with_a_fault']} day(s), "
+            f"{value['first_day']} to {value['last_day']}:"
+        ]
+        for r in rows:
+            lines.append(f"- {r['day']}: {r['labels']} class(es), {r['slots']} slot(s)")
+        lines += ["", str(value.get("window_note", "")), "", str(value.get("trend_note", ""))]
+        return chr(10).join(lines)
+
     if tool == "compare_equipment":
         lines = []
         for key, m in (value.get("machines") or {}).items():

@@ -158,6 +158,14 @@ _DOMAIN_TERMS = (
     # costs a model call. The red-team suite caught it the same minute it was added. A reader
     # asking about evidence will almost always name a machine or a fault as well.
     "check", "finding", "verify",
+    # Plant-level analytical vocabulary. Added 2026-08-18 with the analytical tools: without
+    # these, "is it getting worse over time?" and "compare the two chillers" were refused as
+    # off-topic while the tools that answer them sat registered. Every one was checked against
+    # the red-team corpus first — an injection payload that happens to contain a domain word
+    # gets past the gate on that word alone, which is how "evidence" had to be removed.
+    "trend", "over time", "timeline", "worse", "compare", "history",
+    "across the plant", "plant wide", "summary", "overview", "situation",
+    "anomaly", "anomalies", "efficiency",
 )
 
 _REFUSAL_SCOPE = (

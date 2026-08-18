@@ -214,6 +214,55 @@ async def _priority_for_fault(fault_label: str, slot_count: int) -> dict[str, An
     }
 
 
+async def _fault_timeline(*, plant_repo: Any) -> dict[str, Any]:
+    """When faults appeared across the measured window — the shape of the record over time.
+
+    **What a trend question can and cannot be on this data.** *"Is it getting worse?"* is the
+    question underneath *"show me the trend"*, and it cannot be answered here: the window is a
+    **snapshot**, not a live feed, and it ends on a fixed date. A rising count in the last week
+    of a snapshot is not a deteriorating plant — it is the end of the data. So this reports the
+    distribution by day and says what it is: a record of when labels were raised, in a window
+    that stopped.
+
+    **Counts per day, never a slope.** Fitting a line through fault counts and calling it a
+    trend would produce a number with no error bar on nine classes of which one has an agreed
+    severity. The distribution is a fact; the direction would be a claim.
+    """
+    rows = [r for r in await plant_repo.faulted_slots() if r.fault_label]
+
+    by_day: dict[str, dict[str, int]] = {}
+    for row in rows:
+        day = row.slot_time.date().isoformat()
+        by_day.setdefault(day, {})
+        by_day[day][row.fault_label] = by_day[day].get(row.fault_label, 0) + 1
+
+    days = sorted(by_day)
+    return {
+        "days_with_a_fault": len(days),
+        "first_day": days[0] if days else None,
+        "last_day": days[-1] if days else None,
+        "by_day": [
+            {
+                "day": d,
+                "labels": len(by_day[d]),
+                "slots": sum(by_day[d].values()),
+                "classes": sorted(by_day[d], key=lambda k: -by_day[d][k]),
+            }
+            for d in days
+        ],
+        "window_note": (
+            "This is a snapshot, not a live feed: the measured window ends on a fixed date and "
+            "nothing after it exists. A count that rises toward the last day is the end of the "
+            "data, not a deteriorating plant."
+        ),
+        "trend_note": (
+            "Counts per day, never a slope. Fitting a line through fault counts would produce a "
+            "direction with no error behind it, on nine classes of which one has an agreed "
+            "severity. The distribution is a fact; the trend would be a claim."
+        ),
+    }
+
+
 async def _compare_equipment(*, plant_repo: Any) -> dict[str, Any]:
     """The two scoreable machines beside each other — what each carries and how far each is
     judged against **its own** band.
@@ -581,6 +630,24 @@ def register_all(registry=REGISTRY) -> None:
             skill="prepare_work",
             needs=("pack",),
             tags=("work", "draft"),
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="fault_timeline",
+            description=(
+                "When faults were detected across the measured window: which days carried "
+                "which classes and how many slots each. Answers 'show me the trend', 'when did "
+                "this start', 'is it getting worse'. Reports the distribution by day and "
+                "explicitly refuses to fit a direction — the window is a snapshot that ends."
+            ),
+            parameters=NoArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_fault_timeline,
+            skill="investigate",
+            needs=("plant_repo",),
+            tags=("plant", "history"),
         )
     )
     registry.register(
