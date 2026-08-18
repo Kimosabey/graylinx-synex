@@ -37,6 +37,18 @@ DIMENSIONS: int = 768
 #: `app/config.py`; this one is local to the embedder because it is a different machine.
 TIMEOUT_SECONDS: float = 60.0
 
+#: The largest input `nomic-embed-text` will embed, measured against the model rather than read
+#: off a spec sheet: on 2026-08-18 a 10,000-character input returned 768 dimensions and a
+#: 10,312-character one returned HTTP 500, bisected from a 10,000/20,000 bracket. The boundary
+#: sits just under 10 KiB, which is what a hard cap looks like from the outside.
+#:
+#: **Why this is a constant here and not a chunk size over in the chunker.** The chunker splits
+#: on the document's own structure and never at a character count — a passage cut mid-instruction
+#: is worse than no passage, so it is right that it refuses to slice by length. That means an
+#: oversized passage is a real possibility, and the honest place to notice it is the layer that
+#: knows the model's limit. Checked before the request so an oversized input costs nothing.
+MAX_INPUT_CHARS: int = 10_000
+
 
 class EmbeddingUnavailable(RuntimeError):
     """The embedder could not be reached, or returned something unusable.
@@ -44,6 +56,21 @@ class EmbeddingUnavailable(RuntimeError):
     Deliberately an exception rather than an empty result. A zero vector would make every
     document equidistant from every query, so the search would return whatever came first
     and look like it had worked.
+    """
+
+
+class EmbeddingInputTooLong(EmbeddingUnavailable):
+    """The model is reachable and refused this particular input for its length.
+
+    **A subclass, because collapsing the two is the defect this repository keeps finding.**
+    Before 2026-08-18 an oversized passage raised `EmbeddingUnavailable` saying the model
+    "could not be reached" — while it was reachable, healthy, and answering every other
+    request. A caller reading that message would go and check the network. Worse, the corpus
+    ingest treated it as a dead embedder and abandoned a run it had already deleted documents
+    for, so one long chapter emptied the whole store.
+
+    *Unreachable* and *this input is too long* call for opposite responses: wait and retry
+    versus split the passage and carry on. One exception type cannot ask for both.
     """
 
 
@@ -95,6 +122,14 @@ class Embedder:
 
     async def embed(self, text: str) -> Embedding:
         """One vector. Raises rather than returning zeros — see `EmbeddingUnavailable`."""
+        if len(text) > MAX_INPUT_CHARS:
+            raise EmbeddingInputTooLong(
+                f"this passage is {len(text)} characters and {self.model!r} refuses anything "
+                f"over about {MAX_INPUT_CHARS}. The model is reachable; this one input is too "
+                f"long. Split the passage on its own structure — never at a character count — "
+                f"or record it as unembeddable and say so."
+            )
+
         payload = {"model": self.model, "prompt": text}
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:

@@ -40,6 +40,19 @@ separate tool: DeepEval against a local judge, never Ragas, which is banned.
 set exists (`Q91`), and one written here would measure agreement with our own expectations —
 the same defect as the 124 checklist items and 19 discriminators that no refrigeration
 engineer has read.
+
+**Who calls this.** `app/jobs/index_library.py`, immediately after it indexes the library.
+Until that job existed the only caller was this module's own test file — a metric nobody runs
+is the same class of defect as a gate that passes while checking nothing, one step earlier.
+
+**The corpus has three states and the verdict cannot carry all of them.** `Verdict` answers
+*why is there no score*, and the first thing that stops a score is a missing labelled set —
+which Synex has today. So over an empty corpus with no questions the verdict reads
+`NO_LABELLED_SET`, and the emptiness disappears behind it. `CorpusState` is therefore reported
+**alongside** the verdict and computed independently of it: *nothing was indexed*, *something
+was indexed and none of it is approved*, and *something is approved and searchable* are three
+findings that send an engineer to three different places, and this repository has collapsed
+two states into one five times in a day. They are never merged here.
 """
 from __future__ import annotations
 
@@ -86,6 +99,26 @@ class Verdict(StrEnum):
     SEARCH_UNAVAILABLE = "search_unavailable"
     """The embedder could not be reached, so nothing was searched — a fact about the system
     rather than about the library, exactly as `SearchResult.available` keeps them apart."""
+
+
+class CorpusState(StrEnum):
+    """What `synex_document_chunk` holds, independently of whether anything was measured.
+
+    Three, and the middle one is the state Synex is in the moment `app/jobs/index_library.py`
+    finishes: **the corpus is full and search still returns nothing.** A reader who saw only
+    *"search returned nothing"* would conclude the ingest failed. It did not — constraint 1
+    gates retrieval on approval exactly as it gates the checklist on SME review, and 124
+    unreviewed instructions becoming retrievable is the outcome that gate exists to prevent.
+    """
+
+    EMPTY = "empty"
+    """Not one passage. A recall of 0.0 over this is a statement about the ingest."""
+
+    NOTHING_APPROVED = "nothing_approved"
+    """Passages exist and none is searchable. The designed state after a library ingest."""
+
+    APPROVED_AND_SEARCHABLE = "approved_and_searchable"
+    """At least one approved passage exists, so a search can reach something."""
 
 
 class Outcome(StrEnum):
@@ -177,6 +210,30 @@ NO_LABELLED_SET_YET = LabelledSet(
 )
 
 
+def _state_of(approved_documents: int, unapproved_passages: int) -> CorpusState:
+    """The one place the three states are separated, so no caller can draw the line elsewhere.
+
+    Written once and used by both `RetrievalReport.corpus_state` and `corpus_state()`. Two
+    copies of this rule is how *empty* and *nothing approved* start disagreeing across a
+    codebase, which is the collapse the enum exists to prevent.
+    """
+    if approved_documents:
+        return CorpusState.APPROVED_AND_SEARCHABLE
+    if unapproved_passages:
+        return CorpusState.NOTHING_APPROVED
+    return CorpusState.EMPTY
+
+
+async def corpus_state(index: ApprovedCorpus, kind: str | None = None) -> CorpusState:
+    """What the store holds, asked before anything is measured or written.
+
+    Exists for `app/jobs/index_library.py`, which has to know whether a corpus is already there
+    **before** it indexes: `synex_document_chunk` carries no idempotency key, so a second run
+    over a populated table would duplicate every passage rather than replace it.
+    """
+    return _state_of(len(await index.approved_documents(kind)), await index.unapproved_count(kind))
+
+
 @dataclass(frozen=True)
 class QuestionResult:
     """One pair, scored or explicitly not scored."""
@@ -227,6 +284,37 @@ class RetrievalReport:
     @property
     def was_measured(self) -> bool:
         return self.verdict is Verdict.MEASURED
+
+    @property
+    def corpus_state(self) -> CorpusState:
+        """What the store holds — asked of the counts, never of the verdict.
+
+        Derived rather than passed so it cannot be set to disagree with the numbers beside it,
+        and reported even when a score was impossible for some other reason. The verdict says
+        why there is no figure; this says what the corpus is, and the two answer different
+        questions.
+        """
+        return _state_of(self.corpus_documents, self.unapproved_in_corpus)
+
+    @property
+    def corpus_statement(self) -> str:
+        """The corpus in words, so *empty* and *unapproved* can never read the same."""
+        if self.corpus_state is CorpusState.EMPTY:
+            return (
+                "the corpus is empty — synex_document_chunk holds no passage at all, approved "
+                "or otherwise, so nothing has been indexed and no retriever could return "
+                "anything"
+            )
+        if self.corpus_state is CorpusState.NOTHING_APPROVED:
+            return (
+                f"the corpus holds {self.unapproved_in_corpus} passage(s) and not one is "
+                f"approved, so search reaches none of them. The ingest ran and the approval "
+                f"gate is shut: constraint 1, working as designed rather than failing"
+            )
+        return (
+            f"the corpus holds {self.corpus_documents} approved document(s), with "
+            f"{self.unapproved_in_corpus} passage(s) still unapproved and unsearchable"
+        )
 
     @property
     def scored(self) -> tuple[QuestionResult, ...]:
@@ -303,6 +391,8 @@ class RetrievalReport:
             "verdict": self.verdict.value,
             "reason": self.reason,
             "measured": self.was_measured,
+            "corpus_state": self.corpus_state.value,
+            "corpus": self.corpus_statement,
             "recall_at_k": self.recall_at_k,
             "recall": self.recall_statement,
             "mrr_at_k": self.mrr_at_k,
@@ -317,7 +407,8 @@ class RetrievalReport:
         }
 
     def render(self) -> str:
-        lines = [self.recall_statement, self.mrr_statement, self.target_statement]
+        lines = [self.corpus_statement, self.recall_statement, self.mrr_statement]
+        lines.append(self.target_statement)
         lines.append(self.review_statement)
         if self.unscored:
             lines.append(

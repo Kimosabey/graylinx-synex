@@ -27,10 +27,41 @@ describes for a greyed-out check, arriving by a different door. So:
 | 14 | A concern is **words**, never a flag | A figure is a value or a stated absence. A chunk
   that quietly carries a defect is the dash wearing a sentence |
 
+**The defect this module shipped with, and what replaced it.** A dotted number opened a chunk
+*unconditionally*, so every hierarchically-numbered value in the corpus was read as a section
+heading. The reference plant's own figures are full of them — head pressure at `4.2 bar`, a
+condenser ΔT of `−3.0 to −3.4`, an efficiency proxy whose design band is `0.65–0.85` and whose
+healthiest measured month reached `1.40`. A line beginning *"4.2 bar is the commissioned head
+pressure"* split the passage there, which severs a checklist step from the condition it applies
+under — the precise failure rule 38 above exists to prevent, arriving through the heading
+detector instead of through the step detector. Three checks now stand between a dotted number
+and a boundary, and **all three fail toward not splitting**, because a missed heading costs a
+weaker citation while a false one costs a technician an instruction that reads as complete:
+
+| | A dotted number opens a passage only if | Because |
+|---|---|---|
+| H1 | it **starts a block** — first line, after a blank line, or under another heading | A
+  heading begins something. A measurement that wrapped onto its own line continues a sentence |
+| H2 | the word after it is **not a unit** | `4.2 bar` is a value and its unit. `4.2 Condenser
+  isolation` names a section. `Q95` carries the unit list, which is ours and unreviewed |
+| H3 | the text after it is **not a sentence** | A section title does not end in a full stop.
+  *"0.65 to 0.85 is the design band."* is prose that happens to begin with a number |
+
+Every dotted number held back this way is recorded on the passage as a `HeldAsText`, with the
+reason in words — not as a concern, because holding a measurement inside its own paragraph is
+the splitter working, not a defect it found. A boundary decision nobody can inspect is
+indistinguishable from a guess, and this one is now a judgement with a reason attached rather
+than a regex somebody widens later.
+
 **No character limit is sourced anywhere.** `MAX_PASSAGE_CHARS` is `TBD (Q92)` and it
 **annotates only** — nothing here splits, drops or truncates a passage because of it. A
 threshold that silently cut a checklist would be the unreviewed-judgement failure that
 `app/domain/differential.py` exists to prevent, one layer down in the ingest.
+
+**Who calls this.** `app/jobs/index_library.py` — the job that transcribes the 124 curated
+checklist items, the 7-item generic fallback and the 4 differentials into the store. Until
+that job existed this module had no consumer but its own test file, which means the boundary
+rules above were never exercised against the content they were written for.
 
 **Nothing here has ever run against a real SOP.** `synex_document_chunk` holds zero rows, so
 the structure markers below are inferred from the shape of the checklist library rather than
@@ -102,7 +133,9 @@ class Boundary(StrEnum):
 # The one judgement worth stating: **a dotted number is a heading and a flat number is a
 # step.** `4.2 Condenser isolation` names a section; `4. Close the discharge valve` is an
 # instruction. Getting this backwards would sever every checklist in the corpus, which is why
-# it is a rule with a reason here rather than a regex somebody widens later.
+# it is a rule with a reason here rather than a regex somebody widens later — and why the
+# dotted form alone has to pass H1, H2 and H3 before it is believed. `#` and `§` are explicit
+# section markers written by an author who meant them, so neither is second-guessed.
 
 _ATX_HEADING = re.compile(r"^(?P<hashes>#{1,6})\s+(?P<title>\S.*?)\s*#*$")
 _SECTION_MARK = re.compile(r"^§\s*(?P<number>\d+(?:\.\d+)*)\.?\s*(?P<title>.*)$")
@@ -114,6 +147,46 @@ _UNDERLINE_MINOR = re.compile(r"-{3,}")
 _STEP = re.compile(r"^\s*(?:step\s+)?(?P<number>\d{1,2})\s*[.)]\s+(?P<text>\S.*)$", re.IGNORECASE)
 _BULLET = re.compile(r"^\s*[-*•]\s+\S")
 
+#: The first word after the number, and whether the line ends a sentence. H2 and H3.
+_FIRST_WORD = re.compile(r"^(?P<word>\S+)")
+_SENTENCE_END = re.compile(r"\.(?:\s|$)")
+
+#: Units that turn a dotted number into a measurement — H2, held as data so the judgement can
+#: be read, argued with and extended in one place.
+#:
+#: TBD (Q95) — nobody has reviewed this list, and no document under `docs/00-source/` states
+#: the units the site's own procedures use. It is drawn from the plant facts in `CONTEXT.md`
+#: §6 and §10a: head pressure in **bar**, temperatures and approach in **°C**, chiller power
+#: in **kW**, condenser and evaporator flow in **m³/h**, load as a **%**. It is deliberately
+#: over-inclusive, because the two errors do not cost the same. A unit wrongly on this list
+#: costs one real heading that merges into the passage above — a weaker citation. A unit
+#: missing from it costs a checklist step severed from its condition, which reads as complete
+#: when it is not. Constraint 24's asymmetry, applied to text instead of to role tags.
+#:
+#: The single letters are the known cost of that choice, and they are here on purpose: `a`,
+#: `c`, `k`, `m`, `s`, `t` and `v` are all real units and all plausible first words of a title,
+#: so `4.2 A guide to isolation` will merge upward rather than open a passage. That loses an
+#: address. The alternative loses an instruction.
+_MEASUREMENT_UNITS: frozenset[str] = frozenset(
+    {
+        # pressure
+        "bar", "bara", "barg", "mbar", "kpa", "mpa", "pa", "psi", "psia", "psig",
+        # temperature and its differences
+        "c", "°c", "degc", "f", "°f", "degf", "k", "kelvin", "deg", "degree", "degrees",
+        # electrical
+        "a", "amp", "amps", "ma", "v", "kv", "kw", "kwh", "mw", "w", "kva", "hz", "pf",
+        # flow, volume and mass
+        "l", "l/s", "lps", "lpm", "gpm", "m3/h", "m³/h", "cmh", "kg", "kg/s", "g", "t",
+        "tonne", "tonnes", "ton", "tons", "tr", "kwr",
+        # length and proportion
+        "mm", "cm", "m", "km", "in", "inch", "inches", "ft", "%", "ppm", "ppb",
+        # rate and time
+        "rpm", "hz.", "s", "sec", "secs", "second", "seconds", "min", "mins", "minute",
+        "minutes", "h", "hr", "hrs", "hour", "hours", "day", "days", "week", "weeks",
+        "month", "months", "year", "years",
+    }
+)
+
 
 @dataclass(frozen=True)
 class _Heading:
@@ -124,6 +197,29 @@ class _Heading:
     title: str
     boundary: Boundary
     lines_consumed: int
+
+
+@dataclass(frozen=True)
+class HeldAsText:
+    """A line that begins with a dotted number and was **not** allowed to open a passage.
+
+    Public, because the boundaries a splitter declines to make are as consequential as the ones
+    it makes and are otherwise invisible. `Boundary` says why a passage started; this says why
+    one did not, so `4.2 bar` and `4.2 Condenser isolation` can be told apart by a reader
+    rather than only by the regex.
+
+    Not a `Chunk.concern`. A concern names what a reader would get wrong by trusting the
+    passage; this records the splitter working correctly.
+    """
+
+    line: str
+    """The line verbatim, so a reviewer can find it in the document."""
+
+    reason: str
+    """Which of H1, H2 or H3 held it, in words. Never a rule number on its own."""
+
+    def render(self) -> str:
+        return f"{self.line!r} did not open a passage: {self.reason}"
 
 
 @dataclass(frozen=True)
@@ -154,12 +250,18 @@ class Chunk:
     """Words, always — never a flag and never a count on its own. Each one names what a
     reader would get wrong if they trusted this passage as it stands."""
 
+    dotted_numbers_held_as_text: tuple[HeldAsText, ...] = field(default_factory=tuple)
+    """Lines inside this passage that could have opened one and were refused, each with its
+    reason. Empty means no dotted number appeared in it — never *"we did not look"*."""
+
     @property
     def characters(self) -> int:
         return len(self.text)
 
     @property
     def is_clean(self) -> bool:
+        """No concerns. A held dotted number is deliberately not one of them: a measurement
+        kept inside its own paragraph is the splitter succeeding, not a defect it found."""
         return not self.concerns
 
     def index_arguments(self, *, document: str, version: str = "") -> dict[str, str]:
@@ -180,10 +282,14 @@ class Chunk:
             f"{self.step_count} numbered step(s)" if self.holds_steps else "no numbered steps"
         )
         concerns = "; ".join(self.concerns) if self.concerns else "no concerns recorded"
-        return (
+        line = (
             f"{self.locator} — split on {self.split_on.value}, {self.characters} characters, "
             f"{steps}. {concerns}."
         )
+        if self.dotted_numbers_held_as_text:
+            held = "; ".join(h.render() for h in self.dotted_numbers_held_as_text)
+            line = f"{line} {len(self.dotted_numbers_held_as_text)} dotted number(s) held: {held}"
+        return line
 
 
 @dataclass(frozen=True)
@@ -217,6 +323,20 @@ class ChunkedDocument:
             f"{chunk.locator}: {concern}" for chunk in self.chunks for concern in chunk.concerns
         )
 
+    @property
+    def dotted_numbers_held_as_text(self) -> tuple[str, ...]:
+        """Every boundary this document could have had and does not, with its reason.
+
+        Reported for the whole document because the question a reviewer asks is *"did the
+        splitter miss a section?"*, and that cannot be answered by looking at the passages it
+        did produce.
+        """
+        return tuple(
+            f"{chunk.locator}: {held.render()}"
+            for chunk in self.chunks
+            for held in chunk.dotted_numbers_held_as_text
+        )
+
     def index_arguments(self) -> tuple[dict[str, str], ...]:
         return tuple(
             chunk.index_arguments(document=self.document, version=self.version)
@@ -231,11 +351,80 @@ class ChunkedDocument:
         return "\n".join(lines)
 
 
+def _reads_as_a_measurement(number: str, title: str) -> str:
+    """H2 and H3. `""` means the text after the number reads as a section title.
+
+    Deliberately independent of where the line sits, so H1 can ask the same question of the
+    line above without recursing down a run of numbered headings.
+    """
+    word = _FIRST_WORD.match(title)
+    first = word.group("word").strip(".,;:)").lower() if word else ""
+    if first in _MEASUREMENT_UNITS:
+        return (
+            f"the word after {number} is {first!r}, which is a unit — so this line is a value "
+            f"and its unit rather than the title of section {number} (Q95 carries the unit "
+            f"list, which is ours and unreviewed)"
+        )
+    if _SENTENCE_END.search(title):
+        return (
+            f"the text after {number} ends a sentence, so this line is prose that happens to "
+            f"begin with a number rather than the title of section {number}"
+        )
+    return ""
+
+
+def _dotted_verdict(lines: list[str], i: int) -> str | None:
+    """Three answers, and the third is why this function does not return a bool.
+
+    `None` — line `i` does not begin with a dotted number at all.
+    `""` — it does, and it opens a passage.
+    Anything else — it does, and this is the reason in words that it was held as text.
+    """
+    stripped = lines[i].strip()
+    match = _DOTTED_HEADING.match(stripped)
+    if match is None:
+        return None
+
+    number = match.group("number")
+    refusal = _reads_as_a_measurement(number, match.group("title").strip())
+    if refusal:
+        return refusal
+
+    # H1 — a heading begins a block. The document's first line begins one by definition, a
+    # blank line before it makes one, and so does another heading: `4.1` and `4.2` printed on
+    # consecutive lines is an outline, not a paragraph.
+    if i == 0:
+        return ""
+    previous = lines[i - 1].strip()
+    if not previous or _ATX_HEADING.match(previous) or _SECTION_MARK.match(previous):
+        return ""
+    above = _DOTTED_HEADING.match(previous)
+    if above and not _reads_as_a_measurement(
+        above.group("number"), above.group("title").strip()
+    ):
+        return ""
+    return (
+        f"the line above it is text with no blank line between, so {number} continues that "
+        f"sentence rather than opening section {number} — a heading starts a block and a "
+        f"measurement that wrapped onto its own line does not"
+    )
+
+
+def _held_at(lines: list[str], i: int) -> HeldAsText | None:
+    """The record of a refused boundary, or `None` when there was nothing to refuse."""
+    verdict = _dotted_verdict(lines, i)
+    if not verdict:
+        return None
+    return HeldAsText(line=lines[i].strip(), reason=verdict)
+
+
 def _heading_at(lines: list[str], i: int) -> _Heading | None:
     """Is line `i` a heading, and of what kind? `None` means it is body text.
 
     Checked in order, and the order is the rule: a markdown hash beats a section mark beats a
-    dotted number, and a **flat** number reaches none of them because it is a step.
+    dotted number, and a **flat** number reaches none of them because it is a step. The dotted
+    form is the only one asked to prove itself, because `#` and `§` were typed by an author who
+    meant them while a dotted number is equally often a pressure.
     """
     stripped = lines[i].strip()
     if not stripped:
@@ -251,17 +440,18 @@ def _heading_at(lines: list[str], i: int) -> _Heading | None:
             lines_consumed=1,
         )
 
-    for pattern in (_SECTION_MARK, _DOTTED_HEADING):
-        match = pattern.match(stripped)
-        if match:
-            number = match.group("number")
-            return _Heading(
-                level=number.count(".") + 1,
-                number=number,
-                title=match.group("title").strip(),
-                boundary=Boundary.NUMBERED_HEADING,
-                lines_consumed=1,
-            )
+    match = _SECTION_MARK.match(stripped)
+    if match is None and _dotted_verdict(lines, i) == "":
+        match = _DOTTED_HEADING.match(stripped)
+    if match:
+        number = match.group("number")
+        return _Heading(
+            level=number.count(".") + 1,
+            number=number,
+            title=match.group("title").strip(),
+            boundary=Boundary.NUMBERED_HEADING,
+            lines_consumed=1,
+        )
 
     # An underlined heading is the only form that needs the *next* line, and a step or a
     # bullet is excluded first: `- - -` under a bullet is a rule, not a title.
@@ -327,7 +517,10 @@ def _step_shape(body_lines: list[str]) -> tuple[int, bool]:
 
 
 def _build_chunk(
-    raw_lines: list[str], heading: _Heading | None, path: tuple[str, ...]
+    raw_lines: list[str],
+    heading: _Heading | None,
+    path: tuple[str, ...],
+    held: tuple[HeldAsText, ...] = (),
 ) -> Chunk | None:
     """One passage from the lines collected under one heading, or `None` if it is all blank."""
     text = "\n".join(raw_lines).strip("\n")
@@ -363,6 +556,7 @@ def _build_chunk(
         holds_steps=step_count > 0,
         steps_have_a_lead_in=lead_in,
         concerns=tuple(concerns),
+        dotted_numbers_held_as_text=held,
     )
 
 
@@ -386,16 +580,20 @@ def chunk_document(text: str, *, document: str, version: str = "") -> ChunkedDoc
     current_heading: _Heading | None = None
     current_path: tuple[str, ...] = ()
     buffer: list[str] = []
+    held: list[HeldAsText] = []
 
     index = 0
     while index < len(lines):
         heading = _heading_at(lines, index)
         if heading is None:
+            refused = _held_at(lines, index)
+            if refused is not None:
+                held.append(refused)
             buffer.append(lines[index])
             index += 1
             continue
 
-        built = _build_chunk(buffer, current_heading, current_path)
+        built = _build_chunk(buffer, current_heading, current_path, tuple(held))
         if built is not None:
             chunks.append(built)
 
@@ -404,9 +602,10 @@ def chunk_document(text: str, *, document: str, version: str = "") -> ChunkedDoc
         current_heading = heading
         current_path = tuple(entry.title or f"§{entry.number}" for entry in stack)
         buffer = lines[index : index + heading.lines_consumed]
+        held = []
         index += heading.lines_consumed
 
-    built = _build_chunk(buffer, current_heading, current_path)
+    built = _build_chunk(buffer, current_heading, current_path, tuple(held))
     if built is not None:
         chunks.append(built)
 
@@ -444,6 +643,7 @@ def chunk_document(text: str, *, document: str, version: str = "") -> ChunkedDoc
                     "this document has no headings and no section numbers, so the whole of it "
                     "is one passage and its citation names no place inside it",
                 ),
+                dotted_numbers_held_as_text=chunks[0].dotted_numbers_held_as_text,
             )
         ]
 
