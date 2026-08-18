@@ -544,10 +544,42 @@ body {
   text-wrap: balance;
 }
 
+/* A stage name is real work happening right now, not a fact — the same distinction that
+ * keeps `.skel-bar` sweeping over an empty placeholder rather than over a reading. So this
+ * shimmers *through* `--muted`, never past it: the gradient's darkest point matches today's
+ * flat colour exactly, and the animated highlight only ever brightens toward `--accent`. The
+ * text is never harder to read than it already was, in any frame.
+ */
 .turn-stage {
   margin: 0;
   font-size: var(--t-micro);
-  color: var(--muted);
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--muted) 40%,
+    var(--accent) 50%,
+    var(--muted) 60%,
+    var(--muted) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: stageshimmer 1.6s linear infinite;
+}
+
+@keyframes stageshimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-stage {
+    animation: none;
+    background: none;
+    color: var(--muted);
+  }
 }
 
 /* **`--rail-w` is registered, and that is what makes the collapse animate at all.**
@@ -2057,6 +2089,19 @@ ul.reasons li {
   padding-right: 0;
 }
 
+/* **The bug this fixes.** `autoAlpha` (GSAP, above) only sets opacity and visibility — it
+ * never claimed to touch layout, and nothing else was zeroing the label's width. So the
+ * flex row was still centring "icon + a full-width invisible label", which shoves the icon
+ * off-centre by half the label's width and, on the longer labels, off the 60px rail
+ * entirely. Fixed the same way `--rail-w` itself is: CSS owns layout, GSAP owns the fade —
+ * two different properties, so neither fights the other for one. */
+.shell[data-rail='collapsed'] .navitem .long {
+  width: 0;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 /* `autoAlpha` handles visibility, so nothing here needs to hide the labels — doing it in
    CSS as well would fight GSAP for the same property and one of them would win at random. */
 .shell[data-rail='collapsed'] .railgroup h2 {
@@ -2235,6 +2280,18 @@ ul.reasons li {
 @media (min-width: 640px) and (max-width: 1023px) {
   .shell {
     grid-template-columns: 1fr;
+  }
+  /* **The bug this fixes.** The topbar's own wrap rule stops at 639px, on the assumption
+   * that 640px and up always has room — but the persona switcher plus `.healthgroup`'s two
+   * badges need about 490px together, and at 640-700px that plus the lockup does not fit.
+   * The result was the whole bar, not just this one row, forced wider than the viewport.
+   * Same fix as the phone tier, for the same reason: a second row costs 28px, and a bar cut
+   * off mid-badge is worse. */
+  .topbar {
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    row-gap: 4px;
   }
   .rail {
     display: flex;
@@ -3243,4 +3300,36 @@ table.data .absent {
  */
 .value-swap {
   display: inline-block;
+}
+
+/* The confirm control. **Deliberately the only primary button in a turn** — a NEEDS_APPROVAL
+   answer has exactly one act available, and giving it a second would make the reader choose
+   between them rather than decide the one thing they were asked to decide. */
+.confirmwork {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.confirmwork .muted {
+  font-size: var(--fs-sm);
+  max-width: 44ch;
+}
+
+/* The outcome replaces the button rather than sitting beside it: a control that has already
+   acted, still offering to act, invites the second press that G5 exists to make harmless. */
+.confirmwork-result {
+  margin-top: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  max-width: 62ch;
+}
+
+.confirmwork-result[data-tone='refused'] {
+  border-left-color: var(--muted-fg);
 }

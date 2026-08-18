@@ -21,6 +21,7 @@
 
 import { IconHalt } from '@/components/Icons';
 import { AnswerText } from '@/components/AnswerText';
+import { ConfirmWork } from '@/components/ConfirmWork';
 import { Inspector } from '@/components/Inspector';
 import type { TurnState } from '@/lib/useTurn';
 
@@ -113,6 +114,13 @@ export function TurnView({
 
 
 
+
+      {/* **The draft is only a draft until somebody says so, and this is where they say it.**
+          Offered on `NEEDS_APPROVAL` and only when the state named an episode — a confirm
+          button with nothing behind it would be a control that cannot act. */}
+      {turn.state?.state === 'NEEDS_APPROVAL' && turn.state.awaiting_approval_for && (
+        <ConfirmWork episodeId={turn.state.awaiting_approval_for} />
+      )}
 
       {/* D-015. A refusal gets its own card, its own rule and its own heading — and the accent,
           never red. A NO_DIAGNOSIS is a correct outcome and the most common one on this data;

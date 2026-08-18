@@ -887,6 +887,11 @@ def _equipment_named_in(text: str) -> str | None:
     return f"chiller_{m.group(1)}" if m else None
 
 
+#: A fault class as the model emits it: SCREAMING_SNAKE, at least two words long so an ordinary
+#: capitalised word or an acronym cannot match.
+_FAULT_LABEL = re.compile(r"\b[A-Z][A-Z0-9]{2,}(?:_[A-Z0-9]+)+\b")
+
+
 async def answer_catalogue(
     question: str,
     *,
@@ -957,6 +962,14 @@ async def answer_catalogue(
         plan = ("reconciliation_report", {})
     elif any(t in text for t in ("fault class", "fault label", "what faults", "which faults")):
         plan = ("list_fault_classes", {})
+    elif _FAULT_LABEL.search(question):
+        # **A fault class named outright is a catalogue question.** "What does
+        # HIGH_HEAD_AMBIGUOUS mean?" matched no branch and fell through to the diagnostic
+        # path, which needs one episode's evidence — so a starter chip the product offers came
+        # back "there is no scored evidence", which reads as the platform not knowing its own
+        # vocabulary. The tool returns every class; the wording layer answers about the one
+        # that was named, from a result that already contains it.
+        plan = ("list_fault_classes", {})
     elif any(t in text for t in ("equipment", "machine", "asset", "chillers", "units")):
         plan = ("list_equipment", {})
 
@@ -997,7 +1010,7 @@ async def answer_catalogue(
     return SkillOutcome(state=AnswerState.ANSWERED, text=text, used_model=used_model)
 
 
-def _render_catalogue(tool: str, value: dict) -> str:  # noqa: PLR0911
+def _render_catalogue(tool: str, value: dict) -> str:  # noqa: PLR0911, PLR0915
     """Turn a tool's dict into the sentence a reader gets.
 
     No model, and no number invented — every figure here is a count of rows the tool itself
@@ -1019,7 +1032,7 @@ def _render_catalogue(tool: str, value: dict) -> str:  # noqa: PLR0911
 
     if tool == "compare_equipment":
         lines = []
-        for key, m in (value.get("machines") or {}).items():
+        for _key, m in (value.get("machines") or {}).items():
             lines.append(
                 f"- {m['display_name']}: {m['fault_classes']} fault class(es) over "
                 f"{m['days_with_a_fault']} day(s), {m['bands_fitted']} model(s) fitted"

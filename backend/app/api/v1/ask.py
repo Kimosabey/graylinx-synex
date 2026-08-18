@@ -28,6 +28,7 @@ from app.agents.sse_contract import FRAMES
 from app.analytics.episodes import LabelledSlot, to_episodes
 from app.api.deps import CurrentScope, Repo, current_scope, get_optional_repo
 from app.config import Settings, get_settings
+from app.domain import plain
 from app.domain.answer import AnswerState
 from app.llm.client import ModelClient
 from app.services import audit_log
@@ -267,12 +268,20 @@ async def _stream(  # noqa: PLR0915
         )
 
     # ── the answer, or the refusal in its own frame ─────────────────────────────
+    # **Our filing is stripped once, here, rather than at each of the places that write prose.**
+    # `for_reader` was applied inside the episode answer only, so the paths that grew later —
+    # the plant summary, the machine summary, the reconciliation — reached readers carrying
+    # "(Q49)" and "(from the signal registry)". A plant engineer has no idea what Q49 is, and a
+    # sentence that shows it is a sentence about us rather than about their chiller. Stripping
+    # at the streaming boundary means every path is covered, including the ones not written yet.
+    reader_text = plain.for_reader(turn.text)
+
     if turn.is_refusal and turn.pack is not None:
         failed = [g for g in turn.pack.gates.results if not g.passed]
         yield _frame(
             "no_diagnosis",
             {
-                "text": turn.text,
+                "text": reader_text,
                 "failed_gates": [
                     {
                         "gate": g.gate.value,
@@ -285,7 +294,7 @@ async def _stream(  # noqa: PLR0915
             },
         )
     else:
-        for chunk in _chunks(turn.text):
+        for chunk in _chunks(reader_text):
             yield _frame("token", {"text": chunk})
 
     # ── the audits ──────────────────────────────────────────────────────────────
@@ -323,7 +332,23 @@ async def _stream(  # noqa: PLR0915
         )
 
     # ── exactly one state, then done ────────────────────────────────────────────
-    yield _frame("state", {"state": turn.state.value, "used_model": turn.used_model})
+    # **`NEEDS_APPROVAL` carries the episode that would be confirmed.** Without it the state
+    # was a sentence with no act attached: the answer said a draft was ready and the reader had
+    # nowhere to say yes. The id travels rather than the draft — confirming rebuilds it from
+    # the same pack, so what is stored is what was shown rather than what the browser held.
+    approval = None
+    if turn.state is AnswerState.NEEDS_APPROVAL and turn.pack is not None and turn.pack.fault_label:
+        approval = (
+            f"{turn.pack.equipment_key}:{turn.pack.fault_label}:{turn.pack.day.isoformat()}"
+        )
+    yield _frame(
+        "state",
+        {
+            "state": turn.state.value,
+            "used_model": turn.used_model,
+            **({"awaiting_approval_for": approval} if approval else {}),
+        },
+    )
 
     audit_log.record(
         audit_row(

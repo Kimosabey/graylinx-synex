@@ -131,8 +131,15 @@ def test_the_window_may_be_pulled_back() -> None:
 # ── mode ────────────────────────────────────────────────────────────────────────
 
 def test_the_default_mode_needs_no_gpu() -> None:
-    """The gate must be the run that needs nothing. `pytest.ini` makes the same argument."""
-    s = Settings()
+    """The gate must be the run that needs nothing. `pytest.ini` makes the same argument.
+
+    **Read with the environment ignored, deliberately.** The box that runs the demonstration
+    sets `SYNEX_MODEL_MODE=live` in its `.env`, and this assertion used to read that file — so
+    turning the models on turned this test red, which says the wrong thing entirely. What must
+    hold is that the *default* needs no GPU: somebody who clones this repository and runs the
+    suite gets the stubbed run without owning a box.
+    """
+    s = Settings(_env_file=None)
     assert s.synex_model_mode == "stub"
     assert s.gpu_required is False
 

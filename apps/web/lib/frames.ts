@@ -107,4 +107,10 @@ export interface NoDiagnosisFrame {
 export interface StateFrame {
   state: AnswerState;
   used_model?: boolean;
+  /**
+   * The episode a `NEEDS_APPROVAL` draft would be confirmed against, as
+   * `equipment:fault:day`. Present only on that state, and only when a pack was built —
+   * a button offered without one would confirm nothing.
+   */
+  awaiting_approval_for?: string;
 }
