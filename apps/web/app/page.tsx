@@ -196,17 +196,6 @@ export default function Page() {
               setQuestion('');
               ask({ question: q });
             }}
-            onPickWithEpisode={(q, ep) => {
-              setQuestion('');
-              setSelected(ep as Episode);
-              ask({
-                question: q,
-                equipment_key: ep.equipment_key,
-                fault_label: ep.fault_label,
-                day: ep.day,
-                last_equipment: ep.equipment_key,
-              });
-            }}
           />
         )}
 
@@ -214,8 +203,9 @@ export default function Page() {
 
         {turns.length === 0 && (
           <p className="muted">
-            Ask about a detected episode. Every answer states its data window, names the
-            evidence behind it, and says plainly when the data cannot support a diagnosis.
+            Ask at whatever level suits the question — the whole plant, one machine, a fault
+            class, or the evidence behind one detected episode. Every answer states the data
+            window it covers and names the evidence behind it.
           </p>
         )}
 
