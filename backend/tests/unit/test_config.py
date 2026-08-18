@@ -130,18 +130,32 @@ def test_the_window_may_be_pulled_back() -> None:
 
 # ── mode ────────────────────────────────────────────────────────────────────────
 
-def test_the_default_mode_needs_no_gpu() -> None:
-    """The gate must be the run that needs nothing. `pytest.ini` makes the same argument.
+def test_the_product_reaches_the_models_unless_told_otherwise() -> None:
+    """**The application default is `live`, and this test is the record of why it changed.**
 
-    **Read with the environment ignored, deliberately.** The box that runs the demonstration
-    sets `SYNEX_MODEL_MODE=live` in its `.env`, and this assertion used to read that file — so
-    turning the models on turned this test red, which says the wrong thing entirely. What must
-    hold is that the *default* needs no GPU: somebody who clones this repository and runs the
-    suite gets the stubbed run without owning a box.
+    It used to assert `stub`, on the argument that the gate must need no GPU. That argument is
+    right about the gate and wrong about the product: a demonstration ran with the models off,
+    every answer correctly reported "language model - not used", and nothing was broken —
+    the platform was doing exactly what it had been configured to do and looked like it had no
+    models at all. A default that silently disables the thing the product is for is the wrong
+    default.
+
+    The gate keeps its guarantee a different way: `tests/conftest.py` pins `stub` for the
+    offline suite, so a bare `pytest` still runs on a machine with no box. Turning the models
+    off is now something somebody does, rather than something they inherit.
     """
-    s = Settings(_env_file=None)
-    assert s.synex_model_mode == "stub"
-    assert s.gpu_required is False
+    fresh = Settings(_env_file=None, synex_model_mode="live")
+    assert fresh.synex_model_mode == "live"
+    assert fresh.gpu_required is True
+
+    # And the field's own default, read without the suite's pin or any .env in the way.
+    assert Settings.model_fields["synex_model_mode"].default == "live"
+
+
+def test_the_gate_pins_stub_so_it_needs_no_gpu() -> None:
+    """`conftest` sets it, so the suite this test belongs to is itself the evidence."""
+    assert Settings().synex_model_mode == "stub"
+    assert Settings().gpu_required is False
 
 
 @pytest.mark.parametrize("mode,needs_box", [("stub", False), ("record", True), ("live", True)])

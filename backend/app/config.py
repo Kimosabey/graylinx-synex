@@ -79,9 +79,16 @@ class Settings(BaseSettings):
     # Default port 11434 is Ollama's own; `ollama_host` above is the tunnel to the box.
     embed_host: str = "http://127.0.0.1:11434"
 
-    # stub | record | live. The default is `stub` so the honest run is the one that needs
-    # nothing: most of M1 is built with the box terminated, and the box is burst once a day.
-    synex_model_mode: Literal["stub", "record", "live"] = "stub"
+    # stub | record | live. **The default is `live`, and it was `stub` for one release too
+    # long.** A demonstration ran with `SYNEX_MODEL_MODE=stub` in `.env` and every answer's
+    # badge correctly reported "language model - not used"; the platform was behaving exactly
+    # as configured and looked like it had no models at all. A default that silently disables
+    # the thing the product is for is the wrong default, however convenient it is for CI.
+    #
+    # The offline suite pins `stub` explicitly in `tests/conftest.py`, so a bare `pytest` still
+    # needs no GPU. Turning the models off is now an act somebody performs, rather than the
+    # state they inherit.
+    synex_model_mode: Literal["stub", "record", "live"] = "live"
 
     # ── identity. D-013 ─────────────────────────────────────────────────────────
     auth_mode: str = "dev_jwt"

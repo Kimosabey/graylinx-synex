@@ -69,11 +69,13 @@ const GROUPS: ReadonlyArray<{ heading: string; questions: readonly string[] }> =
   // selected — they come back saying an episode is needed. A starter chip that leads to
   // "open a case first" teaches that the product cannot do the thing it is named after. Those
   // belong on the case, where the evidence to answer them is.
-  {
-    heading: 'The boundary — what it will refuse',
-    questions: ['Can you change the chilled water setpoint?'],
-  },
 ];
+
+/** Last of all: what it refuses. A boundary met early reads as a list of limitations. */
+const BOUNDARY = {
+  heading: 'The boundary — what it will refuse',
+  questions: ['Can you change the chilled water setpoint?'],
+} as const;
 
 /** How a day reads in a question somebody would actually type: `2026-04-09` → `9 April`. */
 function inWords(iso: string): string {
@@ -92,9 +94,30 @@ export function StarterChips({ faultLabels, episodes, onPick }: StarterChipsProp
   // class" teaches exactly the wrong lesson.
   const machine = worked ? worked.equipment_key.replace('_', ' ') : '';
   const day = worked ? inWords(worked.day) : '';
-  const groups = faultLabels.length
-    ? [...GROUPS, { heading: 'A fault', questions: [`What does ${faultLabels[0]} mean?`] }]
-    : GROUPS;
+  // **Widest scope first, narrowest last.** The episode group used to lead, which said the
+  // opposite of what the product claims: that the plant is the natural place to start and the
+  // episode is where you end up. A reader who meets the narrowest question first concludes
+  // they must pick an episode before they can ask anything — the belief the whole selection
+  // removal exists to undo.
+  const groups = [
+    ...GROUPS,
+    ...(faultLabels.length
+      ? [{ heading: 'Fault class level — what a label means', questions: [`What does ${faultLabels[0]} mean?`] }]
+      : []),
+    ...(worked
+      ? [
+          {
+            heading: 'Episode level — name the machine and the day, and it finds the episode',
+            questions: [
+              `Raise a work order for ${machine} on ${day} for ${worked.fault_label}`,
+              `What should I check on ${machine} on ${day}?`,
+              `Did the repair work on ${machine} on ${day}?`,
+            ],
+          },
+        ]
+      : []),
+    BOUNDARY,
+  ];
 
   return (
     <section className="starters" aria-labelledby="starters">
@@ -104,23 +127,6 @@ export function StarterChips({ faultLabels, episodes, onPick }: StarterChipsProp
           levels genuinely need nothing; the work questions are built from one episode's
           evidence and carry one, and the group says which. */}
       <h2 id="starters">Try asking — plant, machine, fault class or one episode</h2>
-      {worked && (
-        <div className="startergroup">
-          <h3>Episode level — name the machine and the day, and it finds the episode</h3>
-          <Reveal className="row" runKey={3}>
-            {[
-              `Raise a work order for ${machine} on ${day} for ${worked.fault_label}`,
-              `What should I check on ${machine} on ${day}?`,
-              `Did the repair work on ${machine} on ${day}?`,
-            ].map((q) => (
-              <button key={q} type="button" className="chip starter" onClick={() => onPick(q)}>
-                {q}
-              </button>
-            ))}
-          </Reveal>
-        </div>
-      )}
-
       {groups.map((group) => (
         <div className="startergroup" key={group.heading}>
           <h3>{group.heading}</h3>
