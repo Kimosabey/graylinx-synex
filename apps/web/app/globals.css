@@ -1075,15 +1075,46 @@ main.content {
  * What is loaded, stated once and prominently, with the picker folded behind it. The chip is
  * the answer to "what am I asking about", which is the question a reader has when an answer
  * names a machine they did not choose. */
+/* One line when an episode is loaded, and absent when none is. The block this replaces led
+   every visit with a heading and a sentence explaining that the selection was optional — which
+   teaches that it matters however the sentence is worded. */
 .context-current {
-  margin: 0;
-  font-size: var(--t-lead);
-  line-height: 1.35;
-  color: var(--ink);
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-small);
+  line-height: 1.5;
+  color: var(--body);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.context-label {
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.context-clear {
+  font: inherit;
+  font-size: var(--t-micro);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-full);
+  color: var(--muted);
+  padding: 2px var(--s-2);
+  min-height: 28px;
+  cursor: pointer;
+}
+
+.context-clear:hover {
+  color: var(--accent);
+  border-color: var(--rule-accent);
 }
 
 .context-picker {
-  margin-top: var(--s-3);
+  margin-top: var(--s-2);
 }
 
 .context-picker > summary {
@@ -1237,6 +1268,192 @@ main.content {
   border-color: var(--rule-accent);
   background: var(--tint-accent);
   color: var(--ink);
+}
+
+/* ── whether a model wrote the answer ─────────────────────────────────────
+ * On the turn, not in the Inspector. Four of the five skills spend no model and that is the
+ * design — but a reader cannot tell a deliberate deterministic answer from a broken model
+ * without being told, and "is it using the models?" was asked three times before this existed. */
+.turn-kinds {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+/* Each kind is a chip rather than a sentence, because the point is the *split* — three
+   things did three jobs — and a sentence reads as one thing having happened. */
+.kind {
+  font-size: var(--t-micro);
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-full);
+  padding: 2px var(--s-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  cursor: default;
+}
+
+.kind::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--rule-strong);
+}
+
+/* The ML layer and the rules are always what they are. Only the language model varies per
+   turn, so only it changes colour — a badge that is always green teaches nothing. */
+.kind[data-kind='ml']::before {
+  background: var(--ok);
+}
+
+.kind[data-kind='rules']::before {
+  background: var(--accent);
+}
+
+.kind[data-kind='llm'][data-used='yes']::before {
+  background: var(--focus);
+}
+
+.kind[data-kind='llm'][data-used='yes'] {
+  color: var(--body);
+  border-color: var(--rule-accent);
+}
+
+.turn-model {
+  margin: 0;
+  font-size: var(--t-micro);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.turn-model::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--rule-strong);
+}
+
+.turn-model[data-used='yes']::before {
+  background: var(--accent);
+}
+
+/* ── follow-ups ────────────────────────────────────────────────────────────
+ * On the last answer only. Every turn carrying its own would turn a transcript into a wall
+ * of buttons, and the question a reader wants next is about the answer in front of them. */
+.followups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.followups-label {
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── the services panel ────────────────────────────────────────────────────
+ * Three states, not two. `unknown` gets its own treatment rather than borrowing the
+ * available one, because "nobody probed this" and "this works" are different facts and a
+ * panel that painted them alike would report a guess as a measurement. */
+.services {
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--s-2);
+}
+
+.services > li {
+  border-left: 3px solid var(--rule);
+  padding-left: var(--s-3);
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.services > li[data-state='available'] {
+  border-left-color: var(--ok);
+}
+
+.services > li[data-state='degraded'] {
+  border-left-color: var(--stop);
+}
+
+/* Unknown takes the accent, not the warn colour. It is not a fault — it is an absence of
+   measurement, and colouring it amber would tell somebody to go and fix something. */
+.services > li[data-state='unknown'] {
+  border-left-color: var(--accent);
+}
+
+.services-name {
+  font-weight: 500;
+  color: var(--body);
+}
+
+.services-state {
+  font-size: var(--t-micro);
+  color: var(--muted);
+  text-transform: none;
+}
+
+.services-reason {
+  font-size: var(--t-small);
+}
+
+/* ── who built it ──────────────────────────────────────────────────────────
+ * At the foot of the content column: present on every surface, in the way of none. */
+.builtby {
+  margin-top: auto;
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-micro);
+  color: var(--muted);
+}
+
+.builtby-mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--grad-brand);
+  flex: none;
+}
+
+.builtby-who {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.builtby-name {
+  color: var(--body);
+  font-weight: 500;
+}
+
+.builtby-what {
+  margin-left: auto;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 639px) {
+  .builtby-what {
+    display: none;
+  }
 }
 
 /* ── the inspector ─────────────────────────────────────────────────────────

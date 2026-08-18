@@ -24,7 +24,37 @@ import { AnswerText } from '@/components/AnswerText';
 import { Inspector } from '@/components/Inspector';
 import type { TurnState } from '@/lib/useTurn';
 
-export function TurnView({ turn }: { turn: TurnState }) {
+/** What a reader sensibly asks after each kind of answer. Deterministic, from the route. */
+function followUpsFor(turn: TurnState): string[] {
+  const skill = turn.route?.skill ?? '';
+  const machine = turn.equipmentKey?.replace('_', ' ');
+
+  if (skill === 'refuse') return ['What equipment do we have?', 'What happened across the plant?'];
+  if (machine) {
+    return [
+      `How is ${machine} doing?`,
+      'What should I check?',
+      'Raise a work order',
+      'Did the repair work?',
+    ];
+  }
+  return [
+    'What happened across the plant?',
+    'What happened on chiller 1?',
+    'Do the numbers in the report match the plant?',
+  ];
+}
+
+export function TurnView({
+  turn,
+  isLast = false,
+  onAsk,
+}: {
+  turn: TurnState;
+  isLast?: boolean;
+  onAsk?: (question: string) => void;
+}) {
+  const followUps = followUpsFor(turn);
   const refused = turn.state?.state === 'NO_DIAGNOSIS' || Boolean(turn.refusal);
   const graded = turn.audits.find((a) => a.findings);
   const notes = turn.audits.filter((a) => !a.findings);
@@ -33,6 +63,44 @@ export function TurnView({ turn }: { turn: TurnState }) {
   return (
     <article className="turn" aria-label={`Question: ${turn.question}`}>
       <p className="turn-question">{turn.question}</p>
+
+      {/* **Whether a model wrote this, on the answer rather than inside the Inspector.**
+       *
+       * It was already emitted on the `state` frame and shown one fold down, and the question
+       * "is it actually using the models?" was asked three times in one evening — which is a
+       * failure of placement, not of instrumentation. Four of the five skills spend no model
+       * at all and that is the design, so the badge has to say which happened plainly enough
+       * that nobody has to open a panel to find out.
+       *
+       * `null` until the state frame lands, so a streaming turn does not claim either. */}
+      {/* **Three kinds of machinery, named separately, because they fail differently.**
+       *
+       * `CONTEXT.md` §5 splits the work three ways and a reader cannot see the split from an
+       * answer: the ML layer says whether a reading is abnormal, deterministic rules name the
+       * fault and set priority and grant permission, and the language model only ever puts it
+       * into English. Collapsing that into "AI answered" is exactly the impression the
+       * separation law exists to prevent — and "is it actually using the models?" was asked
+       * three times in one evening, which is what an invisible split costs.
+       *
+       * The ML badge appears whenever a residual is on the turn: a residual *is* a trained
+       * model's output, so a figure with a band behind it is the ML layer having spoken. */}
+      {turn.state && (
+        <p className="turn-kinds">
+          {turn.figures.length > 0 && (
+            <span className="kind" data-kind="ml" title="A trained model produced these residuals — the reading against this asset's own healthy band.">
+              ML · {turn.figures.length} residual(s)
+            </span>
+          )}
+          <span className="kind" data-kind="rules" title="Deterministic software: the fault label, the gates, the priority formula and the Control Plane. None of it is a model.">
+            Rules · gates and priority
+          </span>
+          <span className="kind" data-kind="llm" data-used={turn.state.used_model ? 'yes' : 'no'}>
+            {turn.state.used_model
+              ? 'Language model · wrote the wording'
+              : 'Language model · not used'}
+          </span>
+        </p>
+      )}
 
       {/* The stream's own stages, while it runs. A turn that shows nothing for several seconds
           reads as a hang; naming the stage says the work is real and which part of it is
@@ -102,6 +170,27 @@ export function TurnView({ turn }: { turn: TurnState }) {
         audits={turn.audits}
         usedModel={Boolean(turn.state?.used_model)}
       />
+
+      {/* **What to ask next, from what this turn actually did.**
+       *
+       * Derived from the route rather than generated: the skill that answered determines what
+       * a reader sensibly asks next, and a suggestion that came from a model would be a
+       * fourth place a model could put words on the screen. A plant overview leads to a
+       * machine; a machine leads to its signals; an answer about one episode leads to the
+       * work it would raise.
+       *
+       * Only on the last turn — every answer carrying its own follow-ups turns a transcript
+       * into a wall of buttons. */}
+      {isLast && !turn.streaming && onAsk && followUps.length > 0 && (
+        <div className="followups">
+          <span className="followups-label">Next</span>
+          {followUps.map((q) => (
+            <button key={q} type="button" className="chip" onClick={() => onAsk(q)}>
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
 
       {turn.error && <p className="muted">Stream error: {turn.error}</p>}
     </article>

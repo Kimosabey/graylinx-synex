@@ -70,6 +70,15 @@ export const IconReport = ({ className, style }: Props) => (
   </svg>
 );
 
+/** Work orders. A spanner — the job itself, distinct from the clipboard that is the job *pack*
+ *  a technician carries and from the dial that belongs to the asset. Eight destinations need
+ *  eight glyphs: collapsed, the icon is the whole of the label. */
+export const IconWrench = ({ className, style }: Props) => (
+  <svg {...base} className={className} style={style}>
+    <path d="M15.8 6.2a3.6 3.6 0 0 0-4.9 4.2l-6 6a1.6 1.6 0 0 0 2.3 2.3l6-6a3.6 3.6 0 0 0 4.2-4.9l-2.2 2.2-2.1-.5-.5-2.1z" />
+  </svg>
+);
+
 export const IconClipboard = ({ className, style }: Props) => (
   <svg {...base} className={className} style={style}>
     <path d="M9 4h6v3H9zM8 5.5H6.5A1.5 1.5 0 0 0 5 7v12a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19V7a1.5 1.5 0 0 0-1.5-1.5H16" />

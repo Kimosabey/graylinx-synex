@@ -30,6 +30,7 @@ import { useCallback, useState } from 'react';
 import { PageEnter } from '@/components/motion/PageEnter';
 import { useRailCollapse } from '@/components/useRailCollapse';
 import { SystemHealth } from '@/components/SystemHealth';
+import { BuiltBy } from '@/components/BuiltBy';
 import {
   IconAlert,
   IconChat,
@@ -37,6 +38,7 @@ import {
   IconClipboard,
   IconGauge,
   IconReport,
+  IconWrench,
   IconShield,
   IconUsers,
 } from '@/components/Icons';
@@ -70,6 +72,7 @@ const GROUPS: ReadonlyArray<{
     heading: 'Work',
     items: [
       { href: '/case', label: 'Cases', short: 'Cases', Icon: IconCheck },
+      { href: '/work-orders', label: 'Work orders', short: 'Work', Icon: IconWrench },
       { href: '/job', label: 'Job pack', short: 'Job', Icon: IconClipboard },
       { href: '/supervisor', label: 'Supervisor queue', short: 'Approve', Icon: IconShield },
     ],
@@ -254,6 +257,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           `:focus-visible`, so a programmatic focus does not draw one. */}
       <main className="content" id="surface" tabIndex={-1}>
         <PageEnter>{children}</PageEnter>
+        <BuiltBy />
       </main>
     </div>
   );

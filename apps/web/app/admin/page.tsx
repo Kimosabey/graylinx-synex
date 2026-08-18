@@ -39,6 +39,7 @@
  */
 
 import { useCallback } from 'react';
+import { ServicesHealth } from '@/components/ServicesHealth';
 import { Degraded, EmptyState, PageHeader, Skeleton, StateChip } from '@/components/Surface';
 import { Reveal, ValueChange } from '@/components/motion';
 import { useApi } from '@/components/useApi';
@@ -185,6 +186,11 @@ export default function AdminPage() {
           </button>
         }
       />
+
+      {/* Every capability the platform depends on, with three states rather than two:
+          "not probed" is not "working", and painting it green would report a guess as a
+          measurement. Four of the seven are unknown right now, which is the honest answer. */}
+      <ServicesHealth />
 
       {view.loading && (
         <section className="card" aria-label="Loading the governance record">

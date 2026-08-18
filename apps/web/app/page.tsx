@@ -19,8 +19,7 @@ import { useTurn } from '@/lib/useTurn';
 import { TurnView } from '@/components/TurnView';
 import { NeverDoes } from '@/components/NeverDoes';
 import { StarterChips } from '@/components/StarterChips';
-import { PageEnter, Pressable, Reveal } from '@/components/motion';
-import { Skeleton } from '@/components/Surface';
+import { PageEnter } from '@/components/motion';
 
 interface CaseItem {
   id: string;
@@ -55,7 +54,16 @@ export default function Page() {
     fetch(`${API}/api/v1/episodes`, { credentials: 'include' })
       .then((r) => r.json())
       .then((body) => {
-        setEpisodes(body.episodes ?? []);
+        const list = body.episodes ?? [];
+        setEpisodes(list);
+        // **The deep link replaces the picker.** `/workspace` lists all 39 ranked and links
+        // in with `?episode=<id>`, so "ask about this specific day" arrives from the surface
+        // that is built for choosing rather than from 39 rows above the composer. A question
+        // that needs no episode never sees one; a question that does arrives with it loaded.
+        const wanted = new URLSearchParams(window.location.search).get('episode');
+        if (wanted) {
+          setSelected(list.find((e: Episode) => e.id === wanted) ?? null);
+        }
         // **Nothing is pre-selected.** This used to open on a named fault class —
         // `CONDENSER_LOW_FLOW`, chosen because it is the strongest single case in the data —
         // which meant the surface arrived already pointed at the episode that demonstrates
@@ -106,63 +114,32 @@ export default function Page() {
          * picker is still here because a cold visit to `/` needs a way in — but it is a
          * disclosure behind the chip rather than the first thing on the screen, and it names
          * the true total rather than silently cutting the list. */}
-        <section className="card sunken context" aria-labelledby="ctx">
-          <h2 id="ctx">Asking about</h2>
+        {/* **The context block is gone when nothing is selected, and that is the point.**
+         *
+         * It used to sit at the top of every visit: a heading, a sentence explaining that an
+         * episode was optional, and a disclosure offering 39 of them. All of that to say
+         * *nothing is selected* — which is the state a reader is already in, and which the
+         * composer's own placeholder covers. A surface whose first element explains a selection
+         * teaches that the selection matters, however carefully the sentence says it does not.
+         *
+         * Selected, it is one line: what is loaded, and a way to change or clear it. The picker
+         * moved down beside the composer, where a person reaches for it. */}
+        {selected && (
+          <p className="context-current">
+            <span className="context-label">Asking about</span>{' '}
+            <strong>{selected.equipment_key.replace('_', ' ')}</strong>
+            {' · '}
+            {selected.fault_label}
+            {' · '}
+            {selected.day}
+            <button type="button" className="context-clear" onClick={() => setSelected(null)}>
+              Clear
+            </button>
+            {' '}
+            <Link href={`/case/${encodeURIComponent(selected.id)}`}>Open the full case</Link>
+          </p>
+        )}
 
-          {selected ? (
-            <p className="context-current">
-              <strong>{selected.equipment_key.replace('_', ' ')}</strong>
-              {' · '}
-              {selected.fault_label}
-              {' · '}
-              {selected.day}
-              <span className="muted"> · {selected.slot_count} slot(s)</span>
-            </p>
-          ) : (
-            <p className="muted">
-              Nothing selected — ask about the plant, a machine or a fault class and it will
-              answer. Pick an episode only when you want the evidence behind one specific day.
-            </p>
-          )}
-
-          {loadError && (
-            <p className="muted">Could not reach the back end on {API}: {loadError}</p>
-          )}
-
-          {episodes.length === 0 && !loadError && <Skeleton lines={1} label="Loading episodes" />}
-
-          {/* The picker never opens itself. It used to whenever nothing was selected,
-              which put 39 rows between a cold visitor and the composer — on the assumption
-              that selecting was a prerequisite. It is not: the catalogue path answers
-              questions that have no episode at all. */}
-          {episodes.length > 0 && (
-            <details className="context-picker">
-              {/* The count is the true total. A disclosure that says "12" while holding 39 is
-                  the silent cap this replaces. */}
-              <summary>
-                {selected ? 'Change episode' : 'Choose an episode'} · {episodes.length} detected
-                in the measured window
-              </summary>
-              <Reveal className="row" runKey={episodes.length}>
-                {episodes.map((e) => (
-                  <Pressable
-                    key={e.id}
-                    className="chip"
-                    ariaPressed={selected?.id === e.id}
-                    onClick={() => setSelected(e)}
-                    ariaLabel={`${e.equipment_key.replace('_', ' ')}, ${e.fault_label}, ${e.day}, ${e.slot_count} slot(s)`}
-                  >
-                    {e.equipment_key.replace('_', ' ')} · {e.fault_label} · {e.day}
-                  </Pressable>
-                ))}
-              </Reveal>
-              <p className="muted">
-                <Link href="/workspace">Open the reliability workspace</Link> to rank, filter and
-                work the full queue.
-              </p>
-            </details>
-          )}
-        </section>
 
         {/* **The case detail left this surface on 2026-08-18.**
          *
@@ -191,8 +168,22 @@ export default function Page() {
         {/* The transcript. Turns append rather than replace, so the exchange the back end
             already remembers — six turns, with pronoun resolution — is visible to the reader
             resolving the same pronouns. Newest last, the way a conversation reads. */}
-        {turns.map((t) => (
-          <TurnView key={t.id} turn={t} />
+        {turns.map((t, i) => (
+          <TurnView
+            key={t.id}
+            turn={t}
+            isLast={i === turns.length - 1}
+            onAsk={(q) => {
+              setQuestion('');
+              ask({
+                question: q,
+                equipment_key: selected?.equipment_key,
+                fault_label: selected?.fault_label,
+                day: selected?.day,
+                last_equipment: turns.length ? turns[turns.length - 1].equipmentKey : undefined,
+              });
+            }}
+          />
         ))}
 
         {/* Starters before the boundary panel: what you CAN ask, then what it will never do.
@@ -200,9 +191,21 @@ export default function Page() {
         {turns.length === 0 && (
           <StarterChips
             faultLabels={Array.from(new Set(episodes.map((e) => e.fault_label)))}
+            episodes={episodes}
             onPick={(q) => {
-              setQuestion(q);
+              setQuestion('');
               ask({ question: q });
+            }}
+            onPickWithEpisode={(q, ep) => {
+              setQuestion('');
+              setSelected(ep as Episode);
+              ask({
+                question: q,
+                equipment_key: ep.equipment_key,
+                fault_label: ep.fault_label,
+                day: ep.day,
+                last_equipment: ep.equipment_key,
+              });
             }}
           />
         )}
@@ -218,6 +221,21 @@ export default function Page() {
 
         {/* The composer is last in the flow and pinned by CSS. A chat where you type
             above the reply is one where every answer arrives off-screen. */}
+
+        {/* Beside the composer rather than above the transcript: it is a thing you reach for
+            when a question needs one episode's evidence, not an orientation you read first. */}
+        {/* **The episode picker left this surface on 2026-08-18.**
+         *
+         * It offered 39 rows above the composer, and its presence was the claim: that a
+         * question needed one chosen first. That stopped being true when the catalogue,
+         * machine and plant-wide paths landed — you can ask what the plant has, what
+         * happened across it, what a machine carries and whether the numbers reconcile,
+         * none of which has an episode. The one thing that genuinely needs one is the
+         * evidence behind a specific day, and `/workspace` lists all 39 ranked and
+         * filterable with a link into each.
+         *
+         * A control that exists to be ignored still teaches that it matters. */}
+
         <div className="composer">
           <label htmlFor="q" className="sr-only" style={{ position: 'absolute', left: -9999 }}>
             Your question

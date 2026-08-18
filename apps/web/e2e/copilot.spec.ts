@@ -106,6 +106,20 @@ test.describe('the conversation', () => {
   });
 });
 
+test.describe('work orders', () => {
+  test('lists what was raised and says what it deliberately omits', async ({ page }) => {
+    await page.goto('/work-orders');
+
+    // Raised and draftable are different facts. A planner reading a list of drafts would
+    // schedule against work nobody committed to, so the surface has to say it omits them.
+    await expect(page.getByText(/Drafts are not listed here/i)).toBeVisible();
+
+    // Newest first rather than ranked: severity is agreed for one fault class of nine, so
+    // ordering by priority would present a ranking the formula cannot produce.
+    await expect(page.getByText(/Newest first, not ranked/i)).toBeVisible();
+  });
+});
+
 test.describe('the shell', () => {
   test('the page announces itself as Graylinx Synex', async ({ page }) => {
     await page.goto('/');
@@ -115,7 +129,7 @@ test.describe('the shell', () => {
   });
 
   test('nothing scrolls sideways', async ({ page }) => {
-    for (const path of ['/', '/workspace', '/case', '/job', '/admin', '/reports']) {
+    for (const path of ['/', '/workspace', '/case', '/work-orders', '/job', '/admin', '/reports']) {
       await page.goto(path);
       const overflows = await page.evaluate(
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -126,7 +140,7 @@ test.describe('the shell', () => {
 
   test('every surface in the rail opens', async ({ page }) => {
     await page.goto('/');
-    for (const path of ['/workspace', '/case', '/job', '/supervisor', '/admin', '/reports']) {
+    for (const path of ['/workspace', '/case', '/work-orders', '/job', '/supervisor', '/admin', '/reports']) {
       const response = await page.goto(path);
       expect(response?.status(), `${path} did not load`).toBeLessThan(400);
       await expect(page.locator('main.content')).toBeVisible();
