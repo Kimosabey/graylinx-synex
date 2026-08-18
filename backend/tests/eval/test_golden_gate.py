@@ -185,3 +185,35 @@ def test_the_test_suite_reads_the_same_set_the_gate_does() -> None:
     from tests.golden.cases import GOLDEN_CASES as FROM_TESTS
 
     assert FROM_TESTS is GOLDEN_CASES
+
+
+def test_every_detected_fault_class_has_a_golden_case() -> None:
+    """A gate that reports a pass rate over classes it never graded is the honesty gap this
+    platform refuses to let a *report* get away with.
+
+    **Found on 2026-08-18 by asking, not by failing.** The measured window holds seven fault
+    classes and the set graded five: `COMPRESSOR_INEFFICIENCY` had four episodes and no case,
+    `CONDENSER_WATER_SIDE_UNSPECIFIED` had one — and the scorecard still printed a percentage
+    as though it covered the plant. Nothing was wrong with any case in the set; the set was
+    simply silent about two branches, which is exactly the failure `R5` exists to prevent one
+    layer up.
+
+    Asserted against the **domain's** class list rather than the database, so it holds with
+    MySQL stopped and fails the day a class is added to the taxonomy without a case behind it.
+    """
+    from app.domain import faults
+
+    graded = {c.fault_label for c in GOLDEN_CASES if c.fault_label}
+    # `NO_DIAGNOSIS` and `NO_EFFICIENCY_FAULT` are outcomes rather than faults: there is
+    # nothing to explain about a slot the model declined to label, and the refusal cases
+    # cover that path directly.
+    detectable = {
+        f.label
+        for f in faults.FAULT_CLASSES
+        if f.label not in {"NO_DIAGNOSIS", "NO_EFFICIENCY_FAULT"}
+    }
+    missing = sorted(detectable - graded)
+    assert not missing, (
+        f"{missing} can be detected on this plant and no golden case grades them — the "
+        f"scorecard would report a pass rate over a branch nobody measured"
+    )

@@ -181,6 +181,15 @@ _REFERENTIAL = (
 )
 
 
+def names_equipment(message: str) -> str | None:
+    """Which machine **this message** names, or `None`.
+
+    Public because the request layer needs the same answer the gate does: a question naming a
+    different machine from the one on screen must not be answered about the one on screen.
+    """
+    return _extract_equipment(message, None)
+
+
 def _names_equipment(message: str) -> bool:
     """Did **this message** name a machine, as opposed to inheriting one?
 

@@ -22,6 +22,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.agents.answer import answer_turn, build_gates
+from app.agents.router import names_equipment as router_names_equipment
 from app.agents.sse_contract import FRAMES
 from app.api.deps import CurrentScope, Repo, current_scope, get_optional_repo
 from app.config import Settings, get_settings
@@ -97,8 +98,19 @@ async def _stream(
 
     yield _frame("stage", {"stage": "routing", "detail": "eight layers, cheapest first"})
 
+    # **A machine named in the question outranks the one on screen.** The selection used to
+    # decide the pack outright, so with chiller 1 loaded, *"how is chiller 2 doing?"* assembled
+    # chiller 1's evidence and answered about chiller 1 — confidently, with every figure
+    # correct, about a machine nobody asked about. The same shape as the scope leak: context
+    # overriding intent. When the question names a different machine the selection is dropped
+    # and the plant-level paths answer, which is what the question actually asked for.
+    named_in_question = router_names_equipment(body.question)
+    selection_contradicted = bool(
+        named_in_question and body.equipment_key and named_in_question != body.equipment_key
+    )
+
     pack = None
-    if body.equipment_key and body.fault_label and body.day:
+    if body.equipment_key and body.fault_label and body.day and not selection_contradicted:
         # Only *this* branch needs telemetry. A question that names no episode never touches
         # the plant, and refusing it with a database error was the defect CI caught — the
         # refusal is the modal outcome and must survive MySQL being stopped.
@@ -134,7 +146,9 @@ async def _stream(
         # refuses the most natural question in the product — "why was this flagged?" — which
         # contains no machine name and no domain word, because the machine is on screen and
         # already selected. The router reads text only, so the selection has to reach it.
-        last_equipment=body.last_equipment or body.equipment_key,
+        last_equipment=(
+            None if selection_contradicted else (body.last_equipment or body.equipment_key)
+        ),
         # The plant repository this request already holds, carried down so a tool can be handed
         # one rather than building it. Tools are forbidden from importing a driver at all, so
         # injection is the only route by which a capability may read the plant.
@@ -294,19 +308,38 @@ async def _pack_for(body: AskRequest, repo: Repo, settings: Settings):
 
 
 def _chunks(text: str, size: int = 48) -> list[str]:
-    """Split for streaming. Word-aware, so a token frame never splits a number in half.
+    """Split for streaming, **without touching a single character of the text**.
 
-    That is not cosmetic: `FigureView` is the only component allowed to render a number, and
-    a figure arriving as "-25.6" then "45" would defeat both that rule and the numeric audit
-    that reads the assembled text.
+    Word-aware, because `FigureView` is the only component allowed to render a number and a
+    figure arriving as "-25.6" then "45" would defeat both that rule and the numeric audit that
+    reads the assembled text.
+
+    **Whitespace-preserving, and that is the fix.** The previous version did
+    `text.split(" ")` and rebuilt each chunk with `f"{current} {word}".strip()`. Every residual
+    line begins `"
+  - "` — two spaces — which `split(" ")` turns into an *empty* token, and
+    the `strip()` that followed then ate the newline in front of it. Six residual lines
+    collapsed onto the end of the preceding sentence, and the answer arrived as a paragraph
+    with `- Dp_residual: 80.7 - Sp_residual: 78.5` run together inside it.
+
+    That was invisible to every test: the assembled text still contained every number, so the
+    numeric audit passed, the golden set passed, and only a reader could see it. The
+    concatenation of these chunks is now `text` exactly, asserted by a test.
     """
-    words, out, current = text.split(" "), [], ""
-    for word in words:
-        if len(current) + len(word) + 1 > size and current:
-            out.append(current + " ")
-            current = word
-        else:
-            current = f"{current} {word}".strip()
-    if current:
-        out.append(current)
+    if not text:
+        return []
+
+    out: list[str] = []
+    start = 0
+    cut = 0  # the last index at which a break would fall on whitespace
+
+    for i, ch in enumerate(text):
+        if ch.isspace():
+            cut = i
+        if i - start >= size and cut > start:
+            out.append(text[start : cut + 1])
+            start = cut + 1
+
+    if start < len(text):
+        out.append(text[start:])
     return out

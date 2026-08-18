@@ -41,6 +41,7 @@ from app.analytics.gates import (
 )
 from app.db.plant import ResidualRow
 from app.domain import equipment as eq
+from app.domain import plain
 from app.domain.answer import AnswerState
 from app.llm.client import ModelClient, ModelUnavailable
 from app.prompts.explain import build_messages, build_no_diagnosis_messages
@@ -114,11 +115,16 @@ def deterministic_answer(pack: EvidencePack) -> str:
     unambiguously correct, so that a reader can tell at a glance that the prose layer is
     absent rather than wonder why the writing got worse.
     """
+    # **Our own filing is stripped from what a reader sees.** `Q49`, `F16`, `C21`, `D-009` are
+    # this repository's questions, features, constraints and decisions. They belong in the
+    # note — that is how somebody working here finds why a signal is distrusted — and to a
+    # plant engineer reading about their chiller they are ticket numbers from another system.
+    # The Inspector shows the full note; the sentence does not.
     lines = [
         f"{pack.equipment_display} on {pack.day.isoformat()} "
         f"({pack.slot_count} slot(s), {pack.window.render()}).",
         f"Detected label: {pack.fault_label or 'none on this slot'}. "
-        f"Severity: {pack.severity_text}.",
+        f"Severity: {plain.for_reader(pack.severity_text)}.",
     ]
     if pack.is_undecidable:
         lines.append(
@@ -126,16 +132,21 @@ def deterministic_answer(pack: EvidencePack) -> str:
             "candidate causes, and narrowing it further would invent a certainty nobody has."
         )
     for evidence in pack.residual_evidence:
-        lines.append(f"  - {evidence.render()}")
+        lines.append(f"  - {plain.for_reader(evidence.render())}")
     if pack.other_labels_same_day:
         lines.append(
             "Other labels on this machine the same day: "
             + ", ".join(pack.other_labels_same_day)
             + ". One repair may explain several of them."
         )
-    absent = [s.render() for s in pack.signal_notes]
+    # One signal per line rather than a semicolon-joined paragraph. Five provenance notes run
+    # together is the densest text on the screen and the least likely to be read, and each one
+    # is a separate reason a separate reading cannot be trusted.
+    absent = [plain.for_reader(s.render()) for s in pack.signal_notes]
+    absent = [a for a in absent if a]
     if absent:
-        lines.append("Signals that cannot be read on this plant: " + "; ".join(absent))
+        lines.append("Signals that cannot be read on this plant:")
+        lines.extend(f"  - {a}" for a in absent)
     return "\n".join(lines)
 
 
@@ -203,7 +214,7 @@ async def answer_turn(  # noqa: PLR0911
     # have answered outright. "What equipment do we have?" is not a question about evidence.
     if pack is None:
         catalogue = await skills.answer_catalogue(
-            question, scope=scope, plant_repo=plant_repo
+            question, scope=scope, plant_repo=plant_repo, client=client
         )
         if catalogue is not None:
             return Turn(
@@ -211,13 +222,39 @@ async def answer_turn(  # noqa: PLR0911
                 state=catalogue.state,
                 text=catalogue.text,
                 route=decision,
+                used_model=catalogue.used_model,
             )
 
     if pack is None:
+        # **Say which episode is missing, not that evidence is missing.** Four skills are built
+        # from one episode's evidence — a work order, a checklist, a verification, a residual
+        # read — and asking for any of them without one is a question the product can answer
+        # *given a day*, not a question it cannot answer. The generic sentence below was
+        # returned for all of them, so "raise a work order" came back as "there is no scored
+        # evidence", which reads as a refusal about the plant rather than a missing input.
+        needs_an_episode = {
+            Skill.PREPARE_WORK: (
+                "A work order is raised from one episode's evidence — the residuals, the gates "
+                "and the provenance travel with the job. Open a case and the draft it would "
+                "raise is there, with the evidence already attached."
+            ),
+            Skill.VERIFY: (
+                "Verification compares an episode against the days after it, so it needs one "
+                "episode to compare from. Open a case to see whether what was measured has "
+                "returned to band."
+            ),
+            Skill.RESOLVE: (
+                "The checklist belongs to one detected fault on one machine on one day. Open a "
+                "case and the checks for your capability are there, with the blocking ones "
+                "marked."
+            ),
+        }
+        specific = needs_an_episode.get(decision.skill)
         return Turn(
             question=question,
             state=AnswerState.NO_DIAGNOSIS,
-            text=(
+            text=specific
+            or (
                 "There is no scored evidence for that request. Only chiller 1 and chiller 2 "
                 "have a fitted model and a reference band; the other ten equipment tables "
                 "carry telemetry and nothing that can be judged against it."

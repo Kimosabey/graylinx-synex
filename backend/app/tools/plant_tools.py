@@ -214,6 +214,73 @@ async def _priority_for_fault(fault_label: str, slot_count: int) -> dict[str, An
     }
 
 
+async def _plant_overview(*, plant_repo: Any) -> dict[str, Any]:
+    """What the whole plant carries — no machine named, no episode chosen.
+
+    **The question a manager actually opens with.** *"What is the worst equipment today?"*,
+    *"what happened across the plant?"* — neither names a machine and neither wants a
+    diagnosis. Until now the Copilot had no path for them at all: every skill takes an
+    `EvidencePack`, a pack needs equipment **and** fault **and** day, so a plant-wide question
+    fell through to *"there is no scored evidence"* on a plant with 39 detected episodes.
+
+    **It refuses to rank, and says so.** *"Worst"* is the word in the question and it is the one
+    thing this cannot answer: severity is agreed for one fault class of nine (`Q49`), so a
+    ranking would be a claim the formula cannot make. Ordering by how far a residual sits
+    outside its band is forbidden outright — inherited constraint 3, because non-faults were
+    measured to deviate *more* than faults on this plant. So it reports counts, sorted by days
+    affected, and states plainly that days are not severity.
+
+    **Machines with nothing detected are listed too.** A plant summary that showed only the
+    faulted machines would read as a clean bill of health for the rest, and ten of the twelve
+    have no fitted model at all — unjudged, which is not the same as well.
+    """
+    rows = await plant_repo.faulted_slots()
+
+    per_machine: dict[str, dict[str, set]] = {}
+    for row in rows:
+        if not row.fault_label:
+            continue
+        per_machine.setdefault(row.equipment_key, {}).setdefault(row.fault_label, set()).add(
+            row.slot_time.date()
+        )
+
+    machines = []
+    for e in equipment.all_equipment():
+        labels = per_machine.get(e.key, {})
+        days = {d for dates in labels.values() for d in dates}
+        machines.append(
+            {
+                "equipment_key": e.key,
+                "display_name": getattr(e, "display_name", e.key),
+                "scoreable": equipment.is_scoreable(e.key),
+                "fault_classes": len(labels),
+                "days_affected": len(days),
+                "labels": sorted(labels, key=lambda k: -len(labels[k])),
+            }
+        )
+    machines.sort(key=lambda m: (-m["days_affected"], -m["fault_classes"], m["equipment_key"]))
+
+    unjudged = [m["display_name"] for m in machines if not m["scoreable"]]
+    return {
+        "equipment": len(machines),
+        "with_a_detected_fault": sum(1 for m in machines if m["fault_classes"]),
+        "scoreable": sum(1 for m in machines if m["scoreable"]),
+        "machines": machines,
+        "unjudged": unjudged,
+        "ranking_note": (
+            "Sorted by days affected, which is NOT a ranking by severity. Severity is agreed "
+            "for one fault class of nine (Q49), and ordering by how far a residual sits outside "
+            "its band is forbidden: non-faults on this plant were measured to deviate more than "
+            "faults did."
+        ),
+        "unjudged_note": (
+            f"{len(unjudged)} machine(s) have no fitted model and no reference band, so nothing "
+            f"on them can be judged. That is not a statement that they are healthy — it is a "
+            f"statement that they are unexamined."
+        ),
+    }
+
+
 async def _episodes_for_equipment(equipment_key: str, *, plant_repo: Any) -> dict[str, Any]:
     """Every detected episode on one machine — the answer to a question about a *machine*.
 
@@ -458,6 +525,25 @@ def register_all(registry=REGISTRY) -> None:
             skill="prepare_work",
             needs=("pack",),
             tags=("work", "draft"),
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="plant_overview",
+            description=(
+                "What the whole plant carries: every machine, how many fault classes and days "
+                "each has, and which machines cannot be judged at all. Answers a plant-wide "
+                "question with no machine named and no episode chosen — 'what happened across "
+                "the plant', 'which equipment is worst'. Reports counts and explicitly refuses "
+                "to rank by severity."
+            ),
+            parameters=NoArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_plant_overview,
+            skill="look_up",
+            needs=("plant_repo",),
+            tags=("plant", "fdd", "overview"),
         )
     )
     registry.register(

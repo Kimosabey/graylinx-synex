@@ -369,3 +369,51 @@ def test_a_hard_failure_replaces_the_answer_rather_than_annotating_it() -> None:
     assert "HIGH_HEAD_AMBIGUOUS" in correction
     assert "2026-04-15" in correction
     assert "7.4" not in correction, "the correction must not repeat the invented figure"
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# The stream must not edit the answer on its way out
+# ════════════════════════════════════════════════════════════════════════════════
+
+
+def test_streaming_chunks_reassemble_into_the_exact_answer() -> None:
+    """`_chunks` splits for transport and must change nothing.
+
+    **The defect this locks out.** The previous implementation did `text.split(" ")` and
+    rebuilt each chunk with `strip()`. Every residual line begins with a newline and *two*
+    spaces, which `split(" ")` turns into an empty token — and the `strip()` then ate the
+    newline in front of it. Six residual lines collapsed onto the end of the preceding
+    sentence and the answer reached the reader as one run-on paragraph.
+
+    Nothing caught it. The assembled text still held every number, so the numeric audit
+    passed, the golden set passed, and the honesty layer was satisfied — the answer was
+    entirely true and unreadable. A transport layer that edits its payload is a defect no
+    content test can see, so this asserts the only property that matters: what goes in comes
+    out.
+    """
+    from app.api.v1.ask import _chunks
+
+    answers = [
+        "Chiller 1 on 2026-04-09 (1 slot(s)).\n"
+        "Detected label: HIGH_HEAD_AMBIGUOUS.\n"
+        "  - Dp_residual: 80.7 — high for this asset; model nRMSE 5.38\n"
+        "  - Sp_residual: 78.5 — high for this asset; model nRMSE 7.93",
+        "one line only",
+        "trailing space and newline \n",
+        "",
+        "  leading whitespace kept",
+    ]
+    for answer in answers:
+        assert "".join(_chunks(answer)) == answer, f"the stream edited {answer!r}"
+
+
+def test_streaming_never_splits_a_number_across_two_chunks() -> None:
+    """`FigureView` is the only component allowed to render a number, and a figure arriving as
+    "-25.6" then "45" would defeat both that rule and the audit that reads the assembled text.
+    Every chunk therefore ends on whitespace, except the last."""
+    from app.api.v1.ask import _chunks
+
+    text = "The residual was -25.645 and the band reaches -38.677 to -12.613 on this asset."
+    chunks = _chunks(text)
+    for chunk in chunks[:-1]:
+        assert chunk[-1].isspace(), f"chunk {chunk!r} ends mid-word"

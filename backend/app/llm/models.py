@@ -37,8 +37,22 @@ TEXT = "phi4"
 EMBED = "nomic-embed-text"
 
 # Aliases resolve before the lookup, so the table below has one row per real model.
+#
+# **`planner` points at `text`, not `brain`, and the reason is measured rather than a
+# preference.** A planner's whole output is a strict JSON schema, and the Thermynx
+# implementation recorded the 26B brain failing at exactly that job: it degenerated into a
+# repetition loop — *"…pressure-driven work to pressure-driven work conversion efficiency loss
+# in pressure-driven work to pressure-"* — the JSON never closed, and **every plan silently
+# became empty**. Not a crash and not a refusal: an empty result that reads as "nothing to
+# plan". `phi4` returned valid JSON every time.
+#
+# The lesson generalises and this table now follows it: **a short strict schema does not need a
+# big model, and gives a big one room to run away.** The two roles that emit JSON — `planner`
+# and `tool` — take the small models; the two that write prose a person reads — `brain` and
+# `composer` — take the large one. `Q107` records that Synex has not reproduced the failure
+# itself, only inherited the finding.
 _ALIASES: dict[str, str] = {
-    "planner": "brain",
+    "planner": "text",
     "composer": "brain",
     "sql": "tool",
 }

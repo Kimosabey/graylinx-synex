@@ -43,10 +43,23 @@ def test_no_module_but_the_role_table_names_a_model() -> None:
 
 
 def test_aliases_resolve_to_a_real_model() -> None:
-    """`planner` and `composer` are the brain; `sql` is the tool model."""
-    assert role_table.model_for("planner") == role_table.model_for("brain")
+    """`composer` is the brain; `planner` and `sql` are the small models.
+
+    **`planner` moved off the brain on 2026-08-18, and it is the one alias with a measured
+    reason.** A planner's whole output is a strict JSON schema, and the Thermynx implementation
+    recorded the 26B brain failing at exactly that: it degenerated into a repetition loop, the
+    JSON never closed, and *every plan silently became empty* — not a crash, not a refusal, an
+    empty result that reads as "nothing to plan". `phi4` returned valid JSON every time.
+
+    So the split this asserts is by **output shape, not by importance**: the roles that emit
+    JSON take the small models, the roles that write prose a person reads take the large one.
+    """
     assert role_table.model_for("composer") == role_table.model_for("brain")
     assert role_table.model_for("sql") == role_table.model_for("tool")
+    assert role_table.model_for("planner") != role_table.model_for("brain"), (
+        "a strict-JSON role on the 26B brain is the failure Thermynx recorded"
+    )
+    assert role_table.model_for("planner") == role_table.model_for("text")
 
 
 def test_the_auditor_is_not_the_brain() -> None:

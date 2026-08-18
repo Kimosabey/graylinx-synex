@@ -63,6 +63,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from app.agents import compose
 from app.agents.react import (
     Chooser,
     LoopOutcome,
@@ -887,7 +888,11 @@ def _equipment_named_in(text: str) -> str | None:
 
 
 async def answer_catalogue(
-    question: str, *, scope: Scope | None, plant_repo: object | None = None
+    question: str,
+    *,
+    scope: Scope | None,
+    plant_repo: object | None = None,
+    client: object | None = None,
 ) -> SkillOutcome | None:
     """Answer a question about the plant's *catalogue* — no episode, no evidence pack.
 
@@ -922,7 +927,17 @@ async def answer_catalogue(
 
     # Ordered: the more specific reading wins. "how many fault classes" is a fault-class
     # question before it is a counting question.
-    if named and any(
+    # **A plant-wide phrase outranks machine resolution, and it has to.** `Plant` is itself an
+    # equipment key on this site, so "what happened across the plant" resolved to a *machine*
+    # called Plant and came back "Plant carries no detected fault" — technically true of that
+    # row and the opposite of what was asked. The phrase describes a scope, not a name.
+    if any(
+        t in text for t in ("across the plant", "whole plant", "the plant", "worst",
+                            "overview", "everything", "all equipment", "all machines",
+                            "plant wide", "plant-wide", "situation")
+    ):
+        plan = ("plant_overview", {})
+    elif named and any(
         t in text for t in ("fault", "flagged", "happened", "episode", "wrong", "issue",
                             "problem", "history", "seen", "detected")
     ):
@@ -958,12 +973,64 @@ async def answer_catalogue(
             text=result.reason or f"{plan[0]} did not answer, and gave no reason.",
         )
 
-    return SkillOutcome(state=AnswerState.ANSWERED, text=_render_catalogue(plan[0], result.value))
+    # **The tool supplies the facts and the brain supplies the wording.** The deterministic
+    # rendering below is the floor, not a fallback nobody exercises: it ships whenever the box
+    # is unreachable or the reply is unusable. Composed or not, the answer goes through the
+    # same seven audits and the same critique gate — a sentence that invents a figure is
+    # replaced exactly as one from the diagnostic path would be.
+    rendered = _render_catalogue(plan[0], result.value)
+    text, used_model = await compose.compose_from_tool(
+        question=question,
+        tool=plan[0],
+        value=result.value,
+        fallback=rendered,
+        client=client,
+    )
+    return SkillOutcome(state=AnswerState.ANSWERED, text=text, used_model=used_model)
 
 
-def _render_catalogue(tool: str, value: dict) -> str:
-    """Turn a tool's dict into the sentence a reader gets. No model, and no number invented —
-    every figure here is a count of rows the tool itself returned."""
+def _render_catalogue(tool: str, value: dict) -> str:  # noqa: PLR0911
+    """Turn a tool's dict into the sentence a reader gets.
+
+    No model, and no number invented — every figure here is a count of rows the tool itself
+    returned. One branch per tool, and `PLR0911` is suppressed because each branch is a
+    different *reader*: the sentence a plant overview needs and the sentence a reconciliation
+    needs share no structure, and funnelling them through a common shape is how a rendering
+    starts saying "3 items" where it used to name them.
+    """
+    if tool == "equipment_standing":
+        if not value.get("known"):
+            return str(value.get("note") or "That machine is not on this site.")
+        lines = [f"{value['display_name']}: {value['scoreable_note']}"]
+        never = value.get("never_measured") or []
+        unusable = value.get("unusable") or []
+        if never or unusable:
+            lines.append("")
+            lines.append(str(value.get("trust_note", "")))
+            for name in unusable:
+                lines.append(f"  - {name}")
+        lines.append("")
+        lines.append(str(value.get("to_go_further", "")))
+        return chr(10).join(lines)
+
+    if tool == "plant_overview":
+        machines = value.get("machines", [])
+        faulted = [m for m in machines if m["fault_classes"]]
+        lines = [
+            f"{value['with_a_detected_fault']} of {value['equipment']} machine(s) carry a "
+            f"detected fault in the measured window."
+        ]
+        for m in faulted:
+            lines.append(
+                f"- {m['display_name']} — {m['fault_classes']} fault class(es) over "
+                f"{m['days_affected']} day(s): {', '.join(m['labels'])}"
+            )
+        lines.append("")
+        lines.append(str(value.get("ranking_note", "")))
+        lines.append("")
+        lines.append(str(value.get("unjudged_note", "")))
+        return chr(10).join(lines)
+
     if tool == "episodes_for_equipment":
         if not value.get("known"):
             return str(value.get("note") or "That machine is not on this site.")
@@ -1012,6 +1079,18 @@ def _render_catalogue(tool: str, value: dict) -> str:
             "Only chiller 1 and chiller 2 carry a fitted residual model and a reference band, "
             "so they are the two whose readings can be judged. The rest carry telemetry that "
             "nothing has been fitted against — which is not a statement that they are healthy."
+        )
+
+    # **The fall-through is explicit now.** This function used to end on the fault-class
+    # renderer unconditionally, so a tool with no branch — `equipment_standing`, added later —
+    # was rendered as a fault-class list, found no `labels` key, and answered "the trained
+    # model can report 0 fault class(es)". A confident, well-formed, entirely wrong answer to
+    # a question about a machine. A default that renders *something* is worse than one that
+    # says it does not know how.
+    if tool != "list_fault_classes":
+        return (
+            f"{tool} answered and this surface has no way to phrase its result yet. Nothing "
+            f"was invented in place of it; the raw keys were: {', '.join(sorted(value))}."
         )
 
     rows = value.get("labels", [])

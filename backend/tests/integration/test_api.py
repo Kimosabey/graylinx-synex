@@ -282,7 +282,9 @@ async def test_the_roster_exposes_nine_roles_over_four_models(
     assert len(body["roster"]) == 9
     assert len(set(body["roster"].values())) == 4
     assert body["roster"]["sql"] == body["roster"]["tool"]
-    assert body["roster"]["planner"] == body["roster"]["brain"]
+    # `planner` emits strict JSON and is deliberately not the brain — see
+    # `tests/unit/test_role_table.py` for the failure that decided it.
+    assert body["roster"]["composer"] == body["roster"]["brain"]
 
 
 async def test_the_auditor_is_never_the_brain(client: httpx.AsyncClient) -> None:
