@@ -356,7 +356,7 @@ def test_all_six_audits_run_even_after_the_first_failure() -> None:
     """The record should say everything wrong with an answer, not the first thing."""
     answer = "Chiller 3 flow was 893.7 and the root cause is definitely fouling."
     report = run_audits(answer, _pack())
-    assert len(report.findings) == 6
+    assert len(report.findings) == 7
     assert len(report.hard_failures) >= 3
 
 

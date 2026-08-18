@@ -152,6 +152,17 @@ DISHONEST_ANSWERS = {
         "On 2026-04-15 the root cause is definitely a fouled condenser on chiller 1.",
         "model_did_not_diagnose",
     ),
+    # From a live failure in the Thermynx implementation: a model asked to raise a work order
+    # produced a formatted draft citing real figures and ended "please review and confirm",
+    # having called one read-only tool. The work order was prose, not a proposal — no approval
+    # control, because the interface keys off the tool frame, and no substantiation guard,
+    # because none had run. It reads exactly like the feature working.
+    "claims_a_work_order_it_did_not_raise": (
+        "On 2026-04-15 chiller 1 carried HIGH_HEAD_AMBIGUOUS over 2026-04-15 00:00 to "
+        "2026-04-15 23:59. I have raised a work order for it. Please review and confirm "
+        "this work order.",
+        "no_phantom_work_order",
+    ),
 }
 
 
@@ -196,13 +207,14 @@ def test_the_correction_never_repeats_the_fabrication() -> None:
 def test_every_audit_is_reachable() -> None:
     """A gate with an unreachable rule is a rule nobody maintains.
 
-    Six audits are registered and the dishonest set exercises five of them; the sixth is
+    Seven audits are registered and the dishonest set exercises six of them; the seventh is
     the soft poor-fit disclosure, which has its own test in the unit suite. Asserting the
-    registry size here catches an audit being added without a case to prove it fires.
+    registry size here catches an audit being added without a case to prove it fires — which
+    is exactly what it did when `no_phantom_work_order` arrived on 2026-08-18.
     """
-    assert len(postcheck.AUDITS) == 6
+    assert len(postcheck.AUDITS) == 7
     exercised = {a for _, a in DISHONEST_ANSWERS.values()}
-    assert len(exercised) == 5
+    assert len(exercised) == 6
 
 
 def test_the_hard_dimensions_are_not_weighted() -> None:

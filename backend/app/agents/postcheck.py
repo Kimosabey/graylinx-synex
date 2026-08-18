@@ -174,6 +174,16 @@ def _numbers_in(text: str) -> list[str]:
     return out
 
 
+def evidence_text(pack: EvidencePack) -> str:
+    """Everything the writer was given, as one string.
+
+    Public because the critique gate needs exactly what the deterministic audits compare
+    against — if the two read different evidence, a disagreement between them says nothing
+    about the answer.
+    """
+    return _pack_strings(pack)
+
+
 def _pack_strings(pack: EvidencePack) -> str:
     """Every display string the model was handed, concatenated for containment testing."""
     data = pack.to_prompt_data()
@@ -457,6 +467,74 @@ def audit_fit_disclosed(answer: str, pack: EvidencePack) -> AuditFinding:
 
 # ── the gate ────────────────────────────────────────────────────────────────────
 
+#: Phrases that assert a work order now exists. Held as data so the set is inspectable and
+#: widening it is a decision rather than a regex somebody stretched.
+_CLAIMS_A_WORK_ORDER = (
+    "work order has been",
+    "work order was",
+    "i have raised",
+    "i have created",
+    "i have drafted",
+    "have raised a work order",
+    "created a work order",
+    "raised a work order",
+    "drafted a work order",
+    "wo-",
+    "please review and confirm this work order",
+)
+
+
+def audit_phantom_work_order(answer: str, pack: EvidencePack) -> AuditFinding:
+    """An answer that *claims* to have raised a work order without one existing.
+
+    **From a live failure in the Thermynx implementation, not from imagination.** Asked to raise
+    a work order, the model produced a beautifully formatted draft — equipment id, title,
+    diagnosis citing real figures, recommended actions — ending *"Please review and confirm this
+    work order."* It had called one read-only tool and nothing else. **The work order was prose,
+    not a proposal:** no Approve control, because the interface keys off the tool frame, and no
+    substantiation guard, because none had run. And it reads exactly like the feature working,
+    which is what makes it dangerous rather than merely wrong.
+
+    Synex has the same shape of risk. `prepare_work` returns `NEEDS_APPROVAL` and the surface
+    renders an approval affordance from *that state*; an `explain` turn whose prose announces a
+    work order produces no such state and no such control, so a reader is told something was
+    raised and nothing was.
+
+    **Hard, and this is where Synex parts from the implementation it inherited.** Thermynx
+    treats the phantom work order as one flag among six, feeding a soft badge. Here it replaces
+    the answer, because of what the false sentence *causes*: a reader told a job was raised does
+    not raise one. The fault is real, the evidence is real, and the work never happens — which
+    is case 8, operational silence, arriving through the one door the honesty layer watches.
+    Constraint 16 is that the honesty layer overrides the model rather than advising it, and a
+    reassuring sentence followed by a caveat is still read as reassuring.
+    """
+    lowered = answer.lower()
+    hits = tuple(p for p in _CLAIMS_A_WORK_ORDER if p in lowered)
+
+    # A turn that genuinely drafted one carries the draft on the pack, and `prepare_work`
+    # renders it from there. If the pack has one, the claim is substantiated by definition.
+    drafted = bool(getattr(pack, "work_order_draft", None))
+
+    if not hits or drafted:
+        return AuditFinding(
+            audit="no_phantom_work_order",
+            passed=True,
+            severity=AuditSeverity.SOFT,
+            detail="the answer claims no work order it did not raise",
+        )
+    return AuditFinding(
+        audit="no_phantom_work_order",
+        passed=False,
+        severity=AuditSeverity.HARD,
+        detail=(
+            "the answer says a work order exists, and this turn raised none. Nothing was "
+            "written and there is no approval control behind the sentence — a reader told a "
+            "job was raised will not raise it themselves."
+        ),
+        offending=hits,
+    )
+
+
 AUDITS = (
     audit_numbers,
     audit_equipment,
@@ -464,6 +542,7 @@ AUDITS = (
     audit_window,
     audit_no_diagnosis_by_model,
     audit_fit_disclosed,
+    audit_phantom_work_order,
 )
 
 
