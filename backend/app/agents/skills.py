@@ -1038,9 +1038,13 @@ def _render_catalogue(tool: str, value: dict) -> str:  # noqa: PLR0911, PLR0915
                 f"{m['days_with_a_fault']} day(s), {m['bands_fitted']} model(s) fitted"
             )
         return chr(10).join(
-            [str(value.get("comparable_note", "")), ""]
-            + lines
-            + ["", str(value.get("not_compared_note", ""))]
+            [
+                str(value.get("comparable_note", "")),
+                "",
+                *lines,
+                "",
+                str(value.get("not_compared_note", "")),
+            ]
         )
 
     if tool == "equipment_standing":
