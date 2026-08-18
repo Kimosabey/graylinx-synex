@@ -21,9 +21,11 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.agents import episode_ref
 from app.agents.answer import answer_turn, build_gates
 from app.agents.router import names_equipment as router_names_equipment
 from app.agents.sse_contract import FRAMES
+from app.analytics.episodes import LabelledSlot, to_episodes
 from app.api.deps import CurrentScope, Repo, current_scope, get_optional_repo
 from app.config import Settings, get_settings
 from app.domain.answer import AnswerState
@@ -83,7 +85,7 @@ async def ask(
     )
 
 
-async def _stream(
+async def _stream(  # noqa: PLR0915
     body: AskRequest,
     request_id: str,
     repo: Repo | None,
@@ -105,9 +107,76 @@ async def _stream(
     # overriding intent. When the question names a different machine the selection is dropped
     # and the plant-level paths answer, which is what the question actually asked for.
     named_in_question = router_names_equipment(body.question)
+
+    # **An episode named in the question beats anything on screen.** Until now the only way to
+    # reach one episode's evidence was to have it selected, so the interface carried a picker
+    # and the starter chips carried a fixed episode — both the same workaround for the same
+    # gap: the product could not understand "raise a work order for chiller 1 on 9 April".
+    # Resolution is against episodes that exist, so an unmatched day is reported as a day with
+    # no detected fault rather than becoming an empty pack that reads as a clean machine.
+    spoken = None
+    said_day, said_relative = episode_ref.day_in(body.question)
+    if repo is not None and (said_day is not None or said_relative):
+        # Read the episodes through the repository rather than the HTTP handler: the handler
+        # takes a Request it would only use to write an audit row, and calling it from here
+        # audits a listing nobody asked for.
+        rows = await repo.faulted_slots(include_simulated=False)
+        detected = to_episodes(
+            tuple(
+                LabelledSlot(r.equipment_key, r.slot_time, r.fault_label or "")
+                for r in rows
+            )
+        )
+        spoken = episode_ref.resolve(
+            body.question,
+            equipment_key=named_in_question,
+            episodes=[
+                {
+                    "equipment_key": e.equipment_key,
+                    "fault_label": e.fault_label,
+                    "day": e.day.isoformat(),
+                }
+                for e in detected
+            ],
+        )
     selection_contradicted = bool(
         named_in_question and body.equipment_key and named_in_question != body.equipment_key
     )
+
+    # A resolved episode replaces the selection outright; an ambiguous one is reported rather
+    # than guessed, because a confident answer about the wrong one of four is worse than a
+    # question; and a relative date is refused, because on a snapshot it matches nothing while
+    # looking like it worked.
+    if spoken is not None and spoken.relative_term:
+        yield _frame("state", {"state": AnswerState.BLOCKED.value})
+        yield _frame("token", {"text": (
+            f"This is a snapshot, not a live feed — it ends on a fixed date, so "
+            f"{spoken.relative_term!r} has nothing to point at. Name a day, or ask about the "
+            f"plant, a machine or a fault class and no day is needed."
+        )})
+        yield _frame("done", {"request_id": request_id})
+        return
+
+    if (
+        spoken is not None
+        and spoken.is_ambiguous
+        and episode_ref.needs_one_episode(body.question)
+    ):
+        yield _frame("state", {"state": AnswerState.PARTIAL.value})
+        yield _frame("token", {"text": spoken.render_ambiguity()})
+        yield _frame("done", {"request_id": request_id})
+        return
+
+    # A single match is adopted whatever the question was — it is the episode the words name,
+    # and there is nothing to be ambiguous about.
+    if spoken is not None and spoken.is_resolved:
+        found = spoken.matches[0]
+        body = body.model_copy(update={
+            "equipment_key": found["equipment_key"],
+            "fault_label": found["fault_label"],
+            "day": date.fromisoformat(str(found["day"])),
+        })
+        selection_contradicted = False
 
     pack = None
     if body.equipment_key and body.fault_label and body.day and not selection_contradicted:
