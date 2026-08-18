@@ -898,6 +898,7 @@ async def answer_catalogue(
     scope: Scope | None,
     plant_repo: object | None = None,
     client: object | None = None,
+    history: str = "",
 ) -> SkillOutcome | None:
     """Answer a question about the plant's *catalogue* — no episode, no evidence pack.
 
@@ -1006,6 +1007,7 @@ async def answer_catalogue(
         value=result.value,
         fallback=rendered,
         client=client,
+        history=history,
     )
     return SkillOutcome(state=AnswerState.ANSWERED, text=text, used_model=used_model)
 

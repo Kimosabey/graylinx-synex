@@ -28,8 +28,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
+from app.agents import arbiter, conversation, postcheck, skills
 from app.agents import critique as critique_mod
-from app.agents import postcheck, skills
 from app.agents.router import RouteDecision, Skill, route
 from app.analytics.bands import ResidualBand
 from app.analytics.gates import (
@@ -172,6 +172,7 @@ async def answer_turn(  # noqa: PLR0911
     last_equipment: str | None = None,
     scope: Scope | None = None,
     plant_repo: object | None = None,
+    history: list[conversation.Exchange] | None = None,
 ) -> Turn:
     """Run the turn. Never raises — a failure becomes a state, because a stack trace is not
     an answer and on a demonstration it reads as a broken product.
@@ -191,6 +192,29 @@ async def answer_turn(  # noqa: PLR0911
     exists to prevent. Absent, the turn says so; it never assumes one.
     """
     decision = route(question, mode_override=mode_override, last_equipment=last_equipment)
+
+    # **Layer 4 has existed since the router was written and nothing ever filled it.** The
+    # `arbiter` hook took a callable, defaulted to `None`, and no caller passed one — so every
+    # question the keyword layers did not recognise fell to the deterministic default, and the
+    # product only really answered questions somebody had written a phrase for. That is what
+    # makes a chat feel like a menu: the first question phrased a way nobody anticipated comes
+    # back visibly worse, and a reader who hits two of those stops exploring.
+    #
+    # **It runs only when everything cheaper was inconclusive**, which is what the ladder is
+    # for: a question matching a keyword still routes in under a millisecond and never pays for
+    # this. Routing once and re-routing on the default costs a second pass through pure
+    # functions, which is cheaper than threading an await through every layer above.
+    if decision.layer == "default":
+        arbitration = await arbiter.arbitrate(
+            question, client=client, last_equipment=last_equipment
+        )
+        if arbitration.decided:
+            decision = route(
+                question,
+                mode_override=mode_override,
+                last_equipment=last_equipment,
+                arbiter=lambda _message: arbitration.skill,
+            )
 
     if decision.skill is Skill.REFUSE:
         return Turn(
@@ -214,7 +238,11 @@ async def answer_turn(  # noqa: PLR0911
     # have answered outright. "What equipment do we have?" is not a question about evidence.
     if pack is None:
         catalogue = await skills.answer_catalogue(
-            question, scope=scope, plant_repo=plant_repo, client=client
+            question,
+            scope=scope,
+            plant_repo=plant_repo,
+            client=client,
+            history=conversation.render(history),
         )
         if catalogue is not None:
             return Turn(

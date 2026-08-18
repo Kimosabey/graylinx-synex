@@ -40,6 +40,12 @@ export interface AskBody {
   day?: string;
   mode?: string;
   last_equipment?: string;
+  /**
+   * What was already said. Filled in by the hook from its own transcript rather than by the
+   * caller — every surface that asks a question wants the conversation carried, and making
+   * each one remember to pass it is how one of them ends up not doing so.
+   */
+  history?: { question: string; answer: string }[];
 }
 
 export interface TurnState {
@@ -94,6 +100,14 @@ const EMPTY: TurnState = {
  */
 export function useTurn() {
   const [turns, setTurns] = useState<TurnState[]>([]);
+  // **A ref beside the state, because `ask` reads the transcript from inside a closure.** The
+  // handler that calls it closed over an earlier render, so reading `turns` there would send
+  // the conversation as it stood one question ago — which is worse than sending none, since
+  // the model would resolve "that one" against the wrong turn.
+  const turnsRef = useRef<TurnState[]>([]);
+  useEffect(() => {
+    turnsRef.current = turns;
+  }, [turns]);
   const nextId = useRef(1);
   // Every frame folds into the turn being streamed, which is always the last one.
   const setTurn = useCallback(
@@ -156,7 +170,17 @@ export function useTurn() {
         const response = await fetch(`${API}/api/v1/ask`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+          // **The conversation travels with the question.** Without it the back end saw every
+          // turn as the first turn, so "and chiller 2?" or "why is that?" arrived with nothing
+          // to attach to. Read from the ref rather than the state variable because `ask` is
+          // called from an event handler that closed over an older render.
+          body: JSON.stringify({
+            ...body,
+            history: turnsRef.current
+              .filter((t) => t.question.trim() && t.text.trim())
+              .slice(-6)
+              .map((t) => ({ question: t.question, answer: t.text })),
+          }),
           credentials: 'include',
           signal: controller.signal,
         });

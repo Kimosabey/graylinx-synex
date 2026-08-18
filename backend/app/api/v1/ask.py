@@ -21,7 +21,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.agents import episode_ref
+from app.agents import conversation, episode_ref
 from app.agents.answer import answer_turn, build_gates
 from app.agents.router import names_equipment as router_names_equipment
 from app.agents.sse_contract import FRAMES
@@ -38,8 +38,22 @@ from app.services.evidence import build_pack, window_for
 router = APIRouter(prefix="/api/v1", tags=["copilot"])
 
 
+class Exchange(BaseModel):
+    """One earlier turn, as the browser holds it."""
+
+    question: str = Field(max_length=8_000)
+    answer: str = Field(default="", max_length=20_000)
+
+
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=8_000)
+    #: **What was already said.** Until this existed the composer received one system prompt,
+    #: one tool result and one question — so every turn was the first turn, and a follow-up
+    #: like *"and chiller 2?"* or *"why is that?"* arrived with nothing to attach to. That is
+    #: the single largest reason the product reads as a query box rather than a conversation.
+    #: Bounded at six because a transcript that grows without limit eventually crowds the
+    #: evidence out of the prompt budget, and the evidence is what makes an answer true.
+    history: list[Exchange] = Field(default_factory=list, max_length=6)
     equipment_key: str | None = None
     fault_label: str | None = None
     day: date | None = None
@@ -223,6 +237,11 @@ async def _stream(  # noqa: PLR0915
         # one rather than building it. Tools are forbidden from importing a driver at all, so
         # injection is the only route by which a capability may read the plant.
         plant_repo=repo,
+        # The transcript the browser holds, converted at the boundary. The agents layer owns
+        # what a conversation *is*; the API owns what arrived over the wire.
+        history=[
+            conversation.Exchange(question=e.question, answer=e.answer) for e in body.history
+        ],
         # The scope this request already computed, carried into the turn rather than
         # recomputed inside it. `investigate` runs the bounded tool loop, and every call it
         # makes goes through `G4`, which asks the Control Plane whether *this caller* may
