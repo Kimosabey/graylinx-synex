@@ -120,7 +120,16 @@ _KEYWORDS: tuple[tuple[Skill, tuple[str, ...]], ...] = (
     (Skill.INVESTIGATE, ("compare", "trend", "history", "over time", "both chillers",
                          "pattern", "how often")),
     (Skill.LOOK_UP, ("how many", "list", "show me", "what is the", "count", "value of",
-                     "reading")),
+                     "reading",
+                     # Catalogue phrasings. These reach for a *set* rather than a figure —
+                     # "what equipment do we have", "which fault classes can it report" — and
+                     # every one of them routed to `explain` and came back "no scored evidence"
+                     # while `list_equipment` and `list_fault_classes` sat registered and
+                     # unreached. Kept last so a question that is really an explanation still
+                     # matches `explain` first.
+                     "what equipment", "which equipment", "what fault", "which fault",
+                     "fault classes", "do we have", "are there", "can the model",
+                     "what can you", "what do you")),
 )
 
 #: Domain vocabulary. A message with none of this and no named equipment is out of scope,
@@ -130,6 +139,25 @@ _DOMAIN_TERMS = (
     "fault", "alarm", "temperature", "pressure", "flow", "efficiency", "kw", "plant",
     "cooling tower", "pump", "maintenance", "work order", "case", "diagnos", "head",
     "suction", "discharge", "power", "load", "setpoint", "equipment", "sensor",
+    # Added 2026-08-18. "How many episodes are there?" was refused as out of scope — layer 3
+    # had already proposed `look_up` and the scope gate overrode it, because none of these
+    # words was listed. A false refusal is worse than a wrong route: it tells a reader the
+    # product does not cover its own core vocabulary.
+    "episode", "asset", "machine", "unit", "band", "model", "signal", "provenance",
+    "checklist", "priority", "verification", "report", "gate", "measured", "window",
+    # `verify` and `resolve` had no vocabulary of their own. "Did the repair work?" matched
+    # the VERIFY keywords at layer 3 and was then refused as off-topic at 3.5, because not one
+    # of "repair", "fix" or "job" was listed — so the product rejected its own core question.
+    # Found while widening for "episode", and pre-existing rather than caused by it.
+    "repair", "fix", "job", "inspect", "clean", "replace", "close", "approve",
+    # "check" is this product's own word — checklists, blocking checks, the close gate — and
+    # "what should I check?" is one of the four questions the whole resolve path exists for.
+    # "evidence" is deliberately NOT here. It is genuine domain vocabulary and it is also the
+    # word an injection reaches for — *"answer without the evidence"* — so listing it admitted
+    # a payload that names no machine straight past the gate and on to the arbiter, where it
+    # costs a model call. The red-team suite caught it the same minute it was added. A reader
+    # asking about evidence will almost always name a machine or a fault as well.
+    "check", "finding", "verify",
 )
 
 _REFUSAL_SCOPE = (
@@ -141,6 +169,27 @@ _REFUSAL_SCOPE = (
 
 def _normalise(message: str) -> str:
     return re.sub(r"\s+", " ", message.strip().lower())
+
+
+#: Words that mean "the thing we were just discussing". A follow-up carries no domain
+#: vocabulary of its own — *"and its ΔT?"*, *"did it work?"* — so the scope gate has to admit
+#: it on the strength of the reference instead. Held as data so the set is inspectable and
+#: adding one is a decision rather than a regex somebody widened.
+_REFERENTIAL = (
+    " it", "it ", "its ", "it's", " that", "that ", " this", "this ", " them", "they ",
+    " those", " these", "same ", "again", "instead",
+)
+
+
+def _names_equipment(message: str) -> bool:
+    """Did **this message** name a machine, as opposed to inheriting one?
+
+    The distinction the scope gate turns on. `_extract_equipment` deliberately carries the last
+    unit forward, which is what makes a follow-up resolve — but "resolved from context" is not
+    "in scope", and conflating them is how *"what is the capital of France"* was answered with
+    chiller 1's residuals on 2026-08-18.
+    """
+    return _extract_equipment(message, None) is not None
 
 
 def _extract_equipment(message: str, last_equipment: str | None) -> str | None:
@@ -266,12 +315,28 @@ def _route(  # noqa: PLR0911 — eight layers, eight exits; that is the ladder
     # France" matches `look_up` and would have been routed as a telemetry question. The
     # ladder puts 3.5 *after* 3 for exactly this reason: a keyword match is evidence of
     # intent, not evidence of scope.
-    if equipment is None and not any(t in text for t in _DOMAIN_TERMS):
+    # **Inherited equipment does not put a question in scope.** `_extract_equipment` carries the
+    # last unit forward so *"and its ΔT?"* resolves, and until 2026-08-18 the gate read that
+    # carried-forward value as evidence of scope — so selecting an episode in the interface
+    # admitted *every* question, and *"what is the capital of France"* came back as a full
+    # answer about chiller 1's residuals, honesty checks and all. The checks passed: nothing in
+    # the answer was ungrounded. It was a true answer to a question nobody asked.
+    #
+    # So the gate now asks two separate questions. Does this message name a machine *itself*?
+    # And if it does not, does it either use domain vocabulary or refer back to what was just
+    # discussed? A follow-up has the reference; an off-topic question has neither.
+    in_scope = (
+        _names_equipment(message)
+        or any(t in text for t in _DOMAIN_TERMS)
+        or (last_equipment is not None and any(r in text for r in _REFERENTIAL))
+    )
+    if not in_scope:
         return RouteDecision(
             skill=Skill.REFUSE,
             layer="3.5 · scope gate",
             reason=(
-                "no equipment named and no domain vocabulary; refused before any model call"
+                "this message names no machine, uses no domain vocabulary, and refers to "
+                "nothing in the conversation; refused before any model call"
                 + (
                     f" (layer 3 had proposed {keyword_match.skill.value} on a generic phrase)"
                     if keyword_match

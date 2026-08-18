@@ -30,6 +30,7 @@ Each section below says which attack the existing suite already covers and what 
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from datetime import date, datetime
@@ -845,20 +846,37 @@ def test_a_two_digit_machine_number_is_not_matched_by_its_first_digit() -> None:
 def test_no_read_only_tool_takes_an_equipment_key_to_evade(registry: ToolRegistry) -> None:
     """A guard against a gate that does not exist yet, placed where it will be needed.
 
-    `Scope.covers` is built and no gateway gate consults it, which is harmless today for one
-    reason only: every persona on this single site sees all twelve assets, and no permitted
-    tool accepts an equipment key at all. The one that does is permanently refused. The day a
-    read-only tool takes `equipment_key`, this test fails and somebody has to decide whether
-    the gateway checks scope — which is a decision, not an oversight. Raised as Q65.
+    **The tripwire fired on 2026-08-18 and Q65 was decided rather than deferred.** This test
+    used to assert that *no* permitted tool accepted an `equipment_key`, because `Scope.covers`
+    was built and no gate consulted it. `equipment_standing` now takes one, so the question the
+    tripwire was holding open — does the gateway check scope? — has been answered: it does.
+
+    So the assertion inverts. It no longer forbids the parameter; it requires that any tool
+    taking one is actually gated, which is the property that mattered all along. A tool that
+    accepts an equipment key while the gateway ignores scope is the failure; a tool that
+    accepts one behind a gate is a feature.
     """
-    offenders = [
+    takers = [
         spec.name
         for spec in registry.all()
         if not spec.is_permanently_refused and "equipment_key" in spec.parameters.model_fields
     ]
-    assert offenders == [], (
-        f"{offenders} accept an equipment key and no gate reads Scope.covers (Q65)"
-    )
+
+    scope = compute_scope(Persona.RELIABILITY_ENGINEER)
+    outside = "chiller_99_not_on_this_site"
+    assert not scope.covers(outside), "the fixture key must be genuinely out of scope"
+
+    for name in takers:
+        result = asyncio.run(
+            Gateway(registry).invoke(name, {"equipment_key": outside}, scope)
+        )
+        assert result.outcome is Outcome.REFUSED, (
+            f"{name} accepts an equipment key and was not refused for one outside scope — "
+            f"Scope.covers is not being read (Q65)"
+        )
+        assert "scope" in result.reason.lower(), (
+            f"{name} was refused without saying it was a scope refusal"
+        )
 
 
 # ════════════════════════════════════════════════════════════════════════════════

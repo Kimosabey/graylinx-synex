@@ -135,6 +135,16 @@ async def _stream(
         # contains no machine name and no domain word, because the machine is on screen and
         # already selected. The router reads text only, so the selection has to reach it.
         last_equipment=body.last_equipment or body.equipment_key,
+        # The plant repository this request already holds, carried down so a tool can be handed
+        # one rather than building it. Tools are forbidden from importing a driver at all, so
+        # injection is the only route by which a capability may read the plant.
+        plant_repo=repo,
+        # The scope this request already computed, carried into the turn rather than
+        # recomputed inside it. `investigate` runs the bounded tool loop, and every call it
+        # makes goes through `G4`, which asks the Control Plane whether *this caller* may
+        # have *this capability*. Without this line the loop has nobody to ask and the turn
+        # says so — which is honest, and is not the product.
+        scope=scope,
     )
 
     # ── route ───────────────────────────────────────────────────────────────────

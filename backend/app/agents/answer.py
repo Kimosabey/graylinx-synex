@@ -13,12 +13,22 @@ capability, and a demonstration where the box wedges should lose its prose, not 
 **A refusal is composed, not assembled.** `NO_DIAGNOSIS` gets its own prompt and its own SSE
 frame (D-015), because rendering a refusal through the answer path softens it by
 presentation — and on this data the refusal is the modal outcome, 5,309 slots against 674.
+
+**The turn now carries a scope, and that is what makes the tool loop reachable.** `react.py`
+was built, tested with 32 green tests, and consumed by nothing — the sixth module in one day
+built with no caller. It could not be called from here because a tool call needs an identity:
+`Gateway.invoke` asks the Control Plane whether *this caller* may have *this capability*, and
+a turn with no scope has nobody to ask. So `scope` travels into the turn, `investigate`
+reaches the loop, and `POST /api/v1/ask` is the request path that gets there. A turn without a
+scope still answers — it says which capability it could not check rather than pretending it
+did, because a quieter answer and a smaller one look the same on a screen.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
+from app.agents import critique as critique_mod
 from app.agents import postcheck, skills
 from app.agents.router import RouteDecision, Skill, route
 from app.analytics.bands import ResidualBand
@@ -34,6 +44,7 @@ from app.domain import equipment as eq
 from app.domain.answer import AnswerState
 from app.llm.client import ModelClient, ModelUnavailable
 from app.prompts.explain import build_messages, build_no_diagnosis_messages
+from app.services.control_plane import Scope
 from app.services.evidence import EvidencePack
 
 CONVERSE_REPLY = (
@@ -58,6 +69,9 @@ class Turn:
     used_model: bool = False
     degraded_reason: str = ""
     badges: tuple[str, ...] = field(default_factory=tuple)
+    critique: critique_mod.Critique | None = None
+    """The second opinion, when one was taken. `None` means it was not attempted — which a
+    surface must not render as a pass; `Critique.available` carries that distinction."""
 
     @property
     def is_refusal(self) -> bool:
@@ -145,6 +159,8 @@ async def answer_turn(  # noqa: PLR0911
     client: ModelClient | None,
     mode_override: str | None = None,
     last_equipment: str | None = None,
+    scope: Scope | None = None,
+    plant_repo: object | None = None,
 ) -> Turn:
     """Run the turn. Never raises — a failure becomes a state, because a stack trace is not
     an answer and on a demonstration it reads as a broken product.
@@ -156,6 +172,12 @@ async def answer_turn(  # noqa: PLR0911
     a mutable local and deciding it twice, which is how a corrected answer starts shipping as
     an answered one. The suppression is at this site rather than in the config, so it excuses
     this function and nothing else.
+
+    `scope` is optional and defaults to `None` on purpose. It is what `investigate` needs to
+    reach the tool loop, because `Gateway.invoke` asks the Control Plane whether *this caller*
+    may have *this capability* — and a default persona would be an authorization decision made
+    by a keyword argument, which is exactly the failure the separation law's seventh row
+    exists to prevent. Absent, the turn says so; it never assumes one.
     """
     decision = route(question, mode_override=mode_override, last_equipment=last_equipment)
 
@@ -175,6 +197,22 @@ async def answer_turn(  # noqa: PLR0911
             route=decision,
         )
 
+    # ── the catalogue path: questions with no episode ───────────────────────────
+    # Asked before the no-pack refusal below, because that refusal answered *every* packless
+    # question with "there is no scored evidence" — including the ones a registered tool could
+    # have answered outright. "What equipment do we have?" is not a question about evidence.
+    if pack is None:
+        catalogue = await skills.answer_catalogue(
+            question, scope=scope, plant_repo=plant_repo
+        )
+        if catalogue is not None:
+            return Turn(
+                question=question,
+                state=catalogue.state,
+                text=catalogue.text,
+                route=decision,
+            )
+
     if pack is None:
         return Turn(
             question=question,
@@ -192,7 +230,14 @@ async def answer_turn(  # noqa: PLR0911
     # router resolved `look_up`, `prepare_work`, `resolve` and `verify` correctly, carried the
     # skill into the route frame, and then ignored it. A router whose decision changes nothing
     # only looks like a router. Four of the five spend no model at all.
-    outcome = skills.dispatch(decision.skill.value, pack)
+    #
+    # `dispatch_with_tools` rather than `dispatch` since 2026-08-17: `investigate` runs the
+    # bounded loop over the `C20` registry, through `G4`'s four gates, and every other skill
+    # takes the identical deterministic path it always did. This call is the only thing
+    # standing between a request and `react.py`, which until now had no caller at all.
+    outcome = await skills.dispatch_with_tools(
+        decision.skill.value, pack, scope=scope, question=question, plant_repo=plant_repo
+    )
     if outcome is not None:
         return Turn(
             question=question,
@@ -201,6 +246,7 @@ async def answer_turn(  # noqa: PLR0911
             route=decision,
             pack=pack,
             used_model=outcome.used_model,
+            degraded_reason=outcome.degraded_reason,
         )
 
     # ── the gates decide before the model is reached ────────────────────────────
@@ -235,6 +281,19 @@ async def answer_turn(  # noqa: PLR0911
     report = postcheck.run_audits(text, pack)
     badges = tuple(f.audit for f in report.soft_failures)
 
+    # ── the second opinion, on an answer the first model wrote ───────────────────
+    # `postcheck` compares strings and cannot see a claim the evidence contradicts while every
+    # figure in it is real. The auditor is `phi4` — not the brain that wrote this — which is
+    # what `CONTEXT.md` §4 requires and what nothing exercised until now. It is a **soft** gate:
+    # it never mutates or hides the answer, only badges it, because a hidden answer teaches a
+    # reader the system is broken while a badged one teaches them what to check.
+    second = await critique_mod.critique_answer(
+        answer=text,
+        evidence=postcheck.evidence_text(pack),
+        client=client,
+        postcheck_flags=len(report.soft_failures),
+    )
+
     if report.must_replace_answer:
         # Constraint 16. Replaced outright, and the record marks it corrected — a reassuring
         # paragraph followed by a caveat is still read as reassuring.
@@ -248,6 +307,7 @@ async def answer_turn(  # noqa: PLR0911
             used_model=used_model,
             degraded_reason=degraded,
             badges=badges,
+            critique=second,
         )
 
     return Turn(
@@ -255,6 +315,7 @@ async def answer_turn(  # noqa: PLR0911
         state=AnswerState.ANSWERED,
         text=text,
         route=decision,
+        critique=second,
         pack=pack,
         audit=report,
         used_model=used_model,

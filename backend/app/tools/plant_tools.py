@@ -17,8 +17,9 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.domain import cases as case_rules
-from app.domain import differential, equipment, faults
+from app.domain import differential, equipment, faults, priority, safety, signals
 from app.services import cases as case_service
+from app.services import reports, work_orders
 from app.tools.registry import REGISTRY, ControlLevel, SideEffect, ToolSpec
 
 # ── parameter models ────────────────────────────────────────────────────────────
@@ -47,6 +48,21 @@ class SetpointArgs(BaseModel):
 
     equipment_key: str
     setpoint_c: float
+
+
+class PriorityArgs(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    fault_label: str = Field(description="A fault class label, e.g. CONDENSER_LOW_FLOW")
+    slot_count: int = Field(
+        default=1, ge=0, description="How many consecutive measured slots carried the label"
+    )
+
+
+class EquipmentTrustArgs(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    equipment_key: str = Field(description="An equipment key, e.g. chiller_1")
 
 
 # ── handlers ────────────────────────────────────────────────────────────────────
@@ -102,6 +118,228 @@ async def _list_equipment() -> dict[str, Any]:
             {"key": e.key, "display_name": getattr(e, "display_name", e.key)}
             for e in equipment.all_equipment()
         ]
+    }
+
+
+async def _equipment_standing(equipment_key: str) -> dict[str, Any]:
+    """What is known about one machine before any episode is chosen.
+
+    **The question this exists for is the one people actually ask first.** *"How is chiller 1
+    doing?"* previously returned *"there is no scored evidence for that request"* — a true
+    sentence and a useless one, because the router needs equipment **and** fault **and** day to
+    assemble an evidence pack, and a bare machine name is none of those. A reader hearing that
+    concludes the machine is fine, or that the product is broken; both are wrong.
+
+    So this answers what *can* be said without an episode: whether the machine is scoreable at
+    all, and which of its signals a reading could be trusted from. It deliberately states no
+    verdict — the FDD rules name faults, not this — and it never implies health from silence.
+    A machine with no fitted model is not a healthy machine; it is an unjudged one, and the two
+    are the distinction the whole honesty layer exists to keep.
+    """
+    machine = equipment.by_key(equipment_key)
+    if machine is None:
+        known = ", ".join(e.key for e in equipment.all_equipment())
+        return {
+            "equipment_key": equipment_key,
+            "known": False,
+            "note": f"no equipment called {equipment_key!r}. The plant holds: {known}.",
+        }
+
+    scoreable = equipment.is_scoreable(equipment_key)
+    unusable = list(signals.unusable_keys())
+    never = list(signals.never_measured_keys())
+
+    return {
+        "equipment_key": machine.key,
+        "display_name": getattr(machine, "display_name", machine.key),
+        "known": True,
+        "scoreable": scoreable,
+        "scoreable_note": (
+            "a residual model and a reference band are fitted, so readings here can be judged"
+            if scoreable
+            else (
+                "no model and no reference band are fitted, so nothing on this machine can be "
+                "judged against one. That is not a statement that it is healthy — it is a "
+                "statement that it is unjudged."
+            )
+        ),
+        "never_measured": never,
+        "unusable": unusable,
+        "trust_note": (
+            f"{len(never)} signal(s) have never recorded a credible value and {len(unusable)} "
+            f"are unusable for other reasons; a reading derived from either is not a "
+            f"measurement of this plant."
+        ),
+        "to_go_further": (
+            "Name a fault label and a day to assemble the evidence for one episode — the "
+            "reliability workspace lists every detected episode for this machine."
+        ),
+    }
+
+
+async def _safety_for_fault(fault_label: str) -> dict[str, Any]:
+    """`S1`. Whether a fault class carries a safety impact, and whether anyone has reviewed it.
+
+    **Two absences kept apart, because collapsing them is the dangerous move.** *"No safety
+    impact was found"* and *"nobody has assessed this"* look identical on a screen and mean
+    opposite things to a person about to open a compressor. `declares_no_safety_impact` is a
+    reviewed finding; `ehs_reviewed` says whether the review happened at all. The coverage note
+    states how much of the library has been read, so an unreviewed class is never presented as
+    a cleared one.
+    """
+    assessment = safety.assess(fault_label)
+    return {
+        **assessment.as_dict(),
+        "coverage": safety.coverage_note(),
+        "reviewed_labels": len(safety.reviewed_labels()),
+        "unreviewed_labels": len(safety.unreviewed_labels()),
+    }
+
+
+async def _priority_for_fault(fault_label: str, slot_count: int) -> dict[str, Any]:
+    """`W4`. The priority a deterministic formula computes — never the model's opinion.
+
+    **It reports what it could not use.** Three of the formula's four inputs do not exist for
+    this plant, so a band returned without that caveat would read as a complete calculation.
+    `used` names the inputs that were available and `missing` names the ones that were not, so
+    a reader can see the priority is partial rather than discovering it later.
+    """
+    computed = priority.compute(fault_label, slot_count)
+    return {
+        **computed.as_dict(),
+        "note": (
+            "This band came from a formula over the inputs named in `used`. The language model "
+            "did not choose it and cannot change it."
+        ),
+    }
+
+
+async def _episodes_for_equipment(equipment_key: str, *, plant_repo: Any) -> dict[str, Any]:
+    """Every detected episode on one machine — the answer to a question about a *machine*.
+
+    **The gap this closes, and it was producing a wrong answer rather than a refusal.** Asked
+    *"what faults did chiller 2 have?"*, the catalogue path matched on "fault" and returned all
+    nine fault classes **the plant model can emit** — a confident answer to a different
+    question, with the machine silently dropped. *"What happened on chiller 1?"* did worse and
+    said there was no scored evidence, on a machine carrying 32 detected episodes.
+
+    Neither needed an episode chosen first. A question that names a machine and no day is a
+    question about the machine, and this answers it from what was actually detected: the labels
+    seen, how often, and over which days.
+
+    **Counts, never a verdict.** It says a class appeared and how many days it appeared on. It
+    does not rank, does not say which matters, and does not imply that more days is worse —
+    severity is agreed for one class of nine (`Q49`), and inherited constraint 3 forbids
+    ordering by residual magnitude because non-faults were measured to deviate more than faults.
+    """
+    machine = equipment.by_key(equipment_key)
+    if machine is None:
+        known = ", ".join(e.key for e in equipment.all_equipment())
+        return {
+            "equipment_key": equipment_key,
+            "known": False,
+            "note": f"no equipment called {equipment_key!r}. The plant holds: {known}.",
+        }
+
+    rows = [r for r in await plant_repo.faulted_slots() if r.equipment_key == machine.key]
+    by_label: dict[str, set] = {}
+    for row in rows:
+        if row.fault_label:
+            by_label.setdefault(row.fault_label, set()).add(row.slot_time.date())
+
+    days = sorted({r.slot_time.date() for r in rows})
+    return {
+        "equipment_key": machine.key,
+        "display_name": getattr(machine, "display_name", machine.key),
+        "known": True,
+        "scoreable": equipment.is_scoreable(machine.key),
+        "labelled_slots": len(rows),
+        "days_with_a_fault": len(days),
+        "first_day": days[0].isoformat() if days else None,
+        "last_day": days[-1].isoformat() if days else None,
+        "labels": [
+            {"label": label, "days": len(dates), "first": min(dates).isoformat(),
+             "last": max(dates).isoformat()}
+            for label, dates in sorted(by_label.items(), key=lambda kv: -len(kv[1]))
+        ],
+        "note": (
+            "Counts of what was detected, not a ranking. More days is not worse: severity is "
+            "agreed for one class of nine (Q49), and ordering by how far a residual sits "
+            "outside its band is forbidden — non-faults were measured to deviate more than "
+            "faults."
+        ),
+    }
+
+
+async def _reconciliation_report(*, plant_repo: Any) -> dict[str, Any]:
+    """`R3`. Every documented figure recomputed from the plant, and whether the two agree.
+
+    **The first tool that reads the plant, and it does not hold the connection.** `app.tools`
+    is forbidden from importing `sqlalchemy`, `aiomysql`, `asyncpg` or `pgvector`, and the
+    reason recorded beside that contract is not testability: *a tool that could import a
+    database driver could reach the plant directly and bypass `synex_plant_ro`*. So the
+    repository arrives as an injected resource, built by a layer allowed to hold one and
+    read-only by grant. The capability widens; the contract does not loosen.
+
+    **A disagreement is the result, not an error.** A reconciliation that returns only the
+    agreements is a reconciliation nobody needs — the whole point is the figure that does not
+    match, so the count of disagreements leads and each one is named.
+    """
+    rows = await reports.reconcile(plant_repo)
+    checkable = [r for r in rows if r.checkable]
+    disagreed = [r for r in checkable if not r.agrees]
+    return {
+        "figures": len(rows),
+        "checkable": len(checkable),
+        "agreed": len(checkable) - len(disagreed),
+        "disagreed": len(disagreed),
+        "not_checkable": len(rows) - len(checkable),
+        "disagreements": [r.as_dict() for r in disagreed],
+        "note": (
+            "Every figure here was recomputed from the plant snapshot and compared with the "
+            "documented value. A figure that cannot be recomputed is reported as not checkable "
+            "rather than as agreeing — those are different facts."
+        ),
+    }
+
+
+async def _work_order_for_episode(*, pack: Any) -> dict[str, Any]:
+    """`W2`–`W4`. The draft this episode would raise, and why — asked for rather than navigated to.
+
+    **The capability already existed; only the asking did not.** `prepare_work` has drafted work
+    orders since the skill table was wired, so *"raise a work order"* has always worked as a
+    whole turn. What it could not do was be reached *from inside a tool loop* — so an
+    investigation could not look at the job an episode would raise as one step among several,
+    and a question that mixed the two ("what is wrong and what would it cost us to fix") had to
+    pick one.
+
+    **The pack is injected, not fetched.** Same rule as the plant repository: `app.tools` may
+    not import a driver, and an `EvidencePack` is assembled from one. It arrives as a named
+    resource from the turn that already built it, so the tool renders a draft it was handed and
+    can never assemble one behind the Control Plane's back.
+
+    **`is_draft` stays true and nothing is written.** A tool that persisted a work order would
+    be a write hiding inside a read-only catalogue.
+    """
+    draft = work_orders.draft_from_pack(pack)
+    priority = draft.priority
+    return {
+        "is_draft": True,
+        "title": draft.title,
+        "equipment": draft.equipment_display,
+        "fault_label": draft.fault_label,
+        "priority_band": priority.band,
+        "priority_is_complete": priority.is_complete,
+        "priority_used": list(priority.used),
+        "priority_missing": [name for name, _ in priority.missing],
+        "evidence_lines": len(draft.evidence),
+        "cannot_close_until": list(draft.cannot_close_until),
+        "warnings": list(draft.warnings),
+        "note": (
+            "Nothing was written. This is what would be raised, with the evidence that "
+            "justifies it — a draft that reads as dispatchable when it is not is worse than "
+            "none, because somebody plans against it."
+        ),
     }
 
 
@@ -184,6 +422,110 @@ def register_all(registry=REGISTRY) -> None:
             handler=_list_fault_classes,
             skill="look_up",
             tags=("fdd", "reference"),
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="equipment_standing",
+            description=(
+                "What is known about one machine before any episode is chosen: whether it is "
+                "scoreable at all, which of its signals have never been credibly measured, and "
+                "which are unusable. Answers a bare question about a machine — 'how is chiller "
+                "1 doing' — without implying a verdict the FDD rules did not give. States no "
+                "fault and never reads silence as health."
+            ),
+            parameters=EquipmentTrustArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_equipment_standing,
+            skill="look_up",
+            tags=("asset", "provenance", "reference"),
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="work_order_for_episode",
+            description=(
+                "The work order this episode would raise: title, priority band and which of "
+                "the formula's inputs were available, how many evidence lines travel with it, "
+                "what must be true before it can close, and any warning about the models "
+                "behind it. Drafts only — nothing is written and nothing is approved."
+            ),
+            parameters=NoArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_work_order_for_episode,
+            skill="prepare_work",
+            needs=("pack",),
+            tags=("work", "draft"),
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="episodes_for_equipment",
+            description=(
+                "Every fault detected on one machine: which labels, how many days each was "
+                "seen, and the first and last day. Answers a question about a machine — 'what "
+                "happened on chiller 1', 'what faults did chiller 2 have' — with no episode "
+                "chosen. Counts only; it ranks nothing and implies no severity."
+            ),
+            parameters=EquipmentTrustArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_episodes_for_equipment,
+            skill="look_up",
+            needs=("plant_repo",),
+            tags=("asset", "fdd"),
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="reconciliation_report",
+            description=(
+                "Recompute every documented figure from the plant snapshot and report which "
+                "agree, which disagree, and which cannot be checked at all. Answers 'do the "
+                "numbers in the report match the plant'. Names each disagreement."
+            ),
+            parameters=NoArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_reconciliation_report,
+            skill="look_up",
+            needs=("plant_repo",),
+            tags=("reports", "lineage"),
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="safety_for_fault",
+            description=(
+                "Whether a fault class carries a safety impact, whether an EHS reviewer has "
+                "assessed it at all, and how much of the library has been reviewed. Keeps 'no "
+                "impact found' and 'nobody has looked' apart — they mean opposite things to "
+                "someone about to open a machine."
+            ),
+            parameters=FaultLabelArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_safety_for_fault,
+            skill="resolve",
+            tags=("safety", "reference"),
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="priority_for_fault",
+            description=(
+                "The priority band a deterministic formula computes for a fault class and a "
+                "slot count, with the inputs it used and the inputs it could not get. The "
+                "language model never sets priority; this reports what the formula did."
+            ),
+            parameters=PriorityArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_priority_for_fault,
+            skill="prepare_work",
+            tags=("work", "priority"),
         )
     )
     registry.register(

@@ -53,6 +53,11 @@ class Outcome(StrEnum):
     INVALID_ARGUMENTS = "invalid_arguments"
     REFUSED = "refused"
     NOT_IMPLEMENTED = "not_implemented"
+    MISSING_RESOURCE = "missing_resource"
+    """The tool is implemented and permitted, and the gateway was not given something it
+    declared it needs — a plant repository, today. Distinct from `NOT_IMPLEMENTED` because
+    nothing is missing from the code, and distinct from `FAILED` because nothing broke: the
+    caller wired a gateway without a resource, which is a different thing to fix."""
     FAILED = "failed"
 
 
@@ -136,9 +141,19 @@ class Gateway:
     a guarantee it cannot keep.
     """
 
-    def __init__(self, registry: ToolRegistry | None = None) -> None:
+    def __init__(
+        self,
+        registry: ToolRegistry | None = None,
+        *,
+        resources: dict[str, object] | None = None,
+    ) -> None:
         self._registry = registry or REGISTRY
         self._ledger: dict[str, ToolResult] = {}
+        # Named resources a tool may declare it needs. Held here rather than reached for by the
+        # tool, so `app.tools` still cannot import a driver — see `ToolSpec.needs`. A gateway
+        # built without them keeps working: every tool that declares none is unaffected, and
+        # one that declares a missing name reports it in words.
+        self._resources: dict[str, object] = dict(resources or {})
 
     @property
     def is_durable(self) -> bool:
@@ -186,6 +201,34 @@ class Gateway:
             )
 
         args = validated.model_dump()
+
+        # ── the fifth gate: scope, on the equipment the call actually names ──────────
+        #
+        # **Closing Q65, which was left open deliberately.** `Scope.covers` was built and no
+        # gate consulted it, which was harmless for exactly one reason: no permitted tool took
+        # an `equipment_key`, so there was no key to check. `tests/eval/test_adversarial.py`
+        # placed a tripwire on that condition — *the day a read-only tool takes an equipment
+        # key, somebody has to decide whether the gateway checks scope* — and `equipment_standing`
+        # tripped it on 2026-08-18.
+        #
+        # The decision is that it checks. Today every persona on this single site sees all
+        # twelve assets, so this refuses nothing and changes no answer; that is the point. A
+        # gate wired while it is a no-op is a gate that works on the day a second site, a
+        # contractor identity or a customer-scoped persona makes it real — rather than one
+        # somebody has to remember to add under pressure, on the request that needed it.
+        named = args.get("equipment_key")
+        if isinstance(named, str) and named and not scope.covers(named):
+            return ToolResult(
+                tool=name,
+                outcome=Outcome.REFUSED,
+                reason=(
+                    f"{name} was called for {named!r}, which is outside this identity's scope. "
+                    f"Nothing was read. Scope is recomputed every turn and never inherited, so "
+                    f"this is the scope as it stands now rather than as it was granted."
+                ),
+                arguments=args,
+            )
+
         key = idempotency_key(name, args)
 
         if key in self._ledger:
@@ -211,6 +254,20 @@ class Gateway:
     ) -> ToolResult:
         """Everything after the four gates have passed. Split out so `invoke` reads as the
         gates it is, rather than as gates plus execution."""
+        absent = [n for n in spec.needs if n not in self._resources]
+        if absent:
+            return ToolResult(
+                tool=spec.name,
+                outcome=Outcome.MISSING_RESOURCE,
+                reason=(
+                    f"{spec.name} needs {', '.join(sorted(absent))}, which this gateway was not "
+                    f"given. The tool is implemented and permitted — nothing was run, and this "
+                    f"is a wiring gap rather than a refusal or a fault."
+                ),
+                idempotency_key=key,
+                arguments=args,
+            )
+
         if spec.handler is None:
             return ToolResult(
                 tool=spec.name,
@@ -224,7 +281,11 @@ class Gateway:
             )
 
         try:
-            value = await spec.handler(**args)
+            # Declared needs travel as keyword arguments alongside the validated ones. The
+            # tool's signature names what it needs, so a mismatch is a TypeError at wiring
+            # time rather than a silently ignored resource.
+            supplied = {n: self._resources[n] for n in spec.needs}
+            value = await spec.handler(**args, **supplied)
         except Exception as exc:
             # Deliberately broad. A tool failure is a turn outcome, not a crash — the router's
             # rule that no layer may raise applies one level down too, and a driver can throw

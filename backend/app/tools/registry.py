@@ -104,6 +104,25 @@ class ToolSpec:
 
     tags: tuple[str, ...] = field(default_factory=tuple)
 
+    needs: tuple[str, ...] = field(default_factory=tuple)
+    """Named resources the gateway must hand this tool at call time — today only
+    ``"plant_repo"``.
+
+    **Why injection rather than letting the tool fetch.** The `tools_are_deterministic`
+    contract forbids `app.tools` from importing `sqlalchemy`, `aiomysql`, `asyncpg` or
+    `pgvector`, and the reason recorded beside it is not testability: *a tool that could import
+    a database driver could reach the plant directly and bypass `synex_plant_ro`*. CONTEXT §13
+    says no tool issues a control command to plant equipment in any phase, and giving tools no
+    way to talk to hardware is the cheapest way to keep that true.
+
+    Injection keeps both halves. The tool never constructs a connection and still cannot import
+    a driver; it is handed a repository built by a layer that is allowed to hold one, and that
+    repository is read-only by grant. So the capability widens without the contract loosening.
+
+    A tool that declares a need the gateway was not given does not fail obscurely: it reports
+    `MISSING_RESOURCE` in words, which is a different fact from the tool being unimplemented
+    and from it being refused."""
+
     @property
     def is_implemented(self) -> bool:
         return self.handler is not None
