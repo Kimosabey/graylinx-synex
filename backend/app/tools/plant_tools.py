@@ -214,6 +214,62 @@ async def _priority_for_fault(fault_label: str, slot_count: int) -> dict[str, An
     }
 
 
+async def _compare_equipment(*, plant_repo: Any) -> dict[str, Any]:
+    """The two scoreable machines beside each other — what each carries and how far each is
+    judged against **its own** band.
+
+    **The comparison this makes, and the one it refuses.** *"Compare the two chillers"* is a
+    question a manager asks first and this product could not answer at all. It can now say what
+    each machine carried and how wide each model's own healthy band is — and it will not say
+    which is worse. `F15` is the reason: a residual means nothing against zero, only against
+    that asset's own band, and the same figure is `HIGH` on chiller 1 and `NORMAL` on chiller 2
+    because their bands genuinely differ. Comparing the raw numbers would invert the answer on
+    one machine, which is not imprecision but a wrong result.
+
+    So it compares **counts and fit quality**, both of which are properties of the record, and
+    states the trap rather than performing the comparison a reader expected. A tool that
+    answers the wrong question fluently is worse than one that says which question it answered.
+    """
+    rows = await plant_repo.faulted_slots()
+    bands = await plant_repo.residual_bands()
+    scoreable = list(await plant_repo.scored_equipment_keys())
+
+    per: dict[str, dict[str, Any]] = {}
+    for key in scoreable:
+        machine = equipment.by_key(key)
+        mine = [r for r in rows if r.equipment_key == key and r.fault_label]
+        labels = {r.fault_label for r in mine}
+        days = {r.slot_time.date() for r in mine}
+        my_bands = [b for b in bands if b.equipment_key == key]
+        per[key] = {
+            "display_name": getattr(machine, "display_name", key) if machine else key,
+            "fault_classes": len(labels),
+            "labels": sorted(labels),
+            "days_with_a_fault": len(days),
+            "labelled_slots": len(mine),
+            "bands_fitted": len(my_bands),
+            "band_widths": {b.residual_name: round(b.width, 3) for b in my_bands},
+        }
+
+    return {
+        "compared": scoreable,
+        "machines": per,
+        "comparable_note": (
+            "These are the only two machines with a fitted model and a reference band, so they "
+            "are the only two that can be compared at all. The other ten carry telemetry that "
+            "nothing has been fitted against."
+        ),
+        "not_compared_note": (
+            "Which machine is WORSE is not answered here, and the reason is not caution. A "
+            "residual means nothing against zero, only against that asset's own healthy band — "
+            "and the two bands genuinely differ, so the same figure reads HIGH on one machine "
+            "and NORMAL on the other. Comparing the raw numbers would invert the answer on one "
+            "of them. Counts and band widths are properties of the record and are safe to set "
+            "side by side; severity is not."
+        ),
+    }
+
+
 async def _plant_overview(*, plant_repo: Any) -> dict[str, Any]:
     """What the whole plant carries — no machine named, no episode chosen.
 
@@ -525,6 +581,24 @@ def register_all(registry=REGISTRY) -> None:
             skill="prepare_work",
             needs=("pack",),
             tags=("work", "draft"),
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="compare_equipment",
+            description=(
+                "The scoreable machines side by side: how many fault classes and days each "
+                "carries, how many models are fitted, and how wide each healthy band is. "
+                "Answers 'compare the two chillers'. Deliberately does not say which is worse — "
+                "a residual only means anything against that asset's own band."
+            ),
+            parameters=NoArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_compare_equipment,
+            skill="investigate",
+            needs=("plant_repo",),
+            tags=("plant", "compare"),
         )
     )
     registry.register(

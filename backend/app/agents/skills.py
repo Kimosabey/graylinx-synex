@@ -931,7 +931,12 @@ async def answer_catalogue(
     # equipment key on this site, so "what happened across the plant" resolved to a *machine*
     # called Plant and came back "Plant carries no detected fault" — technically true of that
     # row and the opposite of what was asked. The phrase describes a scope, not a name.
-    if any(
+    # A comparison names two machines or asks for one outright, and it is checked before the
+    # plant-wide branch because "compare the plant's chillers" contains "the plant".
+    if any(t in text for t in ("compare", "versus", " vs ", "against each other",
+                               "both chillers", "difference between", "side by side")):
+        plan = ("compare_equipment", {})
+    elif any(
         t in text for t in ("across the plant", "whole plant", "the plant", "worst",
                             "overview", "everything", "all equipment", "all machines",
                             "plant wide", "plant-wide", "situation")
@@ -998,6 +1003,19 @@ def _render_catalogue(tool: str, value: dict) -> str:  # noqa: PLR0911
     needs share no structure, and funnelling them through a common shape is how a rendering
     starts saying "3 items" where it used to name them.
     """
+    if tool == "compare_equipment":
+        lines = []
+        for key, m in (value.get("machines") or {}).items():
+            lines.append(
+                f"- {m['display_name']}: {m['fault_classes']} fault class(es) over "
+                f"{m['days_with_a_fault']} day(s), {m['bands_fitted']} model(s) fitted"
+            )
+        return chr(10).join(
+            [str(value.get("comparable_note", "")), ""]
+            + lines
+            + ["", str(value.get("not_compared_note", ""))]
+        )
+
     if tool == "equipment_standing":
         if not value.get("known"):
             return str(value.get("note") or "That machine is not on this site.")
