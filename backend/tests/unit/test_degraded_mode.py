@@ -274,7 +274,7 @@ def test_live_mode_is_not_probed_rather_than_assumed_reachable() -> None:
     dependency is one that times out — after which nobody reads it at all."""
     observation = observer.observe_answer_prose(model_mode="live")
     assert observation.finding is Finding.NOT_PROBED
-    assert "makes none" in observation.detail
+    assert "makes no call" in observation.detail
 
 
 def test_the_durability_flags_are_read_from_the_code_that_publishes_them() -> None:

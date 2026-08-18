@@ -493,8 +493,8 @@ export default function JobPage() {
 
             <p className={styles.gateLine} data-may-advance={caseView.may_advance}>
               <span className={styles.gateWord}>
-                Case state · {caseView.state} · may advance: {String(caseView.may_advance)}
-              </span>
+                Case state · {caseView.state} · {caseView.may_advance ? 'can advance' : 'cannot advance'}
+              </span>{' '}
               {caseView.advance_reason}
             </p>
           </>

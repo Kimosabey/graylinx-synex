@@ -226,6 +226,32 @@ export default function Page() {
          *
          * A control that exists to be ignored still teaches that it matters. */}
 
+        {/* **Start again, and say what that means.** A transcript is the product's memory: the
+            router reads the machine named in the previous turn, so a question typed after five
+            unrelated ones can inherit a subject nobody meant. Clearing is how somebody gets a
+            clean read, and without a control for it the only way was reloading the page — which
+            reads as giving up on the product rather than starting a new line of enquiry. */}
+        {turns.length > 0 && (
+          <div className="transcript-actions">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => {
+                if (turn.streaming) stop();
+                clear();
+                setQuestion('');
+                setSelected(null);
+              }}
+            >
+              Clear and start fresh
+            </button>
+            <span className="muted">
+              {turns.length} turn{turns.length === 1 ? '' : 's'} · clearing also drops the machine
+              carried forward from the last question
+            </span>
+          </div>
+        )}
+
         <div className="composer">
           <label htmlFor="q" className="sr-only" style={{ position: 'absolute', left: -9999 }}>
             Your question

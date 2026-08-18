@@ -11,6 +11,8 @@ from fastapi import APIRouter, Depends, Request
 
 from app.agents import degraded_mode
 from app.config import Settings, get_settings
+from app.db import knowledge
+from app.db.session import state_reachable, state_session
 from app.domain import equipment as eq
 from app.domain.answer import ANSWER_STATES
 from app.domain.degradation import DegradationReport
@@ -35,7 +37,7 @@ async def health(request: Request, settings: Settings = Depends(get_settings)) -
     capabilities, with the substitutions named — `/api/v1/degraded` carries it in full.
     """
     repo = getattr(request.app.state, "plant_repo", None)
-    degradation = _degradation(request, settings)
+    degradation = await _probed_degradation(request, settings)
     return {
         "status": "ok" if repo is not None else "degraded",
         "degraded_mode": {
@@ -83,16 +85,103 @@ async def degraded(request: Request, settings: Settings = Depends(get_settings))
     its reason in words, a substituted one names the substitution, and one that nobody probed
     says so rather than being counted as working.
     """
-    return _degradation(request, settings).as_dict()
+    # **The probes happen here, not in the report.** `degraded_mode` opens no sockets by
+    # design — it is imported by code that must stay pure — so the two capabilities that can
+    # only be known by asking are asked at this layer and handed in. Four of seven used to read
+    # `unknown` on a platform where three of them were up; that is honest but not useful, and
+    # "nobody looked" is a poor answer to give somebody deciding whether to trust the screen.
+    return (await _probed_degradation(request, settings)).as_dict()
 
 
-def _degradation(request: Request, settings: Settings) -> DegradationReport:
-    """The observations this process can make without opening a socket.
+async def _probed_degradation(request: Request, settings: Settings) -> DegradationReport:
+    """The assessment, with the two capabilities that can only be known by asking, asked.
+
+    **Both endpoints go through here, and that is the whole point.** `/health` summarises what
+    `/degraded` details, and a test asserts they cannot disagree — so a probe added to one and
+    not the other is not a cosmetic difference, it is the aggregate reporting a different
+    platform than the detail behind it.
+    """
+    embed_ok, embed_why = await _embedder_answers(settings)
+    store_ok, store_why = await _vector_store_answers(settings)
+    return _degradation(
+        request,
+        settings,
+        case_queue_session_opened=await state_reachable(settings),
+        embeddings_reached=embed_ok,
+        embeddings_detail=embed_why,
+        retrieval_reached=store_ok,
+        retrieval_detail=store_why,
+        box_reached=await _box_answers(settings),
+    )
+
+
+async def _embedder_answers(settings: Settings) -> tuple[bool | None, str]:
+    """Does the embedding host answer, and is the embedding model actually pulled?
+
+    Two facts, not one: a host that answers while `nomic-embed-text` is absent produces a
+    retrieval path that fails at the first passage, and reporting that as *available* would
+    send somebody looking in the wrong place.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            response = await client.get(f"{settings.embed_host}/api/tags")
+        if response.status_code != 200:
+            return False, f"{settings.embed_host} answered HTTP {response.status_code}"
+        names = {m.get("name", "") for m in response.json().get("models", [])}
+        wanted = role_table.model_for("embed")
+        if not any(n.split(":")[0] == wanted.split(":")[0] for n in names):
+            return False, (
+                f"{settings.embed_host} answered, but {wanted} is not pulled on it, so the "
+                f"first passage would fail"
+            )
+        return True, f"{wanted} answered at {settings.embed_host}"
+    except Exception as cause:
+        return False, f"{settings.embed_host} did not answer: {cause}"
+
+
+async def _vector_store_answers(settings: Settings) -> tuple[bool | None, str]:
+    """Does pgvector hold approved passages, and how many?
+
+    A store that is reachable and **empty** is not retrieval working — it is retrieval with
+    nothing to retrieve, which returns no passages and reads as a plant with no documentation.
+    The count travels so the difference is visible rather than inferred.
+    """
+    try:
+        async with state_session(settings) as session:
+            count = await knowledge.count_approved(session)
+        if count == 0:
+            return False, (
+                "pgvector answered and holds no approved passages, so retrieval would return "
+                "nothing — which reads as a plant with no documentation"
+            )
+        return True, f"pgvector answered and holds {count} approved passage(s)"
+    except Exception as cause:
+        return False, f"pgvector did not answer: {type(cause).__name__}"
+
+
+def _degradation(
+    request: Request,
+    settings: Settings,
+    *,
+    case_queue_session_opened: bool | None = None,
+    embeddings_reached: bool | None = None,
+    embeddings_detail: str = "",
+    retrieval_reached: bool | None = None,
+    retrieval_detail: str = "",
+    box_reached: bool | None = None,
+) -> DegradationReport:
+    """The observations this process can make, plus any measurement handed in.
 
     Shared by `/health` and `/degraded` so the two can never disagree — a summary computed
     separately from the detail it summarises is the defect the aggregate exists to remove.
     """
     return degraded_mode.assess_platform(
+        case_queue_session_opened=case_queue_session_opened,
+        box_reached=box_reached,
+        embeddings_reached=embeddings_reached,
+        embeddings_detail=embeddings_detail,
+        retrieval_reached=retrieval_reached,
+        retrieval_detail=retrieval_detail,
         plant_repo=getattr(request.app.state, "plant_repo", None),
         plant_error=getattr(request.app.state, "plant_error", None),
         model_mode=settings.synex_model_mode,

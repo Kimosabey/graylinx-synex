@@ -3305,31 +3305,68 @@ table.data .absent {
 /* The confirm control. **Deliberately the only primary button in a turn** — a NEEDS_APPROVAL
    answer has exactly one act available, and giving it a second would make the reader choose
    between them rather than decide the one thing they were asked to decide. */
+/* **The bug this fixes.** Every one of `--sp-3`, `--sp-4`, `--sp-5`, `--fs-sm`, `--radius-md`,
+ * `--surface-2` and `--muted-fg` below was a name that sounds right and was never once defined
+ * in this file — this codebase's actual tokens are `--s-*` for spacing, `--t-*` for type size,
+ * `--r-*`/`--radius` for radius, `--sunken` for a recessed surface, `--muted` for the dim
+ * foreground. An undefined custom property makes the whole declaration invalid, so every gap,
+ * margin, padding and font-size here was silently collapsing to the browser default — which is
+ * exactly why the button and its caption were crowding with no space between them. */
 .confirmwork {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-3);
-  margin-top: var(--sp-4);
+  gap: var(--s-3);
+  margin-top: var(--s-4);
 }
 
 .confirmwork .muted {
-  font-size: var(--fs-sm);
+  font-size: var(--t-small);
   max-width: 44ch;
 }
 
 /* The outcome replaces the button rather than sitting beside it: a control that has already
    acted, still offering to act, invites the second press that G5 exists to make harmless. */
 .confirmwork-result {
-  margin-top: var(--sp-4);
-  padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--radius-md);
+  margin-top: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--radius);
   border-left: 3px solid var(--accent);
-  background: var(--surface-2);
-  font-size: var(--fs-sm);
+  background: var(--sunken);
+  font-size: var(--t-small);
   max-width: 62ch;
 }
 
 .confirmwork-result[data-tone='refused'] {
-  border-left-color: var(--muted-fg);
+  border-left-color: var(--muted);
+}
+
+/* Starting again. **Below the transcript and above the composer**, which is where somebody
+   who has read to the end and wants a clean subject is already looking. Ghost weight, not
+   primary: clearing is a retreat from work already done, and a button that competes with
+   Ask invites the accidental press that loses it. */
+.transcript-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-5) 0 var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--rule);
+}
+
+.transcript-actions .muted {
+  font-size: var(--t-small);
+  max-width: 52ch;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--rule);
+}
+
+.btn.ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }

@@ -74,6 +74,7 @@ def observe_answer_prose(
     model_mode: str,
     transcript_dir: Path | None = None,
     turn_degraded_reason: str = "",
+    box_reached: bool | None = None,
 ) -> Observation:
     """The roster, or the recording of it — and the turn's own verdict outranks both.
 
@@ -85,10 +86,12 @@ def observe_answer_prose(
     place. `SESSION-HANDOFF.md` §3 is blunt about where this stands: *every Copilot answer is
     still the deterministic fallback and says so.*
 
-    **There is no `REACHED` branch here, deliberately.** Nothing in this process ever confirms
-    the roster answered; only a completion does, and this report makes no call. So a mode that
-    reaches the box is `NOT_PROBED` and a turn that already fell back is `NOT_REACHED` — and the
-    turn is read first, because evidence from a call that just failed outranks configuration.
+    **A `REACHED` branch exists now, and only a measurement can enter it.** This module still
+    makes no call; `box_reached` is handed in by a caller that did, the same way
+    `turn_degraded_reason` already is. Handed nothing, a mode that reaches the box is still
+    `NOT_PROBED`, because configuration is not evidence. The order is unchanged and matters: a
+    turn that already fell back outranks a probe that succeeded a moment earlier, because
+    evidence from the path a reader actually took outranks evidence from a different one.
     """
     if turn_degraded_reason.strip():
         return Observation(
@@ -98,12 +101,23 @@ def observe_answer_prose(
         )
 
     if model_mode in MODES_THAT_REACH_THE_BOX:
+        if box_reached is None:
+            return Observation(
+                capability=Capability.ANSWER_PROSE,
+                finding=Finding.NOT_PROBED,
+                detail=(
+                    f"the mode is {model_mode!r}, so a completion goes to the box. Nobody "
+                    f"established whether it answers, and this module makes no call"
+                ),
+            )
         return Observation(
             capability=Capability.ANSWER_PROSE,
-            finding=Finding.NOT_PROBED,
+            finding=Finding.REACHED if box_reached else Finding.NOT_REACHED,
             detail=(
-                f"the mode is {model_mode!r}, so a completion goes to the box. Establishing "
-                f"whether it answers costs a call to it, and this report makes none"
+                f"the mode is {model_mode!r} and the box answered when asked"
+                if box_reached
+                else f"the mode is {model_mode!r} but the box did not answer, so every answer "
+                f"in this process is the deterministic one"
             ),
         )
 
@@ -210,28 +224,55 @@ def observe_case_queue(*, session_opened: bool | None = None) -> Observation:
     )
 
 
-def observe_embeddings() -> Observation:
-    """The embedder on the host. Never probed from here — see the module docstring."""
+def observe_embeddings(*, reached: bool | None = None, detail: str = "") -> Observation:
+    """The embedder on the host.
+
+    **This module still opens no sockets; the caller does.** A probe result may be handed in —
+    the same shape `turn_degraded_reason` already uses — so a surface that *did* reach the host
+    can report a measurement instead of an absence. Handed nothing, it reports not-probed,
+    which is what it always did and is never the same as working.
+    """
+    if reached is None:
+        return Observation(
+            capability=Capability.EMBEDDINGS,
+            finding=Finding.NOT_PROBED,
+            detail=(
+                "reaching the embedder costs an HTTP call to Ollama on the host, and nobody "
+                "made one for this report. `K1` and `S4` establish it when they need it, and "
+                "refuse if it is absent"
+            ),
+        )
     return Observation(
         capability=Capability.EMBEDDINGS,
-        finding=Finding.NOT_PROBED,
-        detail=(
-            "reaching the embedder costs an HTTP call to Ollama on the host, and this report "
-            "makes none. `K1` and `S4` establish it when they need it, and refuse if it is "
-            "absent"
-        ),
+        finding=Finding.REACHED if reached else Finding.NOT_REACHED,
+        detail=detail or ("the embedder answered" if reached else "the embedder did not answer"),
     )
 
 
-def observe_knowledge_retrieval() -> Observation:
-    """Retrieval sits on two other capabilities, so it is not probed independently."""
+def observe_knowledge_retrieval(
+    *, reached: bool | None = None, detail: str = ""
+) -> Observation:
+    """Retrieval stands on pgvector and the embedder.
+
+    **Still never derived from the other two.** A conclusion assembled from two other
+    capabilities is a conclusion nobody measured; if this is to report `reached` it is because
+    somebody actually counted the rows in the vector store and says so in `detail`.
+    """
+    if reached is None:
+        return Observation(
+            capability=Capability.KNOWLEDGE_RETRIEVAL,
+            finding=Finding.NOT_PROBED,
+            detail=(
+                "it stands on pgvector and the embedder, and nobody read the vector store for "
+                "this report. Deriving it from the other two would state a conclusion nobody "
+                "measured"
+            ),
+        )
     return Observation(
         capability=Capability.KNOWLEDGE_RETRIEVAL,
-        finding=Finding.NOT_PROBED,
-        detail=(
-            "it stands on pgvector and the embedder, neither of which this report probes. "
-            "Deriving it from the two would state a conclusion nobody measured"
-        ),
+        finding=Finding.REACHED if reached else Finding.NOT_REACHED,
+        detail=detail
+        or ("the vector store answered" if reached else "the vector store did not answer"),
     )
 
 
@@ -242,8 +283,13 @@ def assess_platform(
     model_mode: str,
     transcript_dir: Path | None = None,
     turn_degraded_reason: str = "",
+    box_reached: bool | None = None,
     case_queue_session_opened: bool | None = None,
     gateway: Gateway | None = None,
+    embeddings_reached: bool | None = None,
+    embeddings_detail: str = "",
+    retrieval_reached: bool | None = None,
+    retrieval_detail: str = "",
 ) -> DegradationReport:
     """The whole report, from what the process already knows.
 
@@ -260,9 +306,10 @@ def assess_platform(
                 model_mode=model_mode,
                 transcript_dir=transcript_dir,
                 turn_degraded_reason=turn_degraded_reason,
+                box_reached=box_reached,
             ),
-            observe_embeddings(),
-            observe_knowledge_retrieval(),
+            observe_embeddings(reached=embeddings_reached, detail=embeddings_detail),
+            observe_knowledge_retrieval(reached=retrieval_reached, detail=retrieval_detail),
             observe_audit_trail(),
             observe_tool_idempotency(gateway),
         )

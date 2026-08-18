@@ -10,6 +10,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import aiomysql
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -96,6 +97,26 @@ async def state_session(settings: Settings) -> AsyncIterator[AsyncSession]:
                 raise
     finally:
         await engine.dispose()
+
+
+async def state_reachable(settings: Settings) -> bool:
+    """Does PostgreSQL answer? One trivial round trip, and nothing is written.
+
+    **In `app.db` rather than at the API layer, because that layer may not import a driver.**
+    A session that merely *opens* is not proof — the engine is lazy and a factory can hand back
+    a session that has never touched the socket — so this executes something and lets the round
+    trip be the evidence.
+
+    Reported as reachable-or-not rather than by counting cases: an empty queue on a plant where
+    nobody has opened one is the ordinary state, and calling that unavailable would report a
+    quiet day as a fault.
+    """
+    try:
+        async with state_session(settings) as session:
+            await session.execute(select(1))
+        return True
+    except Exception:
+        return False
 
 
 @asynccontextmanager

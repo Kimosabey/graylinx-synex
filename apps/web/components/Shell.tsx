@@ -213,7 +213,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
           aria-label={collapsed ? 'Expand the surface rail' : 'Collapse the surface rail'}
           title={collapsed ? 'Expand' : 'Collapse'}
         >
-          <span aria-hidden="true">{collapsed ? '›' : '‹'}</span>
+          {/* One glyph, not two. `globals.css` already rotates this 180deg when collapsed —
+              "the chevron turns rather than being swapped for a different glyph" — so also
+              swapping the character here fought that rotation and cancelled it: collapsed
+              rendered '›' rotated 180deg, which reads as '‹' again, identical to the open
+              state. */}
+          <span aria-hidden="true">‹</span>
         </button>
 
         <div id="rail-surfaces" className="railinner">

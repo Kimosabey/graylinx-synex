@@ -283,6 +283,21 @@ async def count_unapproved(session, kind: str | None = None) -> int:
     return len((await session.scalars(stmt)).all())
 
 
+async def count_approved(session, kind: str | None = None) -> int:
+    """How much of the library retrieval can actually reach.
+
+    **Reachable and non-empty are different facts about the vector store**, and the health
+    surface needs both: a store that answers while holding nothing returns no passages, which
+    reads as a plant with no documentation rather than as a store nobody filled. Counted here
+    rather than in the API layer because `app.api` may not import a driver — the contract that
+    keeps every query in one place.
+    """
+    stmt = select(DocumentChunk).where(DocumentChunk.is_approved.is_(True))
+    if kind:
+        stmt = stmt.where(DocumentChunk.kind == kind)
+    return len((await session.scalars(stmt)).all())
+
+
 async def add_chunk(session, chunk: DocumentChunk) -> DocumentChunk:
     session.add(chunk)
     await session.flush()
