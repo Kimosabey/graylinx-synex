@@ -63,7 +63,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from app.agents import compose, escalate, nl_sql, recall, tool_choice
+from app.agents import compose, escalate, nl_sql, orchestrate, recall, tool_choice
 from app.agents.chooser import ModelChooser
 from app.agents.react import (
     Chooser,
@@ -1000,6 +1000,21 @@ class _SyntheticSpec:
 _TELEMETRY_COLUMNS: frozenset[str] = frozenset(_eq.TELEMETRY_COLUMNS)
 
 
+#: The broad question, offered to the chooser as one capability. It is not a tool: it is a
+#: *plan* over several, and it exists because the chooser picks the single best lookup — right
+#: when there is one, and wrong for "give me a full review", which needs four.
+_WHOLE_PICTURE = _SyntheticSpec(
+    name="whole_picture",
+    description=(
+        "A broad review that no single lookup answers: 'give me a full review of the plant', "
+        "'what should I know before the handover', 'how are we doing overall', 'walk me "
+        "through everything'. Reads several capabilities at once and answers from all of "
+        "them together. Use only when the question genuinely spans more than one — a question "
+        "with a single subject is answered better by the lookup for that subject."
+    ),
+)
+
+
 _QUERY_TELEMETRY = _SyntheticSpec(
     name="query_telemetry",
     description=(
@@ -1011,6 +1026,61 @@ _QUERY_TELEMETRY = _SyntheticSpec(
         "Not for detected faults, gates, priorities or work: those have their own lookups."
     ),
 )
+
+
+async def _answer_from_several(
+    question: str, *, client, gateway, scope, history: str, doc_index
+) -> SkillOutcome:
+    """A broad question, answered from several reads at once.
+
+    The planner names capabilities, they run in parallel, and one composed answer covers all
+    of them. A read that failed is named in the evidence rather than dropped, because a review
+    silently assembled from three quarters of what it meant to gather reads exactly like a
+    complete one.
+
+    `PARTIAL` always: a review of a plant where ten of twelve machines have no fitted model is
+    partial by construction, whatever it manages to gather.
+    """
+    named = await orchestrate.plan(question, specs=list(REGISTRY.all()), client=client)
+    if not named:
+        return SkillOutcome(
+            state=AnswerState.BLOCKED,
+            text=(
+                "No plan could be made for that. Ask about the plant, one machine, a fault "
+                "class or the readings themselves and there is a direct route to each."
+            ),
+        )
+
+    async def run(name: str):
+        outcome = await gateway.invoke(name, {}, scope)
+        return outcome.value if outcome.outcome is Outcome.OK else None
+
+    gathered = await orchestrate.gather(named, run=run)
+    if not gathered.any_answered:
+        return SkillOutcome(
+            state=AnswerState.BLOCKED,
+            text=(
+                f"The review planned {len(named)} read(s) and none of them answered. Nothing "
+                f"was assumed in their place."
+            ),
+        )
+
+    recalled = await recall.recall(question, index=doc_index) if doc_index is not None else None
+    text, used_model = await compose.compose_from_tool(
+        question=question,
+        tool="whole_picture",
+        value=gathered.as_evidence(),
+        fallback=_render_catalogue("plant_overview", gathered.as_evidence()),
+        client=client,
+        history=history,
+        documents=recalled.block if recalled and recalled.has_passages else "",
+    )
+    return SkillOutcome(
+        state=AnswerState.PARTIAL,
+        text=text,
+        used_model=used_model,
+        payload={"read": list(named)},
+    )
 
 
 async def _answer_from_telemetry(
@@ -1128,6 +1198,17 @@ async def answer_catalogue(
 
     _ensure_registry()
 
+    # The repository is *handed in*, never constructed here. `app.tools` may not import a
+    # driver — the contract exists so a tool can never reach the plant outside
+    # `synex_plant_ro` — so the API layer builds it and it travels down as a named resource.
+    # A tool declaring `needs=("plant_repo",)` against a gateway without one reports
+    # `MISSING_RESOURCE` in words rather than failing obscurely.
+    #
+    # Built before the chooser rather than after it, because `whole_picture` runs several
+    # lookups through this same gateway and one gateway per turn is what `G5`'s ledger expects.
+    resources = {"plant_repo": plant_repo} if plant_repo is not None else None
+    gateway = Gateway(REGISTRY, resources=resources)
+
     # **Layer 4 for answering, matching layer 4 for routing.** The branches above are phrases
     # somebody thought of; the questions nobody thought of used to fall out here and come back
     # "there is no scored evidence" while `compare_equipment` and `plant_overview` sat
@@ -1147,7 +1228,7 @@ async def answer_catalogue(
     if plan is None:
         picked = await tool_choice.choose(
             question,
-            specs=[*REGISTRY.all(), _QUERY_TELEMETRY],
+            specs=[*REGISTRY.all(), _QUERY_TELEMETRY, _WHOLE_PICTURE],
             client=client,
             equipment_known=named is not None,
         )
@@ -1156,6 +1237,16 @@ async def answer_catalogue(
 
         if picked.tool == _QUERY_TELEMETRY.name:
             return await _answer_from_telemetry(question, client=client, plant_repo=plant_repo)
+
+        if picked.tool == _WHOLE_PICTURE.name:
+            return await _answer_from_several(
+                question,
+                client=client,
+                gateway=gateway,
+                scope=scope,
+                history=history,
+                doc_index=doc_index,
+            )
         # **Only the arguments this tool actually declares.** Passing `equipment_key` to a
         # `NoArgs` tool is a validation failure the reader sees as "signal_standing was called
         # with arguments it cannot accept" — the chooser having picked correctly and the
@@ -1169,13 +1260,6 @@ async def answer_catalogue(
             picked.tool,
             {"equipment_key": named} if (named and wants_equipment) else {},
         )
-    # The repository is *handed in*, never constructed here. `app.tools` may not import a
-    # driver — the contract exists so a tool can never reach the plant outside
-    # `synex_plant_ro` — so the API layer builds it and it travels down as a named resource.
-    # A tool declaring `needs=("plant_repo",)` against a gateway without one reports
-    # `MISSING_RESOURCE` in words rather than failing obscurely.
-    resources = {"plant_repo": plant_repo} if plant_repo is not None else None
-    gateway = Gateway(REGISTRY, resources=resources)
     result = await gateway.invoke(plan[0], plan[1], scope)
 
     if result.outcome is not Outcome.OK or not isinstance(result.value, dict):
