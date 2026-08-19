@@ -16,6 +16,7 @@ from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from app.analytics.episodes import LabelledSlot, to_episodes
+from app.analytics.events import to_events
 from app.analytics.gates import (
     GateOutcome,
     check_band_available,
@@ -29,6 +30,7 @@ from app.db.plant import RESIDUAL_COLUMNS
 from app.db.provenance import ProvenanceRepository
 from app.db.session import work_order_store
 from app.domain import equipment as eq
+from app.domain import faults
 from app.domain.answer import AnswerState
 from app.services import audit_log, work_orders
 from app.services import cases as case_svc
@@ -145,6 +147,26 @@ async def list_episodes(
                 else "Measured readings only; the simulated span is excluded"
             ),
         },
+        # **What those episodes actually are.** 39 labels describe far fewer real events: one
+        # machine having one bad day is seen through several detectors at once, and a queue
+        # listing labels tells a planner there are 39 things to look at when there are not.
+        # The lead class is never the biggest — HIGH_HEAD_AMBIGUOUS appears on every fault day
+        # and would title every row with the class that says least.
+        "events": [
+            e.as_dict()
+            for e in to_events(
+                [
+                    {
+                        "equipment_key": e.equipment_key,
+                        "fault_label": e.fault_label,
+                        "day": e.day.isoformat(),
+                        "slot_count": e.slot_count,
+                    }
+                    for e in episodes
+                ],
+                undecidable=frozenset(faults.undecidable_labels()),
+            )
+        ],
         "episode_count": len(episodes),
         "equipment_days": len({(e.equipment_key, e.day) for e in episodes}),
         "episodes": [
