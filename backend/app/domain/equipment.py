@@ -136,3 +136,26 @@ def is_scoreable(key: str) -> bool:
     """
     equipment = _BY_KEY.get(key)
     return bool(equipment and equipment.scoreable)
+
+#: Every column the normalized tables carry, read from the live schema on 2026-08-19. The
+#: chiller tables hold 40 and the tower tables hold 11; this is the union, because the allow-list
+#: a written statement is checked against must cover whichever table the question is about.
+#:
+#: **Held here rather than typed into the guard.** A hand-kept copy in the validator is a list
+#: that drifts, and a column the guard does not know about is refused as invented even though it
+#: is real — a refusal a reader cannot distinguish from the plant not having the signal.
+#:
+#: Note what being on this list does and does not mean. It means a statement naming the column
+#: will not be refused as invented. It does **not** mean the reading is trustworthy:
+#: `cond_flow` is never-measured, `kw_per_tr` and `chiller_flow` are suspect, and `dpt` is
+#: constant. `app.domain.signals` owns that judgement and an answer must carry it.
+TELEMETRY_COLUMNS: tuple[str, ...] = (
+    "chiller_flow", "chw_delta_t", "comp1_discharge_temp", "comp1_kw", "comp1_load",
+    "comp1_oil_pressure", "comp1_run_hours", "comp2_discharge_temp", "comp2_kw", "comp2_load",
+    "comp2_oil_pressure", "comp2_run_hours", "compressor_power", "cond_entering_temp",
+    "cond_flow", "cond_leaving_temp", "created_at", "cumulative_kwh", "cumulative_trh",
+    "discharge_pressure", "discharge_temp", "dpt", "evap_entering_temp", "evap_flow",
+    "evap_leaving_temp", "faulty", "id", "is_running", "kw", "kw_per_tr", "kwh", "manual",
+    "percent_cooling_load", "run_hours", "slot_time", "ss_id", "suction_pressure",
+    "temp_setpoint", "tr", "trh",
+)

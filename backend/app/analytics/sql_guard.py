@@ -150,7 +150,19 @@ def validate(
     # Only identifiers that look like column references are checked; a model inventing
     # `power_factor` or `vibration` on a plant that meters neither is the failure this catches.
     if allowed_columns:
-        words = set(re.findall(r"\b([a-z_][a-z0-9_]{3,})\b", body.lower()))
+        # **String literals and aliases are removed before the check, and leaving them in was a
+        # defect in the boundary rather than a strictness setting.** A correct statement —
+        # `SELECT 'chiller_1' AS machine, AVG(comp1_kw) AS avg_kw ...` — was refused because
+        # `chiller_1`, `machine` and `avg_kw` are not columns. They are not meant to be: one is
+        # a literal the model wrote to label a row, the others are names it invented for its
+        # own output, which is what `AS` is for.
+        #
+        # A guard that rejects correct statements is as broken as one that admits dangerous
+        # ones, and it fails in a way nobody investigates: the refusal is articulate and wrong,
+        # so it reads as the plant not having the column.
+        without_literals = re.sub(r"'[^']*'|\"[^\"]*\"", " ", body.lower())
+        aliases = set(re.findall(r"\bas\s+`?([a-z_][a-z0-9_]*)`?", without_literals))
+        words = set(re.findall(r"\b([a-z_][a-z0-9_]{3,})\b", without_literals)) - aliases
         keywords = {
             "select", "from", "where", "group", "order", "limit", "having", "join", "left",
             "right", "inner", "outer", "on", "as", "and", "or", "not", "null", "count", "sum",

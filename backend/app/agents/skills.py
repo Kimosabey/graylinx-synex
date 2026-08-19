@@ -63,7 +63,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from app.agents import compose, escalate, tool_choice
+from app.agents import compose, escalate, nl_sql, tool_choice
 from app.agents.chooser import ModelChooser
 from app.agents.react import (
     Chooser,
@@ -970,6 +970,79 @@ def _equipment_named_in(text: str) -> str | None:
 _FAULT_LABEL = re.compile(r"\b[A-Z][A-Z0-9]{2,}(?:_[A-Z0-9]+)+\b")
 
 
+@dataclass(frozen=True)
+class _SyntheticSpec:
+    """A choosable capability that is not a registered tool.
+
+    It carries the two attributes the chooser reads — a name and a description — and nothing
+    else. Shaped like a `ToolSpec` rather than special-cased in the chooser, so the chooser has
+    one kind of thing to reason about.
+    """
+
+    name: str
+    description: str
+
+    @property
+    def parameters(self):
+        """Shaped like a `ToolSpec`'s, and deliberately empty.
+
+        The chooser reads `model_fields` to decide whether a capability needs a machine named.
+        This one does not — the question carries its own machine into the statement — so an
+        empty mapping is the honest answer rather than a borrowed argument model.
+        """
+        return type("_NoFields", (), {"model_fields": {}})
+
+
+#: The allow-list a written statement is checked against, read from the domain so there is one
+#: source. A hand-kept copy here would drift, and a column the guard does not know about is
+#: refused as invented even though it is real — a refusal a reader cannot tell apart from the
+#: plant genuinely not having the signal.
+_TELEMETRY_COLUMNS: frozenset[str] = frozenset(_eq.TELEMETRY_COLUMNS)
+
+
+_QUERY_TELEMETRY = _SyntheticSpec(
+    name="query_telemetry",
+    description=(
+        "Read the plant's raw readings directly to answer a question about numbers: an "
+        "average, a total, a count, a maximum, a comparison between machines, how much data "
+        "exists, or how something varies over the recorded window. Use this for power, "
+        "current, temperatures, run hours, load and setpoints — anything measured — and "
+        "especially when the question asks which machine is higher or lower on a reading. "
+        "Not for detected faults, gates, priorities or work: those have their own lookups."
+    ),
+)
+
+
+async def _answer_from_telemetry(
+    question: str, *, client, plant_repo
+) -> SkillOutcome:
+    """One bounded SELECT, written by devstral and checked before it runs.
+
+    `PARTIAL` rather than `ANSWERED` deliberately: this returns readings, and readings are not
+    a verdict. A row saying chiller 2 averages more kilowatts is not a statement that chiller 2
+    has a problem — the rules decide that, and this path never reaches them.
+    """
+    if plant_repo is None:
+        return SkillOutcome(
+            state=AnswerState.BLOCKED,
+            text="The plant connection is not available, so no reading can be read.",
+        )
+
+    result = await nl_sql.answer(
+        question,
+        client=client,
+        repo=plant_repo,
+        allowed_tables=frozenset(t.table for t in _eq.all_equipment()),
+        allowed_columns=_TELEMETRY_COLUMNS,
+    )
+    return SkillOutcome(
+        state=AnswerState.PARTIAL if result.ran else AnswerState.BLOCKED,
+        text=result.render(),
+        used_model=result.ran,
+        payload={"statement": result.statement} if result.statement else None,
+    )
+
+
 async def answer_catalogue(
     question: str,
     *,
@@ -1060,15 +1133,28 @@ async def answer_catalogue(
     # registered and unreached. A reader cannot tell that apart from the plant genuinely having
     # nothing. The chooser reads the registry's own descriptions, so it covers tools added
     # after it was written, and it may only name read-only ones it can fully fill.
+    # **The query path is offered to the chooser as if it were a tool, and it is not one.**
+    # A registered tool would have to reach both a model and a connection, and `app.tools` may
+    # import neither — the contract that keeps every query in one place and every model call in
+    # another. So it is described to the chooser here and executed here, using the client and
+    # the repository this layer already holds.
+    #
+    # It answers the class nothing else can: every other path reads residuals, and `comp1_kw`
+    # is a measured column with 10,077 non-null readings on chiller 1. "Which chiller uses more
+    # power" was refused because `compressor_power_residual` is 100% NULL — a fact about a
+    # model that was never fitted, not about a reading that was never taken.
     if plan is None:
         picked = await tool_choice.choose(
             question,
-            specs=list(REGISTRY.all()),
+            specs=[*REGISTRY.all(), _QUERY_TELEMETRY],
             client=client,
             equipment_known=named is not None,
         )
         if not picked.decided:
             return None
+
+        if picked.tool == _QUERY_TELEMETRY.name:
+            return await _answer_from_telemetry(question, client=client, plant_repo=plant_repo)
         # **Only the arguments this tool actually declares.** Passing `equipment_key` to a
         # `NoArgs` tool is a validation failure the reader sees as "signal_standing was called
         # with arguments it cannot accept" — the chooser having picked correctly and the

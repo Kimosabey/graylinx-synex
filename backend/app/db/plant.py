@@ -203,6 +203,29 @@ class PlantRepository:
 
     # ── bands ───────────────────────────────────────────────────────────────────
 
+    async def run_validated_select(
+        self, statement: str, *, max_rows: int
+    ) -> tuple[tuple[str, ...], tuple[tuple, ...]]:
+        """Execute a statement `sql_guard` has already accepted. **Never validates it here.**
+
+        The split is deliberate and it is the security boundary: `app.analytics.sql_guard`
+        decides what may run and knows nothing about connections, this holds the connection and
+        decides nothing. A method that did both would let a caller reach the second half
+        without the first, which is the only way a model-written statement gets executed
+        unchecked.
+
+        `synex_plant_ro` holds two grants and cannot write, so this is the second lock rather
+        than the only one — a defence that exists once is a defence that fails once.
+
+        Column names travel with the rows because a reader shown a bare tuple has to guess what
+        each number is, and guessing is how a condenser temperature becomes a flow.
+        """
+        async with self._pool.acquire() as conn, conn.cursor() as cur:
+            await cur.execute(statement)
+            columns = tuple(d[0] for d in (cur.description or ()))
+            rows = tuple(await cur.fetchmany(max_rows))
+        return columns, rows
+
     async def residual_bands(self) -> tuple[ResidualBand, ...]:
         """The ten reference bands, keyed by domain equipment key.
 
