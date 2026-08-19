@@ -1,7 +1,7 @@
 """The document library, and the four ways citing one can mislead."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from app.agents import recall
 
@@ -80,12 +80,14 @@ async def test_an_unavailable_search_is_not_an_empty_library() -> None:
     system. Told the first when the second happened, somebody goes looking for a document that
     is sitting there.
     """
-    down = await recall.recall("anything", index=_Index(_Result(available=False, reason="pgvector refused")))
+    unreachable = _Index(_Result(available=False, reason="pgvector refused"))
+    down = await recall.recall("anything", index=unreachable)
     assert down.available is False
     assert "pgvector refused" in down.reason
     assert not down.has_passages
 
-    empty = await recall.recall("anything", index=_Index(_Result(reason="no approved passage matched")))
+    nothing_matched = _Index(_Result(reason="no approved passage matched"))
+    empty = await recall.recall("anything", index=nothing_matched)
     assert empty.available is True
     assert not empty.has_passages
 
