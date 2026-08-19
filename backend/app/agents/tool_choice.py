@@ -93,6 +93,26 @@ async def choose(
     if not offered:
         return ToolChoice(None, "no lookup could be filled from what this question resolved")
 
+    # **Asked twice before believing a refusal.** Measured on this box: *"what should I look at
+    # first this morning"* chose `plant_overview` on one call and returned null on the next,
+    # with the same prompt and the same model. A question that answers and then does not is
+    # worse than one that never answers — the reader concludes the product is unreliable rather
+    # than bounded, and no amount of correct behaviour afterwards undoes that.
+    #
+    # The cost is real and worth naming: a *genuine* decline now takes two calls rather than
+    # one. That is the right trade because a genuine decline is rare and a false one is
+    # indistinguishable, to a reader, from the platform having nothing.
+    for attempt in (1, 2):
+        picked = await _ask_once(question, offered=offered, client=client)
+        if picked.decided:
+            return picked
+        if attempt == 2:
+            return picked
+    return ToolChoice(None, "no lookup was chosen")
+
+
+async def _ask_once(question: str, *, offered: list, client) -> ToolChoice:
+    """One call to the chooser. Every failure returns undecided rather than raising."""
     try:
         completion = await asyncio.wait_for(
             client.complete(

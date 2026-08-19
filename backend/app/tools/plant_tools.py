@@ -68,6 +68,39 @@ class EquipmentTrustArgs(BaseModel):
 # ── handlers ────────────────────────────────────────────────────────────────────
 
 
+async def _signal_standing() -> dict[str, Any]:
+    """Every signal this plant carries, and whether a number may be quoted from it.
+
+    **The registry already held honest answers to questions the product was refusing.** Asked
+    *"what is the kW/TR on chiller 1?"*, it said *"there is no scored evidence for that
+    request"* — while `kw_per_tr` sat in the registry marked `suspect` with the reason written
+    out. The same for condenser flow, which is `never_measured` and has been since the first
+    reading. A generic refusal and a stated absence read identically to somebody who does not
+    already know, and only one of them is an answer.
+
+    Five states rather than a boolean, because they need different people: never metered wants
+    an instrumentation budget, constant wants a technician at a transmitter, suspect wants
+    somebody to decide which of two contradicting signals to believe.
+    """
+    return {
+        "signals": [
+            {
+                "signal": s.display_name,
+                "key": s.key,
+                "unit": s.unit,
+                "status": s.status.value,
+                "may_be_quoted": s.is_usable,
+                "why": s.note,
+            }
+            for s in signals.SIGNALS
+        ],
+        "quotable_note": (
+            "Only a MEASURED signal may be read as a value. The others are stated absences: "
+            "a number from any of them would be a number this plant never took."
+        ),
+    }
+
+
 async def _list_fault_classes() -> dict[str, Any]:
     """Every label the trained model can emit, with what is settled about each."""
     return {
@@ -580,6 +613,24 @@ def register_all(registry=REGISTRY) -> None:
     A function rather than import-time side effects: a capability that becomes reachable
     merely because a module was imported is one nobody decided to grant.
     """
+    registry.register(
+        ToolSpec(
+            name="signal_standing",
+            description=(
+                "What each signal on this plant is worth: which are measured and may be "
+                "quoted, and which are never-measured, constant or suspect and may only be "
+                "reported as an absence. Answers questions naming a specific reading — "
+                "condenser flow, kW/TR, condenser approach, chilled water flow — including "
+                "the ones this plant cannot answer, and says why."
+            ),
+            parameters=NoArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_signal_standing,
+            skill="look_up",
+            tags=("provenance", "reference"),
+        )
+    )
     registry.register(
         ToolSpec(
             name="list_fault_classes",

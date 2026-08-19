@@ -1051,9 +1051,18 @@ async def answer_catalogue(
         )
         if not picked.decided:
             return None
+        # **Only the arguments this tool actually declares.** Passing `equipment_key` to a
+        # `NoArgs` tool is a validation failure the reader sees as "signal_standing was called
+        # with arguments it cannot accept" — the chooser having picked correctly and the
+        # caller having filled the call wrong. Read from the parameter model rather than a
+        # list here, so a tool that grows an argument is covered by that change alone.
+        chosen_spec = next((s for s in REGISTRY.all() if s.name == picked.tool), None)
+        wants_equipment = "equipment_key" in getattr(
+            getattr(chosen_spec, "parameters", None), "model_fields", {}
+        )
         plan = (
             picked.tool,
-            {"equipment_key": named} if named else {},
+            {"equipment_key": named} if (named and wants_equipment) else {},
         )
     # The repository is *handed in*, never constructed here. `app.tools` may not import a
     # driver — the contract exists so a tool can never reach the plant outside
