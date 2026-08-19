@@ -21,7 +21,7 @@ class _Box:
         self.asked_task: str | None = None
         self.prompt: str = ""
 
-    async def complete(self, *, role, task, messages, json_only=False):  # noqa: ARG002
+    async def complete(self, *, role, task, messages, json_only=False):
         self.asked_role = role
         self.asked_task = task
         self.prompt = "\n".join(m["content"] for m in messages)

@@ -26,7 +26,7 @@ class _Box:
         self.asked_role: str | None = None
         self.json_only: bool = False
 
-    async def complete(self, *, role, task, messages, json_only=False):  # noqa: ARG002
+    async def complete(self, *, role, task, messages, json_only=False):
         self.asked_role = role
         self.json_only = json_only
         if self._raises is not None:
@@ -140,7 +140,7 @@ async def test_a_failed_read_is_named_rather_than_dropped() -> None:
 
 
 async def test_a_read_returning_nothing_is_a_failure_not_an_empty_result() -> None:
-    async def empty(name: str) -> None:  # noqa: ARG001
+    async def empty(name: str) -> None:
         return None
 
     got = await orchestrate.gather(("plant_overview",), run=empty)
