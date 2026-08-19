@@ -107,6 +107,17 @@ _NEEDS_ONE = (
     "what should i check", "what do i check", "checklist", "check list",
     "did the repair", "did it work", "did the fix", "was it fixed",
     "isolate", "permit", "lock out", "lockout",
+    # **Handing work over is an episode-level act, and leaving it off here broke the whole
+    # path.** "I haven't got the gauge for chiller 1 on 9 April" routed to `resolve` correctly
+    # and then died before reaching it: chiller 1 carries two faults that day, so resolution
+    # was ambiguous, and because escalating was not listed as needing one episode the
+    # ambiguity went unreported and the pack stayed empty. The reader got "open a case first" —
+    # the exact refusal the handoff was built to replace.
+    "escalate", "hand this over", "hand it over", "pass this on", "pass it on",
+    "i can't do this", "i cannot do this", "out of my depth",
+    "not allowed", "no authority", "not authorised", "the authority",
+    "haven't got the", "don't have the", "no gauge", "no meter", "no tool",
+    "need a technician", "need a supervisor", "second opinion",
 )
 
 
