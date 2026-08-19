@@ -176,7 +176,7 @@ def test_no_prompt_carries_a_number_the_repository_cannot_source(name: str, prom
     import re
 
     allowed = {"1", "2", "3", "4", "2b"}
-    found = {t for t in re.findall(r"\b\d+(?:\.\d+)?\b", prompt)} - allowed
+    found = set(re.findall(r"\b\d+(?:\.\d+)?\b", prompt)) - allowed
     assert not found, f"{name} prompt carries unsourced number(s): {sorted(found)}"
 
 

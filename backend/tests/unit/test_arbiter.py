@@ -29,7 +29,7 @@ class _Box:
         self.asked_role: str | None = None
         self.prompt: str = ""
 
-    async def complete(self, *, role, task, messages):  # noqa: ARG002
+    async def complete(self, *, role, task, messages):
         self.asked_role = role
         self.prompt = "\n".join(m["content"] for m in messages)
         if self._raises is not None:
