@@ -12,6 +12,7 @@ refused, with a test on the refusal, is the difference between a policy and an o
 """
 from __future__ import annotations
 
+import asyncio
 import re
 from typing import Any
 
@@ -82,6 +83,45 @@ def _without_figures(note: str) -> str:
     a number that was invented to fill the gap.
     """
     return re.sub(r"\b\d[\d,.]*\b", "a recorded figure", note)
+
+
+async def _shift_report(*, plant_repo: Any) -> dict[str, Any]:
+    """`R1`. One document answering *"give me a report"* — the question with no other path.
+
+    **Gathered deterministically, worded by the model.** Three reads that already exist run in
+    parallel and their results travel whole: what the plant carries, whether the documented
+    figures still match it, and what each signal is worth. Nothing is summarised here — a
+    summary computed in a tool is a second place the counts live, and the two drift.
+
+    **Parallel because they are independent.** Three sequential reads over the same pool is
+    three round trips for one document, and a report a reader waits three times as long for is
+    a report they stop asking for.
+
+    **What it deliberately does not contain.** No ranking: severity is agreed for one fault
+    class of nine, so ordering machines by seriousness would present a judgement the formula
+    cannot make. No trend: the window is a snapshot that ends, and a direction fitted across
+    its edge is a direction about the edge. No recommendation: what to do about a fault comes
+    from the checklist library, which is unreviewed, and a report that invented actions would
+    be the one output the grounding audit cannot check, because actions carry no numbers.
+    """
+    overview, reconciliation, signals_now = await asyncio.gather(
+        _plant_overview(plant_repo=plant_repo),
+        _reconciliation_report(plant_repo=plant_repo),
+        _signal_standing(),
+    )
+    return {
+        "report": "plant status",
+        "what_the_plant_carries": overview,
+        "do_the_documented_figures_match": reconciliation,
+        "what_each_signal_is_worth": signals_now,
+        "deliberately_absent": [
+            "No ranking by seriousness — severity is agreed for one fault class of nine.",
+            "No trend — the measured window is a snapshot that ends, so a direction fitted "
+            "across its edge would be a statement about the edge.",
+            "No recommended actions — those come from the checklist library, which is "
+            "unreviewed, and an invented action is the one output no numeric audit can check.",
+        ],
+    }
 
 
 async def _signal_standing() -> dict[str, Any]:
@@ -637,6 +677,25 @@ def register_all(registry=REGISTRY) -> None:
     A function rather than import-time side effects: a capability that becomes reachable
     merely because a module was imported is one nobody decided to grant.
     """
+    registry.register(
+        ToolSpec(
+            name="shift_report",
+            description=(
+                "One written report on the whole plant: what it carries, whether the "
+                "documented figures still match the readings, and what each signal is worth. "
+                "Answers 'give me a report', 'shift handover', 'plant status report', "
+                "'summarise the plant for me' and anything asking for a document rather than "
+                "a single fact. Says what it deliberately leaves out."
+            ),
+            parameters=NoArgs,
+            side_effect=SideEffect.READ_ONLY,
+            control_level=ControlLevel.AUTOMATIC,
+            handler=_shift_report,
+            skill="investigate",
+            needs=("plant_repo",),
+            tags=("plant", "report"),
+        )
+    )
     registry.register(
         ToolSpec(
             name="signal_standing",

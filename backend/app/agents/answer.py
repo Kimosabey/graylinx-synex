@@ -163,6 +163,28 @@ def deterministic_refusal(pack: EvidencePack) -> str:
     return "\n".join(lines)
 
 
+#: The refusal that fires when no evidence pack could be built. True, and on this plant the
+#: commonest thing the product says — ten of twelve machines have no fitted model.
+_NO_SCORED_EVIDENCE = (
+    "There is no scored evidence for that request. Only chiller 1 and chiller 2 have a fitted "
+    "model and a reference band; the other ten equipment tables carry telemetry and nothing "
+    "that can be judged against it."
+)
+
+#: **What a reader can still do, offered every time a route runs out.** Fixed rather than
+#: generated: these are the paths the product actually has, so it can never offer a capability
+#: it lacks — the failure a model-written suggestion invites. Three, because a longer list stops
+#: being an invitation and becomes a menu somebody has to read.
+_WHAT_IS_STILL_POSSIBLE = (
+    "\n\n**What can still be answered**\n"
+    "- The readings themselves — ask for an average, a maximum or a comparison and the "
+    "telemetry is read directly, no fitted model needed.\n"
+    "- What a fault class means, and which machines carried it.\n"
+    "- The plant as a whole — ask for a report and it says what is detected, whether the "
+    "documented figures still match, and what each signal is worth."
+)
+
+
 async def answer_turn(  # noqa: PLR0911
     *,
     question: str,
@@ -283,12 +305,16 @@ async def answer_turn(  # noqa: PLR0911
         return Turn(
             question=question,
             state=AnswerState.NO_DIAGNOSIS,
-            text=specific
-            or (
-                "There is no scored evidence for that request. Only chiller 1 and chiller 2 "
-                "have a fitted model and a reference band; the other ten equipment tables "
-                "carry telemetry and nothing that can be judged against it."
-            ),
+            # **The fourth mode: nothing usable, so say what *is* possible.** The bare refusal
+            # — "there is no scored evidence for that request" — is true and it ends the
+            # conversation, which on a plant where ten of twelve machines have no fitted model
+            # is the commonest thing this product says. A reader who meets it twice concludes
+            # the platform knows nothing, when what is true is that *this route* knows nothing
+            # and three others are open.
+            #
+            # Deterministic and fixed: the routes are what the product has, not what a model
+            # thinks it has, so this cannot offer a capability that does not exist.
+            text=(specific or _NO_SCORED_EVIDENCE) + _WHAT_IS_STILL_POSSIBLE,
             route=decision,
         )
 
