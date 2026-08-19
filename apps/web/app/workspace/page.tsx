@@ -100,11 +100,29 @@ interface Episode {
   last_slot: string;
 }
 
+/**
+ * One machine-day, and every class detected on it.
+ *
+ * Thirty-nine labels describe far fewer real events: one machine having one bad day is seen
+ * through several detectors at once, and a queue listing labels tells a planner there are
+ * thirty-nine things to look at when there are not.
+ */
+interface PlantEvent {
+  equipment_key: string;
+  day: string;
+  lead_label: string;
+  lead_is_undecidable: boolean;
+  also_detected: string[];
+  label_count: number;
+  slot_count: number;
+}
+
 interface EpisodeList {
   window: { end: string; includes_simulated: boolean; note: string };
   episode_count: number;
   equipment_days: number;
   episodes: Episode[];
+  events: PlantEvent[];
 }
 
 interface Gate {
@@ -363,6 +381,50 @@ export default function WorkspacePage() {
           ) : null
         }
       />
+
+      {/* **What the detections actually are, before the per-label list below.** A queue listing
+          one row per label tells a planner there are thirty-nine things to look at; these are
+          the machine-days those labels describe. The per-label table stays because case
+          identity is built on it — both are true and they answer different questions. */}
+      {(detected.data?.events?.length ?? 0) > 0 && (
+        <section className="card">
+          <h2>
+            {detected.data!.events.length} machine-day
+            {detected.data!.events.length === 1 ? '' : 's'} carry a detection
+          </h2>
+          <p className="muted">
+            {detected.data!.episode_count} detected labels group into these. One machine having
+            one bad day is seen through several detectors at once, so a row here is a visit
+            somebody would make rather than a label somebody would read.
+          </p>
+          <Reveal as="ul" className="events" runKey={detected.data!.events.length}>
+            {detected.data!.events.map((event) => (
+              <li key={`${event.equipment_key}:${event.day}`}>
+                <span className="events-lead" data-undecidable={event.lead_is_undecidable}>
+                  {event.lead_label}
+                </span>
+                <span className="events-where">
+                  {event.equipment_key.replace('_', ' ')} · {event.day} · {event.slot_count}{' '}
+                  slot{event.slot_count === 1 ? '' : 's'}
+                </span>
+                {event.also_detected.length > 0 && (
+                  <span className="muted events-also">
+                    also detected: {event.also_detected.join(', ')}
+                  </span>
+                )}
+                {/* The lead is the determinate class where one exists, never the biggest —
+                    HIGH_HEAD_AMBIGUOUS carries the most slots on most days and says least. */}
+                {event.lead_is_undecidable && (
+                  <span className="muted events-also">
+                    Every class on this day declares itself undecidable, so nothing here names a
+                    mechanism.
+                  </span>
+                )}
+              </li>
+            ))}
+          </Reveal>
+        </section>
+      )}
 
       {workspace.error && (
         <Degraded

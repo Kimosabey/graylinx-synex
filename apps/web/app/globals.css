@@ -3569,3 +3569,48 @@ table.data .absent {
   color: var(--muted-fg);
   font-size: var(--fs-xs);
 }
+
+/* Machine-days that carry a detection. **One row is a visit somebody would make**, rather than
+   a label somebody would read — thirty-nine labels group into far fewer of these. */
+.events {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.events li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3);
+  border-left: 2px solid var(--rule);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--surface-2);
+}
+
+/* A determinate lead takes the accent rail; an undecidable one does not. That is the only
+   visual weight on this list — it is not a severity, it is whether the class names a
+   mechanism at all, which is a fact rather than a judgement. */
+.events li:has(.events-lead[data-undecidable='false']) {
+  border-left-color: var(--accent);
+}
+
+.events-lead {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+
+.events-where {
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-fg);
+}
+
+.events-also {
+  flex-basis: 100%;
+  font-size: var(--fs-xs);
+}
