@@ -200,14 +200,16 @@ export default function Page() {
           />
         )}
 
-        {turns.length === 0 && <NeverDoes />}
-
+        {/* **Folded away, not removed.** An empty chat was carrying twelve starter chips, a
+            six-item list of everything the product refuses, and a paragraph explaining the
+            levels — a wall of limitations in front of somebody who has not asked anything yet.
+            The boundary matters and it is not the first thing to say. It stays one click away,
+            which is where a reader looks when a refusal has just surprised them. */}
         {turns.length === 0 && (
-          <p className="muted">
-            Ask at whatever level suits the question — the whole plant, one machine, a fault
-            class, or the evidence behind one detected episode. Every answer states the data
-            window it covers and names the evidence behind it.
-          </p>
+          <details className="boundary-fold">
+            <summary>What it will never do</summary>
+            <NeverDoes />
+          </details>
         )}
 
         {/* The composer is last in the flow and pinned by CSS. A chat where you type

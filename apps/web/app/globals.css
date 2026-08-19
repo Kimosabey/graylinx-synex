@@ -3517,3 +3517,26 @@ table.data .absent {
 .wo-tile[data-kind='authorisation'] {
   border-color: var(--accent);
 }
+
+/* The boundary, folded. **Available, not announced.** An empty chat was leading with six things
+   the product refuses to do, in front of somebody who had not asked anything yet — a wall of
+   limitations read as a wall of limitations. It stays one click away, which is where a reader
+   looks when a refusal has just surprised them. */
+.boundary-fold {
+  margin-top: var(--sp-5);
+}
+
+.boundary-fold > summary {
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--muted-fg);
+  padding: var(--sp-2) 0;
+}
+
+.boundary-fold > summary:hover {
+  color: var(--accent);
+}
+
+.boundary-fold[open] > summary {
+  margin-bottom: var(--sp-3);
+}

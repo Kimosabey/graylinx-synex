@@ -55,9 +55,8 @@ const GROUPS: ReadonlyArray<{ heading: string; questions: readonly string[] }> =
     heading: 'Plant level — the whole site, no machine named',
     questions: [
       'What happened across the plant?',
+      'Give me a report on the plant',
       'What equipment do we have?',
-      'What fault classes can the model report?',
-      'Do the numbers in the report match the plant?',
     ],
   },
   {
@@ -99,24 +98,23 @@ export function StarterChips({ faultLabels, episodes, onPick }: StarterChipsProp
   // episode is where you end up. A reader who meets the narrowest question first concludes
   // they must pick an episode before they can ask anything — the belief the whole selection
   // removal exists to undo.
+  // **Three groups, and it was five.** The fault-class and boundary groups were teaching a
+  // taxonomy rather than inviting a question, and an empty chat offering twelve chips is a menu
+  // somebody has to read before they can type. What survives is one example per thing a reader
+  // might actually want: the whole plant, one machine, and one episode's worth of work.
   const groups = [
     ...GROUPS,
-    ...(faultLabels.length
-      ? [{ heading: 'Fault class level — what a label means', questions: [`What does ${faultLabels[0]} mean?`] }]
-      : []),
     ...(worked
       ? [
           {
-            heading: 'Episode level — name the machine and the day, and it finds the episode',
+            heading: 'One episode — name the machine and the day',
             questions: [
               `Raise a work order for ${machine} on ${day} for ${worked.fault_label}`,
               `What should I check on ${machine} on ${day}?`,
-              `Did the repair work on ${machine} on ${day}?`,
             ],
           },
         ]
       : []),
-    BOUNDARY,
   ];
 
   return (
