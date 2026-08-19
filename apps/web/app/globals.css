@@ -3540,3 +3540,32 @@ table.data .absent {
 .boundary-fold[open] > summary {
   margin-bottom: var(--sp-3);
 }
+
+/* The hand-off into the Copilot. **A link, not a button** — it goes somewhere, and dressing a
+   navigation as an action makes a reader expect something to happen in place. The question it
+   will ask is shown rather than hidden behind the label, so somebody can tell at a glance
+   whether it is the question they actually have. */
+.askcopilot-row {
+  margin-top: var(--sp-3);
+}
+
+.askcopilot {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.askcopilot:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* The question itself is quiet: it is there to be checked, not read every time. */
+.askcopilot-q {
+  color: var(--muted-fg);
+  font-size: var(--fs-xs);
+}

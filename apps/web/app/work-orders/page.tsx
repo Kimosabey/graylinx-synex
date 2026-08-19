@@ -20,6 +20,7 @@
 
 import Link from 'next/link';
 import { Degraded, EmptyState, PageHeader, Skeleton } from '@/components/Surface';
+import { AskCopilot } from '@/components/AskCopilot';
 import { Reveal } from '@/components/motion';
 import { useApi } from '@/components/useApi';
 
@@ -128,6 +129,13 @@ export default function WorkOrdersPage() {
                         — incomplete, reported with what was used rather than as a finished rank
                       </span>
                     )}
+                    <div className="askcopilot-row">
+                      <AskCopilot
+                        question={`What happened on ${wo.equipment_key.replace('_', ' ')}?`}
+                      >
+                        Ask about this machine
+                      </AskCopilot>
+                    </div>
                     <div className="muted">
                       {wo.evidence_lines} evidence line(s) travel with this job
                       {wo.created_at ? ` · raised ${wo.created_at.slice(0, 16).replace('T', ' ')}` : ''}

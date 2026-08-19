@@ -18,6 +18,7 @@
  */
 
 import { Fragment, useCallback, useEffect, useState } from 'react';
+import { AskCopilot } from '@/components/AskCopilot';
 import { IconAlert, IconCheck } from '@/components/Icons';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'http://127.0.0.1:8001';
@@ -85,6 +86,13 @@ export default function ReportsPage() {
     <>
       <section className="card supporting">
         <h2>Reconciliation — every reported number, recomputed from source</h2>
+        {/* This page is one report. The Copilot writes the wider one, and says what it leaves
+            out — so a reader who wants the whole picture has somewhere to go from here. */}
+        <div className="askcopilot-row">
+          <AskCopilot question="Give me a report on the plant">
+            Ask for the whole-plant report
+          </AskCopilot>
+        </div>
         {error && <p className="muted">Could not reach the back end: {error}</p>}
         {report && (
           <>

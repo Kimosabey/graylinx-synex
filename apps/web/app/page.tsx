@@ -14,7 +14,7 @@
  */
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTurn } from '@/lib/useTurn';
 import { TurnView } from '@/components/TurnView';
 import { Conversations } from '@/components/Conversations';
@@ -50,6 +50,19 @@ export default function Page() {
   // question it held was the one the demonstration wanted asked.
   const [question, setQuestion] = useState('');
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // **The hand-off from every other surface.** A page that knows what it is showing writes the
+  // whole question and links here with it; this asks it once and strips the parameter. Sending
+  // on every render would make a bookmarked URL re-ask forever, and a back-button press would
+  // silently spend box time on an answer already on screen.
+  const askedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const handed = new URLSearchParams(window.location.search).get('ask');
+    if (!handed || handed === askedRef.current) return;
+    askedRef.current = handed;
+    window.history.replaceState({}, '', window.location.pathname);
+    ask({ question: handed });
+  }, [ask]);
 
   useEffect(() => {
     fetch(`${API}/api/v1/episodes`, { credentials: 'include' })

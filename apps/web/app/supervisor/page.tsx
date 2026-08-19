@@ -31,6 +31,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IconAlert, IconCheck, IconHalt, IconShield } from '@/components/Icons';
 import { Pressable, Reveal, ValueChange } from '@/components/motion';
+import { AskCopilot } from '@/components/AskCopilot';
 import { Degraded, EmptyState, PageHeader, Skeleton, StateChip } from '@/components/Surface';
 import { API_BASE, useApi } from '@/components/useApi';
 import styles from './supervisor.module.css';
@@ -285,6 +286,18 @@ function Approval({ row, onDone }: { row: ApprovalRow; onDone: () => void }) {
           <dd className="mono">{row.state}</dd>
           <dt>Action</dt>
           <dd className="mono">{ruling.action}</dd>
+          <dt>Ask</dt>
+          <dd>
+            {/* A supervisor deciding on a case is exactly the reader who needs the evidence
+                behind it, and this page shows the ruling rather than the readings. The
+                question names the machine, the day and the fault, so the Copilot resolves the
+                episode from the words with nothing selected. */}
+            <AskCopilot
+              question={`Why was ${row.equipment_key.replace('_', ' ')} flagged on ${row.day} for ${row.fault_label}?`}
+            >
+              The evidence behind this
+            </AskCopilot>
+          </dd>
           <dt>Risk</dt>
           <dd className="mono">{ruling.risk}</dd>
         </dl>
