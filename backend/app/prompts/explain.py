@@ -204,14 +204,39 @@ def build_fitted_messages(
     )
 
 
-def build_messages(pack: EvidencePack, question: str) -> list[dict[str, str]]:
+def build_messages(
+    pack: EvidencePack, question: str, *, drop_unverified: tuple[str, ...] = ()
+) -> list[dict[str, str]]:
     """The full message list for the brain, fitted to the context ceiling.
 
     Delegates so there is one assembly path rather than two that drift. The signature is
     unchanged because `app.agents.answer` owns the turn and passes this straight to the client;
     anything that wants to know what the ceiling cost calls `build_fitted_messages` instead.
+
+    `drop_unverified` carries the claims the auditor could not verify, on the one retry a gated
+    answer gets. **The claims are quoted back rather than summarised**, because "be more
+    grounded" is advice and "do not say this sentence" is an instruction — and the first
+    produces a hedged version of the same claim.
     """
-    return build_fitted_messages(pack, question).messages
+    messages = build_fitted_messages(pack, question).messages
+    if not drop_unverified:
+        return messages
+
+    quoted = "\n".join(f"- {claim}" for claim in drop_unverified[:6])
+    return [
+        *messages,
+        {
+            "role": "user",
+            "content": (
+                "An independent auditor read your previous answer and could not verify these "
+                f"claims against the evidence:\n\n{quoted}\n\n"
+                "Write the answer again without them. Do not soften them, do not hedge them "
+                "and do not restate them with a caveat — leave them out. Everything else "
+                "stands. If removing them leaves less to say, say less: a shorter answer that "
+                "is entirely supported is the point."
+            ),
+        },
+    ]
 
 
 NO_DIAGNOSIS_SYSTEM = """\

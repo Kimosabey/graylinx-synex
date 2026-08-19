@@ -28,7 +28,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
-from app.agents import arbiter, conversation, postcheck, skills
+from app.agents import arbiter, conversation, hypothesise, postcheck, skills
 from app.agents import critique as critique_mod
 from app.agents.router import RouteDecision, Skill, route
 from app.analytics.bands import ResidualBand
@@ -325,6 +325,34 @@ async def answer_turn(  # noqa: PLR0911
 
     # ── the gates decide before the model is reached ────────────────────────────
     if not pack.may_diagnose:
+        # **A gate that failed on an undecidable class is where the product earns its keep.**
+        # Four classes on this plant admit in their own names that they cannot be resolved, and
+        # `HIGH_HEAD_AMBIGUOUS` — the longest-running of them — was answered with the gates
+        # that did not pass. True, and not an answer: the platform holds five named candidate
+        # causes for that class and five checks that would separate them, and said none of it.
+        #
+        # So the turn changes mode instead of ending. It names the candidates, names the check
+        # that would narrow them most, and says plainly that no discriminator has been reviewed
+        # — which is the honest state and also the clearest statement of what one hour with a
+        # refrigeration engineer would unlock.
+        #
+        # Deterministic throughout: the candidate set is transcribed content, the next question
+        # is chosen by reach with ties broken toward the lowest id, and no model picks, ranks
+        # or eliminates a cause. `PARTIAL` rather than `NO_DIAGNOSIS`, because something was
+        # answered — just not the question the reader hoped for.
+        hypothesis = hypothesise.for_fault(
+            pack.fault_label, equipment_display=pack.equipment_display
+        )
+        if hypothesis is not None:
+            return Turn(
+                question=question,
+                state=AnswerState.PARTIAL,
+                text=hypothesis.render(),
+                route=decision,
+                pack=pack,
+                used_model=False,
+            )
+
         text, used_model, degraded = await _compose(
             client,
             build_no_diagnosis_messages(pack, question),
@@ -367,6 +395,36 @@ async def answer_turn(  # noqa: PLR0911
         client=client,
         postcheck_flags=len(report.soft_failures),
     )
+
+    # **Gated once means answered again, not answered worse.** The gate badges an answer
+    # `needs-review` and stops there, which leaves a reader holding a paragraph they have been
+    # told to distrust and no better one. Thermynx re-answers once from the grounded data only,
+    # dropping the claims the auditor could not verify, and that is the difference between
+    # "this was flagged" and "here it is with the unsupported parts removed".
+    #
+    # **Once, and only on a real gate.** A retry loop against a model that keeps failing burns
+    # the turn; an unavailable auditor is not a gate, because `available=False` is "nobody
+    # checked" rather than "checked and failed". If the second answer is also gated it ships
+    # badged, because two attempts is enough evidence that the evidence is genuinely thin.
+    if second.needs_review and second.available and client is not None:
+        retried, retried_used, retried_degraded = await _compose(
+            client,
+            build_messages(pack, question, drop_unverified=second.unverified),
+            fallback=text,
+            task="diagnose",
+            role="brain",
+        )
+        if retried != text:
+            regraded = postcheck.audit(retried, pack)
+            if not regraded.must_replace_answer:
+                text, used_model, degraded = retried, retried_used, retried_degraded
+                report = regraded
+                second = await critique_mod.critique_answer(
+                    answer=text,
+                    evidence=postcheck.evidence_text(pack),
+                    client=client,
+                    postcheck_flags=len(regraded.soft_failures),
+                )
 
     if report.must_replace_answer:
         # Constraint 16. Replaced outright, and the record marks it corrected — a reassuring
