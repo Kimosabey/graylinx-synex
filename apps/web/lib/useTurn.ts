@@ -233,7 +233,34 @@ export function useTurn() {
     setTurns([]);
   }, [stop]);
 
-  return { turns, turn, ask, stop, clear };
+  /**
+   * Put a saved conversation back on screen.
+   *
+   * **Restored as finished turns, never replayed.** Re-asking every question would spend
+   * minutes of box time reproducing answers already on file, and the second run could differ
+   * from the first — so a reader reopening a thread would find it saying something else.
+   * Reopening reads; it does not re-derive.
+   *
+   * The restored turns carry no route, evidence or audit: those belonged to the turn that
+   * produced them, and inventing them here would put working on screen that nobody did.
+   */
+  const restore = useCallback(
+    (exchanges: { question: string; answer: string }[]) => {
+      stop();
+      setTurns(
+        exchanges.map((exchange) => ({
+          ...EMPTY,
+          id: nextId.current++,
+          question: exchange.question,
+          text: exchange.answer,
+          streaming: false,
+        })),
+      );
+    },
+    [stop],
+  );
+
+  return { turns, turn, ask, stop, clear, restore };
 }
 
 /** Parse one `event:`/`data:` pair and fold it into state. */

@@ -3370,3 +3370,110 @@ table.data .absent {
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* The conversation list. **Above the composer and below the transcript**, where somebody who
+   has finished one thread is already looking, and quiet enough that it never competes with the
+   answer above it. */
+.conversations {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--rule);
+}
+
+.conversations-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.conversations h2 {
+  font-size: var(--fs-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-fg);
+  margin: 0;
+}
+
+.conversations-empty {
+  font-size: var(--fs-sm);
+  max-width: 60ch;
+  margin-top: var(--sp-3);
+}
+
+.conversations-list {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.conversations-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border-radius: var(--radius-sm);
+}
+
+.conversations-list li:hover {
+  background: var(--surface-2);
+}
+
+/* The current thread is marked by an accent rail rather than a fill: a filled row reads as
+   selected-for-an-action, and this one is simply where you are. */
+.conversations-list li[data-current='true'] {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.conversations-open {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: var(--sp-2) var(--sp-3);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  min-width: 0;
+}
+
+/* One line, ellipsised. A wrapped question turns a scannable list into a wall of paragraphs. */
+.conversations-title {
+  font-size: var(--fs-sm);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversations-meta {
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Visible on hover and on keyboard focus alike — a control reachable only by pointer is a
+   control a keyboard user does not have. */
+.conversations-forget {
+  opacity: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: var(--sp-2);
+  color: var(--muted-fg);
+  border-radius: var(--radius-sm);
+}
+
+.conversations-list li:hover .conversations-forget,
+.conversations-forget:focus-visible {
+  opacity: 1;
+}
+
+.btn.ghost.small {
+  padding: 2px var(--sp-3);
+  font-size: var(--fs-sm);
+}

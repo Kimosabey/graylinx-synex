@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTurn } from '@/lib/useTurn';
 import { TurnView } from '@/components/TurnView';
+import { Conversations } from '@/components/Conversations';
 import { NeverDoes } from '@/components/NeverDoes';
 import { StarterChips } from '@/components/StarterChips';
 import { PageEnter } from '@/components/motion';
@@ -42,7 +43,7 @@ interface Episode {
 }
 
 export default function Page() {
-  const { turns, turn, ask, stop, clear } = useTurn();
+  const { turns, turn, ask, stop, clear, restore } = useTurn();
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [selected, setSelected] = useState<Episode | null>(null);
   // Empty. A composer that arrives pre-filled is a script, not a conversation — and the
@@ -225,6 +226,20 @@ export default function Page() {
          * filterable with a link into each.
          *
          * A control that exists to be ignored still teaches that it matters. */}
+
+        {/* **Where a conversation goes when you leave it.** The transcript used to live in one
+            state variable: a reload lost it and Clear lost it deliberately, so the only safe
+            move was never to clear — and every new subject inherited the machine named five
+            questions ago. The product punished the tidy behaviour it needed. */}
+        <Conversations
+          turns={turns}
+          onOpen={(exchanges) => {
+            setQuestion('');
+            setSelected(null);
+            if (exchanges.length) restore(exchanges);
+            else clear();
+          }}
+        />
 
         {/* **Start again, and say what that means.** A transcript is the product's memory: the
             router reads the machine named in the previous turn, so a question typed after five
