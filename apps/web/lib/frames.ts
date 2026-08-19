@@ -76,6 +76,14 @@ export interface EvidenceFrame {
   signal_provenance: string[];
   other_labels_same_day: string[];
   severity: string;
+  /**
+   * Which episode this evidence belongs to. The window says what the answer *covers*; these
+   * say what it was *about* — so a follow-up offered under a scrolled-back answer refers to
+   * that answer rather than to whatever is selected now.
+   */
+  equipment_key: string;
+  fault_label: string | null;
+  day: string;
 }
 
 export interface AuditFinding {

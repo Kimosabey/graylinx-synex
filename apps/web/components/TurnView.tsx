@@ -26,17 +26,44 @@ import { Inspector } from '@/components/Inspector';
 import type { TurnState } from '@/lib/useTurn';
 
 /** What a reader sensibly asks after each kind of answer. Deterministic, from the route. */
+/** How a day reads in a question somebody would type: `2026-04-09` → `9 April`. */
+function dayInWords(iso: string | undefined): string {
+  if (!iso) return '';
+  const parsed = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return `${parsed.getDate()} ${parsed.toLocaleString('en-GB', { month: 'long' })}`;
+}
+
 function followUpsFor(turn: TurnState): string[] {
   const skill = turn.route?.skill ?? '';
   const machine = turn.equipmentKey?.replace('_', ' ');
 
   if (skill === 'refuse') return ['What equipment do we have?', 'What happened across the plant?'];
+
+  // **The offers name the episode the answer was about.** They used to read "Raise a work
+  // order" and "What should I check?" with nothing attached, which worked only while the
+  // interface carried a selection to attach them to. Once the episode was read from the
+  // question instead, those bare sentences started coming back asking *which* episode — so
+  // the product was offering a question it would then decline to answer. The evidence frame
+  // names the machine, the fault and the day, so the offer can say them.
+  const day = dayInWords(turn.evidence?.day);
+  const fault = turn.evidence?.fault_label;
+  if (machine && day) {
+    return [
+      `Raise a work order for ${machine} on ${day}${fault ? ` for ${fault}` : ''}`,
+      `What should I check on ${machine} on ${day}?`,
+      `Did the repair work on ${machine} on ${day}?`,
+      `How is ${machine} doing?`,
+    ];
+  }
+
+  // A machine with no episode behind it: the answer covered the asset rather than one day, so
+  // the offers stay at that level rather than inventing a date to attach to.
   if (machine) {
     return [
       `How is ${machine} doing?`,
-      'What should I check?',
-      'Raise a work order',
-      'Did the repair work?',
+      `What happened on ${machine}?`,
+      'What happened across the plant?',
     ];
   }
   return [

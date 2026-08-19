@@ -283,6 +283,14 @@ async def _stream(  # noqa: PLR0915
                 "signal_provenance": [s.render() for s in turn.pack.signal_notes],
                 "other_labels_same_day": list(turn.pack.other_labels_same_day),
                 "severity": turn.pack.severity_text,
+                # **Which episode this evidence belongs to, so a surface can offer the next
+                # question about it.** The window says what the answer covers; these say what
+                # it was *about*, and without them a follow-up offered under a scrolled-back
+                # answer would have to read the current selection — which by then is a
+                # different episode than the answer above it.
+                "equipment_key": turn.pack.equipment_key,
+                "fault_label": turn.pack.fault_label,
+                "day": turn.pack.day.isoformat(),
             },
         )
 
