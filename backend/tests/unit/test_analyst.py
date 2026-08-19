@@ -40,7 +40,9 @@ NOTE = (
 
 
 async def test_a_usable_note_comes_back() -> None:
-    got = await analyst.assess(evidence="some evidence", question="what is wrong?", client=_Box(NOTE))
+    got = await analyst.assess(
+        evidence="some evidence", question="what is wrong?", client=_Box(NOTE)
+    )
     assert got == NOTE
 
 
