@@ -3477,3 +3477,43 @@ table.data .absent {
   padding: 2px var(--sp-3);
   font-size: var(--fs-sm);
 }
+
+/* Work-order counts. **Two rows of the same tile — state and kind — rather than a dashboard
+   of metrics.** MTTR and a repeat-issue rate are the usual leads on a maintenance screen and
+   neither can be computed here: both need closed jobs with timestamps and every job is open.
+   A tile reading "—" makes a screen look broken; a tile filled with a guess is worse. */
+.wo-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 var(--sp-5);
+}
+
+.wo-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  min-width: 7rem;
+}
+
+.wo-tile dt {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-fg);
+}
+
+.wo-tile dd {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-variant-numeric: tabular-nums;
+}
+
+/* An authorisation job is the one that lands unassigned and waits for a decision, so it is the
+   one worth catching an eye. The others stay neutral — colouring every kind is colouring none. */
+.wo-tile[data-kind='authorisation'] {
+  border-color: var(--accent);
+}

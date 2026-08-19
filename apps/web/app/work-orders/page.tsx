@@ -80,6 +80,42 @@ export default function WorkOrdersPage() {
           ) : (
             <section className="card">
               <h2>{data.count} raised</h2>
+
+              {/* **The planner's view, and only what can be computed.** A maintenance screen
+                  usually leads with MTTR and a repeat-issue rate. Both need closed jobs with
+                  timestamps, and every job here is open — so those tiles would either read
+                  "—" on a dashboard that looks broken, or be filled with a number nobody
+                  measured. Counts by state and by kind need nothing that is missing.
+
+                  Kind is the more useful of the two on this plant and it is unusual enough to
+                  be worth showing: an *inspection* job carries the open checks as its task
+                  list, an *authorisation* job carries a question for somebody to decide, and a
+                  *corrective* job carries the repair. Three different people. */}
+              <dl className="wo-summary">
+                {Object.entries(
+                  data.raised.reduce<Record<string, number>>((acc, wo) => {
+                    acc[wo.state] = (acc[wo.state] ?? 0) + 1;
+                    return acc;
+                  }, {}),
+                ).map(([state, n]) => (
+                  <div key={state} className="wo-tile" data-state={state}>
+                    <dt>{state}</dt>
+                    <dd>{n}</dd>
+                  </div>
+                ))}
+                {Object.entries(
+                  data.raised.reduce<Record<string, number>>((acc, wo) => {
+                    acc[wo.kind] = (acc[wo.kind] ?? 0) + 1;
+                    return acc;
+                  }, {}),
+                ).map(([kind, n]) => (
+                  <div key={kind} className="wo-tile" data-kind={kind}>
+                    <dt>{kind}</dt>
+                    <dd>{n}</dd>
+                  </div>
+                ))}
+              </dl>
+
               <Reveal as="ul" className="reasons" runKey={data.count}>
                 {data.raised.map((wo) => (
                   <li key={wo.id}>
