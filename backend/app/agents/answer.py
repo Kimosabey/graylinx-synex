@@ -28,7 +28,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
-from app.agents import arbiter, conversation, hypothesise, postcheck, skills
+from app.agents import analyst, arbiter, conversation, hypothesise, postcheck, skills
 from app.agents import critique as critique_mod
 from app.agents.router import RouteDecision, Skill, route
 from app.analytics.bands import ResidualBand
@@ -398,10 +398,22 @@ async def answer_turn(  # noqa: PLR0911
             degraded_reason=degraded,
         )
 
+    # **The analyst pass, and it runs before the answer rather than instead of it.** Composing
+    # and assessing are different jobs; one call doing both writes fluently about the residual
+    # easiest to describe and skips the one with a poor model fit. This gives the assessment its
+    # own call with thinking on — `reasoning_policy` has listed `domain_analyst` since it was
+    # written and nothing ever called it — and hands the composer something to write *from*.
+    #
+    # Empty on any failure, and the composer runs exactly as before. It can make an answer
+    # better informed; it cannot make the turn fail.
+    note = await analyst.assess(
+        evidence=postcheck.evidence_text(pack), question=question, client=client
+    )
+
     # ── the model explains a verdict it did not produce ─────────────────────────
     text, used_model, degraded = await _compose(
         client,
-        build_messages(pack, question),
+        build_messages(pack, question, analyst_note=analyst.as_prompt_block(note)),
         fallback=deterministic_answer(pack),
         task="diagnose",
         role="brain",

@@ -205,7 +205,11 @@ def build_fitted_messages(
 
 
 def build_messages(
-    pack: EvidencePack, question: str, *, drop_unverified: tuple[str, ...] = ()
+    pack: EvidencePack,
+    question: str,
+    *,
+    drop_unverified: tuple[str, ...] = (),
+    analyst_note: str = "",
 ) -> list[dict[str, str]]:
     """The full message list for the brain, fitted to the context ceiling.
 
@@ -219,6 +223,13 @@ def build_messages(
     produces a hedged version of the same claim.
     """
     messages = build_fitted_messages(pack, question).messages
+
+    # The analyst's reading goes in as its own turn. It arrives **already framed** — the caller
+    # applies `analyst.as_prompt_block`, because `app.prompts` sits below `app.agents` and may
+    # not reach up to it. This layer assembles messages; it does not know what an analyst is.
+    if analyst_note:
+        messages = [*messages, {"role": "user", "content": analyst_note}]
+
     if not drop_unverified:
         return messages
 
