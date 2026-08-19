@@ -31,7 +31,7 @@ from dataclasses import dataclass
 #: How long to wait before falling back to the deterministic answer. Longer than the router's
 #: budget because this call decides whether the turn answers at all, rather than which of seven
 #: skills takes it — but still bounded, because a turn that hangs reads as a broken product.
-TIMEOUT_S: float = 20.0
+TIMEOUT_S: float = 30.0
 
 #: Tools the arbiter may never name, whatever the registry says. `set_chiller_setpoint` is
 #: registered precisely so `G4` can refuse it; a model that could select it would be a model
@@ -116,8 +116,9 @@ async def _ask_once(question: str, *, offered: list, client) -> ToolChoice:
     try:
         completion = await asyncio.wait_for(
             client.complete(
-                role="text",
+                role="planner",
                 task="choose_tool",
+                json_only=True,
                 messages=[
                     {"role": "system", "content": _SYSTEM},
                     {

@@ -39,7 +39,7 @@ from app.llm.client import ModelClient
 
 #: How long the arbiter may take before the turn gives up and uses the default. A router that
 #: can hang is a product that appears to hang, and the fallback costs nothing.
-TIMEOUT_S: float = 12.0
+TIMEOUT_S: float = 30.0
 
 #: What each skill is *for*, written for a reader deciding between them rather than for us.
 #: One entry per skill the arbiter may choose — `refuse` is deliberately absent, because the
@@ -147,8 +147,9 @@ async def arbitrate(
     try:
         completion = await asyncio.wait_for(
             client.complete(
-                role="text",
+                role="planner",
                 task="route",
+                json_only=True,
                 messages=[
                     {"role": "system", "content": _SYSTEM},
                     {"role": "user", "content": _prompt(message, last_equipment=last_equipment)},

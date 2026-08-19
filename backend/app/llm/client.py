@@ -148,8 +148,14 @@ class ModelClient:
         task: str,
         messages: list[dict[str, str]],
         timeout_s: float | None = None,
+        json_only: bool = False,
     ) -> Completion:
         """One completion, by role.
+
+        `json_only` constrains the decode to a JSON object. Set it on every caller that parses
+        the reply as JSON — the roster's own record is that the brain *"works in JSON-mode,
+        goes BLANK in a tight plain-text cap"*, so asking a thinking model for JSON in free
+        text is the failure, not the model.
 
         In `stub` mode a missing transcript raises rather than falling back to the box. A
         silent fallback would mean CI quietly needing a GPU, which is the one thing the whole
@@ -169,7 +175,9 @@ class ModelClient:
                 )
             return Completion(text, role, model, task, True, thinking)
 
-        text = await self._call_box(model, messages, thinking, timeout_s or self._timeout_s)
+        text = await self._call_box(
+            model, messages, thinking, timeout_s or self._timeout_s, json_only=json_only
+        )
         completion = Completion(text, role, model, task, False, thinking)
         if self._mode == "record":
             self._save(key, completion, messages)
@@ -181,6 +189,7 @@ class ModelClient:
         messages: list[dict[str, str]],
         thinking: bool,
         timeout_s: float,
+        json_only: bool = False,
     ) -> str:
         """Ollama on the rented box. Never a hosted API — that is what keeps inference on
         infrastructure we control, and it is why the roster has to fit one card.
@@ -198,6 +207,15 @@ class ModelClient:
         }
         if thinking:
             payload["think"] = True
+        # **JSON mode, and it is what makes the brain safe as a planner.** The Thermynx roster
+        # records the failure precisely: gemma4 *"works in JSON-mode (thinks AND emits JSON),
+        # goes BLANK in a tight plain-text cap"*. Asked for JSON in free text it can run away
+        # into a repetition loop that never closes the object, and the caller sees an empty
+        # plan rather than an error — the silent failure that made this look like a model
+        # problem rather than a mode problem. Ollama constrains the decode when `format` is
+        # set, so the loop cannot happen.
+        if json_only:
+            payload["format"] = "json"
 
         try:
             async with httpx.AsyncClient(timeout=timeout_s) as client:

@@ -43,23 +43,29 @@ def test_no_module_but_the_role_table_names_a_model() -> None:
 
 
 def test_aliases_resolve_to_a_real_model() -> None:
-    """`composer` is the brain; `planner` and `sql` are the small models.
+    """Every alias points at a model the roster actually holds.
 
-    **`planner` moved off the brain on 2026-08-18, and it is the one alias with a measured
-    reason.** A planner's whole output is a strict JSON schema, and the Thermynx implementation
-    recorded the 26B brain failing at exactly that: it degenerated into a repetition loop, the
-    JSON never closed, and *every plan silently became empty* — not a crash, not a refusal, an
-    empty result that reads as "nothing to plan". `phi4` returned valid JSON every time.
+    **`planner` points at the brain, restored on 2026-08-19 to match the v4 roster.** It sat on
+    `text` for a day on the strength of a half-read finding: the Thermynx implementation
+    recorded the 26B model degenerating into a repetition loop while emitting JSON, the object
+    never closing, and *every plan silently becoming empty*. That is real and it is not an
+    argument for a different model. The same roster says why it happens — the brain *"works in
+    JSON-mode (thinks AND emits JSON), goes BLANK in a tight plain-text cap"* — so the failure
+    is asking a thinking model for JSON in free text with no room to think.
 
-    So the split this asserts is by **output shape, not by importance**: the roles that emit
-    JSON take the small models, the roles that write prose a person reads take the large one.
+    The fix is therefore in the call, not the table: every JSON-parsing caller sets
+    `json_only`, which constrains Ollama's decode so the loop cannot happen, and takes the
+    generous budget the roster names. `test_arbiter.py` asserts both on the routing path.
+
+    So the division this asserts is the one Synex is built around: gemma plans, composes and
+    reasons; devstral executes and writes SQL; phi4 audits, from a different family so it never
+    grades its own output.
     """
     assert role_table.model_for("composer") == role_table.model_for("brain")
     assert role_table.model_for("sql") == role_table.model_for("tool")
-    assert role_table.model_for("planner") != role_table.model_for("brain"), (
-        "a strict-JSON role on the 26B brain is the failure Thermynx recorded"
+    assert role_table.model_for("planner") == role_table.model_for("brain"), (
+        "planning is the brain's job — the v4 roster reads planner/composer→brain"
     )
-    assert role_table.model_for("planner") == role_table.model_for("text")
 
 
 def test_the_auditor_is_not_the_brain() -> None:

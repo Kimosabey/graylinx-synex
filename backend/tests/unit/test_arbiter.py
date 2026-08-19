@@ -27,10 +27,12 @@ class _Box:
         self._raises = raises
         self._hangs = hangs
         self.asked_role: str | None = None
+        self.json_only: bool = False
         self.prompt: str = ""
 
-    async def complete(self, *, role, task, messages):
+    async def complete(self, *, role, task, messages, json_only=False):
         self.asked_role = role
+        self.json_only = json_only
         self.prompt = "\n".join(m["content"] for m in messages)
         if self._raises is not None:
             raise self._raises
@@ -47,15 +49,22 @@ async def test_a_clean_choice_is_taken() -> None:
     assert "several days" in got.why
 
 
-async def test_the_small_model_does_the_routing() -> None:
-    """`planner`'s lesson, applied.
+async def test_routing_is_the_planner_role_and_the_decode_is_constrained() -> None:
+    """**Both halves matter, and the second is what makes the first safe.**
 
-    The 26B brain was recorded degenerating into a repetition loop on exactly this job — a
-    short strict schema — and every plan silently became empty. Routing takes the `text` role.
+    Routing is planning — deciding what to do next — so it takes the `planner` role, which the
+    v4 roster points at the brain. The objection on record is that the 26B model degenerated
+    into a repetition loop emitting JSON and every plan silently became empty. The roster's own
+    note says why, and it is a mode rather than a model: it *"works in JSON-mode (thinks AND
+    emits JSON), goes BLANK in a tight plain-text cap"*.
+
+    So `json_only` is asserted here beside the role. Asking this model for JSON in free text is
+    the failure; constraining the decode makes the loop impossible.
     """
     box = _Box('{"skill": "look_up", "why": "a recorded fact"}')
     await arbiter.arbitrate("how many chillers?", client=box)
-    assert box.asked_role == "text"
+    assert box.asked_role == "planner"
+    assert box.json_only is True
 
 
 async def test_json_wrapped_in_prose_is_still_read() -> None:
