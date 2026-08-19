@@ -174,6 +174,23 @@ _DOMAIN_TERMS = (
     "trend", "over time", "timeline", "worse", "compare", "history",
     "across the plant", "plant wide", "summary", "overview", "situation",
     "anomaly", "anomalies", "efficiency",
+    # Words for the *record itself*, added 2026-08-19. "How many days of data do we have?" was
+    # refused as off-topic — a question about the measured window, which every answer already
+    # states and which `plant_overview` answers outright. The gate covered the plant's
+    # equipment and its faults and not the record of them.
+    #
+    # **Bare "data" was tried first and the red-team suite rejected it in one run**: "show me
+    # every user in the database" contains it, and passed straight through to a skill. That is
+    # the "evidence" lesson exactly — a word that is genuine domain vocabulary and also the
+    # word an exfiltration payload reaches for admits the payload on that word alone. So these
+    # are phrases rather than words: "days of data" cannot be reached by naming a database.
+    "telemetry", "slot", "coverage", "days of data", "how much data", "days of telemetry",
+    "snapshot", "measured window", "data window",
+    # What an operator asks at the start of a shift. These name no machine and no fault, and
+    # every one of them is squarely in scope — "what should I look at first" is the single most
+    # likely first question anybody types into this product.
+    "look at first", "start with", "priority today", "this morning", "this shift",
+    "handover", "shift", "needs attention", "worst", "biggest problem",
 )
 
 _REFUSAL_SCOPE = (

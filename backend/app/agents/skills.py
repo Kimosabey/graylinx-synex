@@ -63,7 +63,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from app.agents import compose, escalate
+from app.agents import compose, escalate, tool_choice
 from app.agents.react import (
     Chooser,
     LoopOutcome,
@@ -1034,10 +1034,27 @@ async def answer_catalogue(
     elif any(t in text for t in ("equipment", "machine", "asset", "chillers", "units")):
         plan = ("list_equipment", {})
 
-    if plan is None:
-        return None
-
     _ensure_registry()
+
+    # **Layer 4 for answering, matching layer 4 for routing.** The branches above are phrases
+    # somebody thought of; the questions nobody thought of used to fall out here and come back
+    # "there is no scored evidence" while `compare_equipment` and `plant_overview` sat
+    # registered and unreached. A reader cannot tell that apart from the plant genuinely having
+    # nothing. The chooser reads the registry's own descriptions, so it covers tools added
+    # after it was written, and it may only name read-only ones it can fully fill.
+    if plan is None:
+        picked = await tool_choice.choose(
+            question,
+            specs=list(REGISTRY.all()),
+            client=client,
+            equipment_known=named is not None,
+        )
+        if not picked.decided:
+            return None
+        plan = (
+            picked.tool,
+            {"equipment_key": named} if named else {},
+        )
     # The repository is *handed in*, never constructed here. `app.tools` may not import a
     # driver — the contract exists so a tool can never reach the plant outside
     # `synex_plant_ro` — so the API layer builds it and it travels down as a named resource.
