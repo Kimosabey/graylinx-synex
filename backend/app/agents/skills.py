@@ -64,6 +64,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.agents import compose, escalate, tool_choice
+from app.agents.chooser import ModelChooser
 from app.agents.react import (
     Chooser,
     LoopOutcome,
@@ -78,6 +79,7 @@ from app.domain import differential as diff
 from app.domain import equipment as _eq
 from app.domain.answer import AnswerState
 from app.domain.cases import Capability
+from app.llm.client import ModelClient
 from app.services.cases import case_from_pack
 from app.services.control_plane import Scope
 from app.services.evidence import EvidencePack
@@ -749,6 +751,7 @@ async def investigate_with_tools(
     loop: ReactLoop | None = None,
     timeout_s: float | None = None,
     plant_repo: object | None = None,
+    client: ModelClient | None = None,
 ) -> SkillOutcome:
     """`C4`/`C6` through the bounded loop — the request path that finally reaches `G4`.
 
@@ -775,8 +778,22 @@ async def investigate_with_tools(
         gateway=Gateway(registry, resources=resources), registry=registry
     )
     plan = plan_for(pack)
+
+    # **devstral gathers, the brain reasons — and until now devstral did neither.** `react.py`
+    # ran the loop and `PlannedChooser` decided every move from a fixed plan, so the `tool`
+    # role had no consumer at all: the model was on the roster, mapped, and never called. That
+    # is the shape this codebase keeps producing — machinery with no consumer — and it is worse
+    # here than elsewhere, because a bounded loop whose every step was decided in advance is
+    # not an investigation, it is a script with a loop around it.
+    #
+    # **`PlannedChooser` stays underneath as the floor, not as a spare.** Every path
+    # `ModelChooser` cannot complete — an unreachable box, a timeout, unparseable JSON, a tool
+    # that does not exist — falls to the same object the loop used before, so a model hiccup
+    # costs a worse choice rather than a stopped investigation. The floor is what makes it safe
+    # to let a model choose at all.
+    floor = PlannedChooser(pack=pack, plan=plan)
     choose = bounded_chooser(
-        PlannedChooser(pack=pack, plan=plan),
+        ModelChooser(client=client, fallback=floor) if client is not None else floor,
         chooser_timeout_s() if timeout_s is None else timeout_s,
     )
     outcome = await react.run(
@@ -890,6 +907,7 @@ async def dispatch_with_tools(
     scope: Scope | None,
     question: str = "",
     plant_repo: object | None = None,
+    client: ModelClient | None = None,
 ) -> SkillOutcome | None:
     """The dispatch, with the one tool-using skill reaching for tools.
 
@@ -914,7 +932,7 @@ async def dispatch_with_tools(
 
     try:
         return await investigate_with_tools(
-            pack, scope=scope, question=question, plant_repo=plant_repo
+            pack, scope=scope, question=question, plant_repo=plant_repo, client=client
         )
     except Exception as exc:
         return SkillOutcome(

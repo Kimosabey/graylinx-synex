@@ -301,7 +301,16 @@ async def answer_turn(  # noqa: PLR0911
     # takes the identical deterministic path it always did. This call is the only thing
     # standing between a request and `react.py`, which until now had no caller at all.
     outcome = await skills.dispatch_with_tools(
-        decision.skill.value, pack, scope=scope, question=question, plant_repo=plant_repo
+        decision.skill.value,
+        pack,
+        scope=scope,
+        question=question,
+        plant_repo=plant_repo,
+        # **What makes `investigate` an investigation rather than a script.** With a client the
+        # loop asks devstral which tool to reach for next and follows what it finds; without
+        # one it walks the deterministic plan, which is the same floor it falls back to on
+        # every model failure. `tool` had no consumer at all until this line.
+        client=client,
     )
     if outcome is not None:
         return Turn(
