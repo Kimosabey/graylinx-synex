@@ -282,6 +282,15 @@ def audit_equipment(answer: str, pack: EvidencePack) -> AuditFinding:
 
 _READING_VERBS = ("is", "was", "reads", "reading", "measured", "at", "of")
 
+#: Words that make a nearby figure a statement *about the absence* rather than a reading of the
+#: signal. "0 non-zero readings in 31,884 slots" is the correct sentence and it is full of
+#: digits; without this the audit would refuse the very sentence it exists to encourage.
+_ABSENCE_LANGUAGE: tuple[str, ...] = (
+    "never", "not measured", "no reading", "non-zero", "zero in", "absent", "unavailable",
+    "cannot be", "not metered", "no meter", "stated absence", "fabricat", "simulated",
+    "not available", "no value", "recorded figure",
+)
+
 
 def audit_never_measured(answer: str, pack: EvidencePack) -> AuditFinding:
     """The one that matters most on this plant.
@@ -314,6 +323,21 @@ def audit_never_measured(answer: str, pack: EvidencePack) -> AuditFinding:
         # sentence. Quoting a value for it is not.
         window = lowered[lowered.index(name) : lowered.index(name) + 120]
         if any(re.search(rf"\b{v}\b\s*-?\d", window) for v in _READING_VERBS):
+            offending.append(display_name)
+            continue
+
+        # **Proximity, not just a verb pattern — and this was found the hard way.** A generated
+        # case asked *"what is the condenser flow on chiller 1?"* and the answer came back
+        # carrying 893.7, the fabricated maximum from the registry's own provenance note. No
+        # reading verb sat in front of it, so this audit passed an answer that gave a
+        # never-metered signal a value. The eval harness caught it on proximity alone.
+        #
+        # The exemption is what keeps it usable: *"0 non-zero readings in 31,884 slots"* is the
+        # correct sentence about an absence and it is full of digits. So a figure near the name
+        # only offends when the surrounding words are not talking about the absence.
+        if re.search(r"-?\d", window) and not any(
+            phrase in window for phrase in _ABSENCE_LANGUAGE
+        ):
             offending.append(display_name)
 
     return AuditFinding(

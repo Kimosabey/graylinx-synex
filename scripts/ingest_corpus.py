@@ -69,7 +69,9 @@ async def check() -> int:
     """Read-only. What is on disk, what is in the store, and what a run would do to it."""
     from app.config import Settings
     from app.db.session import create_state_schema, state_session
-    from app.jobs.corpus import read_docx  # noqa: F401 — imported to fail early if unusable
+    from app.jobs.corpus import (
+        read_docx,  # noqa: F401 — imported to fail early if unusable
+    )
     from app.jobs.ingest_corpus import Outcome, _decide, all_sources
     from app.llm.embeddings import Embedder
     from app.retrieval.sop import SopIndex

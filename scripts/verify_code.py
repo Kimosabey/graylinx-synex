@@ -60,7 +60,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # The rule tables, imported rather than restated. See the module docstring.
-from verify import (  # noqa: E402
+from verify import (
     BANNED_PHRASES,
     LEGACY_NAMES,
     NAMING_VIOLATIONS,

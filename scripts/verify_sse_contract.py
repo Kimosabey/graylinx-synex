@@ -123,7 +123,7 @@ def check_against_context(c, rep: Report) -> None:
         return
 
     text = path.read_text(encoding="utf-8")
-    m = re.search(r"## 7\. Answer contract(.*?)(?=\n## )", text, re.S)
+    m = re.search(r"## 7\. Answer contract(.*?)(?=\n## )", text, re.DOTALL)
     if not m:
         rep.error("CONTEXT.md has no '## 7. Answer contract' section to check against")
         return

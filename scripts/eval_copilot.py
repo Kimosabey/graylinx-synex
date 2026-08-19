@@ -78,6 +78,13 @@ UNTRUE: tuple[tuple[str, str], ...] = (
 )
 
 
+#: Every state a turn may legitimately end in. Used by the generated sweep, which cannot know
+#: which one a question should produce — only that one of them must arrive.
+ANY_STATE: tuple[str, ...] = (
+    "ANSWERED", "PARTIAL", "NO_DIAGNOSIS", "NEEDS_APPROVAL", "BLOCKED", "FAILED",
+)
+
+
 @dataclass(frozen=True)
 class Case:
     """One question, from one identity, and what the platform owes whoever asked it."""

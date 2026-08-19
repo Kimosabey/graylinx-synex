@@ -12,6 +12,7 @@ refused, with a test on the refusal, is the difference between a policy and an o
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -68,6 +69,21 @@ class EquipmentTrustArgs(BaseModel):
 # ── handlers ────────────────────────────────────────────────────────────────────
 
 
+def _without_figures(note: str) -> str:
+    """A provenance note with its numbers taken out.
+
+    A note explaining *why* a signal cannot be quoted often contains numbers — how many slots
+    were zero, what a fabricated maximum reached. Every one of them is a fact about the
+    absence rather than a reading of the signal, and a wording layer cannot tell the
+    difference: it sees a number next to a signal name in its evidence and states it.
+
+    Digits are replaced rather than the sentence dropped, so the reason survives and only the
+    figure goes. A reader needs to know condenser flow reads zero everywhere; they do not need
+    a number that was invented to fill the gap.
+    """
+    return re.sub(r"\b\d[\d,.]*\b", "a recorded figure", note)
+
+
 async def _signal_standing() -> dict[str, Any]:
     """Every signal this plant carries, and whether a number may be quoted from it.
 
@@ -90,7 +106,15 @@ async def _signal_standing() -> dict[str, Any]:
                 "unit": s.unit,
                 "status": s.status.value,
                 "may_be_quoted": s.is_usable,
-                "why": s.note,
+                # **The registry's note goes to a reader with its figures removed, and this is
+                # not tidying.** `cond_flow`'s note ends "the simulated window fabricates it to
+                # a max of 893.7" — a number recording that a fabrication exists. Handed to the
+                # composer it satisfies every rule the prompt sets, because "every figure you
+                # state must appear in the result" is true of 893.7, and the answer came back
+                # giving condenser flow a value. A generated case caught it; the hand-written
+                # suite never asked. The figures stay in `note` for us and never reach prose.
+                "why": _without_figures(s.note) if not s.is_usable else s.note,
+                "note_for_us": s.note,
             }
             for s in signals.SIGNALS
         ],

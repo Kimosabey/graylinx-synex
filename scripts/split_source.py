@@ -264,7 +264,7 @@ def main() -> int:
     for target, label in ((PRODUCT, "Product"), (ARCHITECTURE, "Architecture")):
         files = sorted(p for p in target.glob("*.md") if p.name != "README.md")
         index = [f"# {label} chapters", "",
-                 f"Split from `docs/00-source/Graylinx_Enterprise_AI_Platform_v4.docx`",
+                 "Split from `docs/00-source/Graylinx_Enterprise_AI_Platform_v4.docx`",
                  "by `scripts/split_source.py`. The .docx remains the source of record;",
                  "these are the working copies. Re-run the script after it changes.", ""]
         for f in files:
