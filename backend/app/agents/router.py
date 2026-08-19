@@ -113,8 +113,16 @@ _KEYWORDS: tuple[tuple[Skill, tuple[str, ...]], ...] = (
                     "prove the repair", "after the work")),
     (Skill.PREPARE_WORK, ("work order", "raise a job", "schedule", "assign", "job pack",
                           "create work")),
+    # `RC7`'s handoff phrases sit here rather than in a layer of their own: *"what should I
+    # check?"* and *"I can't do this"* are the same question asked from the two sides of being
+    # stuck, and `resolve` answers both. Kept in step with `escalate.ASKS_TO_ESCALATE`, which
+    # holds the fuller list the skill reads once the turn arrives.
     (Skill.RESOLVE, ("checklist", "what should i check", "next step", "root cause",
-                     "narrow it down", "rule out")),
+                     "narrow it down", "rule out", "escalate", "hand this over",
+                     "hand it over", "pass this on", "i can't do this", "i cannot do this",
+                     "out of my depth", "not allowed", "no authority", "not authorised",
+                     "haven't got the", "don't have the", "need a technician",
+                     "need a supervisor", "second opinion", "not now")),
     (Skill.EXPLAIN, ("why", "explain", "what does it mean", "cause", "reason",
                      "what happened")),
     (Skill.INVESTIGATE, ("compare", "trend", "history", "over time", "both chillers",

@@ -63,7 +63,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from app.agents import compose
+from app.agents import compose, escalate
 from app.agents.react import (
     Chooser,
     LoopOutcome,
@@ -236,12 +236,22 @@ def prepare_work(pack: EvidencePack) -> SkillOutcome:
     )
 
 
-def resolve(pack: EvidencePack) -> SkillOutcome:
-    """`RC1`–`RC5`. Open the case and report whether it may advance — usually it may not.
+def resolve(pack: EvidencePack, question: str = "") -> SkillOutcome:
+    """`RC1`–`RC5` and `RC7`. Open the case, or hand it to somebody who can take it.
 
     Two thirds of measured cases pause: 26 of 43 stop at the checks. So the common outcome
     here is `BLOCKED` with the reason, and that is the feature rather than a shortfall.
+
+    **The handoff lives here because this is where somebody gets stuck.** `RC7`'s three routes,
+    their artefacts and their deterministic assignee were built and tested and nothing in the
+    request path reached any of it — so the sentence a technician most needs to say, *"I can't
+    do this"*, had no answer, and the person saying it is exactly the person least able to go
+    and find the right surface. It is the same question as *"what should I check?"* asked from
+    the other side: one asks what to do, the other says they cannot do it.
     """
+    if question and escalate.asks_to_escalate(question):
+        return _hand_over(pack, question)
+
     case = case_from_pack(pack)
     return SkillOutcome(
         state=AnswerState.ANSWERED if case.may_advance else AnswerState.BLOCKED,
@@ -252,6 +262,50 @@ def resolve(pack: EvidencePack) -> SkillOutcome:
         ),
         used_model=False,
         payload=case.as_dict(Capability.TECHNICIAN),
+    )
+
+
+def _hand_over(pack: EvidencePack, question: str) -> SkillOutcome:
+    """`RC7`. What handing this over would do — and nothing happens until somebody says so.
+
+    **Four routes, and which one is a fact about the words rather than a preference.** A
+    missing tool goes to a technician, a missing permission goes to a supervisor unassigned, a
+    reading nobody can read goes to a supervisor as a *question*, and a running plant is parked
+    with nobody called at all. Collapsing them into one "escalate" loses the distinction that
+    decides who gets woken up.
+
+    `NEEDS_APPROVAL` rather than `ANSWERED`, because escalating is cheap to do and expensive to
+    undo: an inspection work order nobody meant to raise sends a technician across a plant.
+    """
+    handoff = escalate.plan(
+        question,
+        equipment_key=pack.equipment_key,
+        fault_label=pack.fault_label or "",
+        day=pack.day.isoformat(),
+    )
+    if handoff is None:
+        # They asked for a handoff without saying why. The four routes go to four different
+        # people, so a default here would quietly pick one on their behalf.
+        return SkillOutcome(
+            state=AnswerState.PARTIAL,
+            text=escalate.ask_which(),
+            used_model=False,
+        )
+
+    return SkillOutcome(
+        state=AnswerState.NEEDS_APPROVAL,
+        text=handoff.render(),
+        used_model=False,
+        payload={
+            "blocker": handoff.blocker.value,
+            "goes_to": handoff.route.goes_to.value if handoff.route.goes_to else None,
+            "artefact": handoff.route.artefact.value,
+            "case_state": (
+                handoff.route.case_state.value if handoff.route.case_state else None
+            ),
+            "episode_id": handoff.episode_id,
+            "lands_unassigned": handoff.route.lands_unassigned,
+        },
     )
 
 
@@ -290,16 +344,22 @@ DETERMINISTIC_SKILLS = {
 }
 
 
-def dispatch(skill: str, pack: EvidencePack) -> SkillOutcome | None:
+def dispatch(skill: str, pack: EvidencePack, question: str = "") -> SkillOutcome | None:
     """Run the skill's own path, or `None` when it is `explain` and belongs to the model.
 
     Never raises. A skill that fails is a turn outcome, not a crash — the router's rule, one
     layer along.
+
+    **`resolve` reads the question, and it is the only one that does.** The others answer from
+    the evidence alone; *"what do I do next"* and *"I can't do this"* route to the same skill
+    and need opposite answers, and only the words separate them.
     """
     handler = DETERMINISTIC_SKILLS.get(skill)
     if handler is None:
         return None
     try:
+        if handler is resolve:
+            return resolve(pack, question)
         return handler(pack)
     except Exception as exc:
         return SkillOutcome(
@@ -838,7 +898,7 @@ async def dispatch_with_tools(
     outcome, exactly as `dispatch` treats a skill that broke.
     """
     if skill != TOOL_USING_SKILL:
-        return dispatch(skill, pack)
+        return dispatch(skill, pack, question)
 
     if scope is None:
         # Stated, not silent. A turn that quietly fell back to the rules-only enquiry would
