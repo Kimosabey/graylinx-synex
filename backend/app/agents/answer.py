@@ -173,6 +173,7 @@ async def answer_turn(  # noqa: PLR0911
     scope: Scope | None = None,
     plant_repo: object | None = None,
     history: list[conversation.Exchange] | None = None,
+    doc_index: object | None = None,
 ) -> Turn:
     """Run the turn. Never raises — a failure becomes a state, because a stack trace is not
     an answer and on a demonstration it reads as a broken product.
@@ -243,6 +244,7 @@ async def answer_turn(  # noqa: PLR0911
             plant_repo=plant_repo,
             client=client,
             history=conversation.render(history),
+            doc_index=doc_index,
         )
         if catalogue is not None:
             return Turn(

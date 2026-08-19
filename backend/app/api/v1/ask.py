@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import uuid
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Request
@@ -28,9 +29,12 @@ from app.agents.sse_contract import FRAMES
 from app.analytics.episodes import LabelledSlot, to_episodes
 from app.api.deps import CurrentScope, Repo, current_scope, get_optional_repo
 from app.config import Settings, get_settings
+from app.db.session import state_session
 from app.domain import plain
 from app.domain.answer import AnswerState
 from app.llm.client import ModelClient
+from app.llm.embeddings import Embedder
+from app.retrieval.sop import SopIndex
 from app.services import audit_log
 from app.services.control_plane import Capability, audit_row
 from app.services.evidence import build_pack, window_for
@@ -59,6 +63,22 @@ class AskRequest(BaseModel):
     day: date | None = None
     mode: str | None = None
     last_equipment: str | None = None
+
+
+@asynccontextmanager
+async def _doc_index(settings: Settings) -> AsyncIterator[object | None]:
+    """The approved document library for one turn, or `None` when it cannot be opened.
+
+    **A missing library degrades an answer rather than preventing one.** The passages are an
+    augmentation: they say what a term means and what a procedure involves, and an answer
+    without them is thinner rather than wrong. So every failure here yields `None` and the turn
+    composes from the evidence alone.
+    """
+    try:
+        async with state_session(settings) as session:
+            yield SopIndex(session, Embedder(settings.embed_host))
+    except Exception:
+        yield None
 
 
 def _frame(name: str, payload: dict) -> str:
@@ -221,34 +241,47 @@ async def _stream(  # noqa: PLR0915
         timeout_s=settings.graph_timeout_s,
     )
 
-    turn = await answer_turn(
-        question=body.question,
-        pack=pack,
-        client=client,
-        mode_override=body.mode,
-        # Selecting an episode **is** naming the equipment. Without this the scope gate
-        # refuses the most natural question in the product — "why was this flagged?" — which
-        # contains no machine name and no domain word, because the machine is on screen and
-        # already selected. The router reads text only, so the selection has to reach it.
-        last_equipment=(
-            None if selection_contradicted else (body.last_equipment or body.equipment_key)
-        ),
-        # The plant repository this request already holds, carried down so a tool can be handed
-        # one rather than building it. Tools are forbidden from importing a driver at all, so
-        # injection is the only route by which a capability may read the plant.
-        plant_repo=repo,
-        # The transcript the browser holds, converted at the boundary. The agents layer owns
-        # what a conversation *is*; the API owns what arrived over the wire.
-        history=[
-            conversation.Exchange(question=e.question, answer=e.answer) for e in body.history
-        ],
-        # The scope this request already computed, carried into the turn rather than
-        # recomputed inside it. `investigate` runs the bounded tool loop, and every call it
-        # makes goes through `G4`, which asks the Control Plane whether *this caller* may
-        # have *this capability*. Without this line the loop has nobody to ask and the turn
-        # says so — which is honest, and is not the product.
-        scope=scope,
-    )
+    # **The document library, opened for this turn only.** A session held across turns would
+    # outlive the request that opened it, and a search is a read — cheap enough that opening
+    # one per turn costs less than the class of bug a shared session invites.
+    #
+    # `None` when the store cannot be reached, and the answer is composed without documents
+    # rather than failing: a plant manual is an augmentation, and losing it degrades an answer
+    # instead of preventing one.
+    async with _doc_index(settings) as doc_index:
+        turn = await answer_turn(
+            question=body.question,
+            pack=pack,
+            client=client,
+            mode_override=body.mode,
+            # Selecting an episode **is** naming the equipment. Without this the scope gate
+            # refuses the most natural question in the product — "why was this flagged?" — which
+            # contains no machine name and no domain word, because the machine is on screen and
+            # already selected. The router reads text only, so the selection has to reach it.
+            last_equipment=(
+                None if selection_contradicted else (body.last_equipment or body.equipment_key)
+            ),
+            # The plant repository this request already holds, carried down so a tool can be handed
+            # one rather than building it. Tools are forbidden from importing a driver at all, so
+            # injection is the only route by which a capability may read the plant.
+            plant_repo=repo,
+            # The transcript the browser holds, converted at the boundary. The agents layer owns
+            # what a conversation *is*; the API owns what arrived over the wire.
+            history=[
+                conversation.Exchange(question=e.question, answer=e.answer) for e in body.history
+            ],
+            # The scope this request already computed, carried into the turn rather than
+            # recomputed inside it. `investigate` runs the bounded tool loop, and every call it
+            # makes goes through `G4`, which asks the Control Plane whether *this caller* may
+            # have *this capability*. Without this line the loop has nobody to ask and the turn
+            # says so — which is honest, and is not the product.
+            scope=scope,
+            # The approved document library, searched for this question. 269 passages sat
+            # indexed and unreachable because nothing on the answer path ever searched them.
+            # Retrieval augments the wording and never becomes the answer; `recall.py` puts
+            # that rule in the prompt beside the passages.
+            doc_index=doc_index,
+        )
 
     # ── route ───────────────────────────────────────────────────────────────────
     yield _frame(

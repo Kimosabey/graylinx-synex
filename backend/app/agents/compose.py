@@ -82,6 +82,7 @@ async def compose_from_tool(
     fallback: str,
     client: ModelClient | None,
     history: str = "",
+    documents: str = "",
 ) -> tuple[str, bool]:
     """Phrase a tool result. Returns `(text, used_model)`.
 
@@ -107,6 +108,12 @@ async def compose_from_tool(
                         # from it. A conversation placed after the evidence reads as the more
                         # recent source, which is the opposite of what is true.
                         f"{history}"
+                        # Documents sit between the conversation and the readings, which is
+                        # their standing: more authoritative than what was said a moment ago,
+                        # less authoritative than what the plant measured. A manual describes
+                        # how equipment behaves in general; the fence below says what this one
+                        # actually did.
+                        f"{documents}"
                         f"{FENCE}\n{payload}\n{FENCE}\n\n"
                         f"The tool that produced this was `{tool}`.\n\n"
                         f"The person asked: {question}\n\n"

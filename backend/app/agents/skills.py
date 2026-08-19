@@ -63,7 +63,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from app.agents import compose, escalate, nl_sql, tool_choice
+from app.agents import compose, escalate, nl_sql, recall, tool_choice
 from app.agents.chooser import ModelChooser
 from app.agents.react import (
     Chooser,
@@ -1050,6 +1050,7 @@ async def answer_catalogue(
     plant_repo: object | None = None,
     client: object | None = None,
     history: str = "",
+    doc_index: object | None = None,
 ) -> SkillOutcome | None:
     """Answer a question about the plant's *catalogue* — no episode, no evidence pack.
 
@@ -1191,6 +1192,12 @@ async def answer_catalogue(
     # same seven audits and the same critique gate — a sentence that invents a figure is
     # replaced exactly as one from the diagnostic path would be.
     rendered = _render_catalogue(plan[0], result.value)
+    # **The plant's own documents, if any match.** 269 approved passages sat indexed and
+    # unreachable because nothing on the answer path ever searched them — so a question about
+    # what a fault class means got the platform's own words while the manual had a paragraph on
+    # it. Retrieval augments the wording; it never becomes the answer, and the prompt says so.
+    recalled = await recall.recall(question, index=doc_index) if doc_index is not None else None
+
     text, used_model = await compose.compose_from_tool(
         question=question,
         tool=plan[0],
@@ -1198,6 +1205,7 @@ async def answer_catalogue(
         fallback=rendered,
         client=client,
         history=history,
+        documents=recalled.block if recalled and recalled.has_passages else "",
     )
     return SkillOutcome(state=AnswerState.ANSWERED, text=text, used_model=used_model)
 
