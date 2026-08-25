@@ -1,0 +1,246 @@
+# Synex CI.
+#
+# **The rule this workflow exists to hold: CI never needs the 3.9 GB plant snapshot and
+# never needs the GPU.** `backend/pytest.ini` makes the offline subset the default, so a
+# bare `pytest` is the gate and running the box suite is the explicit act. If a job here
+# ever starts needing a service, the layering is wrong and it is cheaper to fix than to
+# provision.
+#
+# Four jobs, run in parallel — they share no state and a failure in one should not hide a
+# failure in another. `docs` is first because the documentation gate predates the code and
+# must not rot now that they share a repository: one builder, two products.
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# A second push to the same branch cancels the first. The gates are deterministic, so an
+# in-flight run of superseded code tells nobody anything.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  # Belt and braces. `stub` is already the default in `app/config.py`; setting it here means
+  # a job that somehow reached for a model would fail on the missing transcript rather than
+  # quietly dialling the box from a runner.
+  SYNEX_MODEL_MODE: stub
+
+jobs:
+  # ── 1. the documentation gate ────────────────────────────────────────────────
+  docs:
+    name: docs — the compliance gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # --strict also fails on a TBD with no question reference. An unreferenced TBD is an
+      # unknown nobody wrote down, which is the failure `decisions/OPEN-QUESTIONS.md` exists
+      # to prevent.
+      - name: Naming law, banned phrases, feature register, scope tables
+        run: python scripts/verify.py --strict
+
+      # The explorer's feature data is generated from the register, so it cannot drift from
+      # it — unless somebody edits the register and forgets to regenerate.
+      - name: The explorer is current with the register
+        run: python scripts/sync_mvp_html.py --check
+
+      # The PDF is the artefact that actually reaches Vishnu. Its --check gate was added
+      # after SME-REVIEW.pdf shipped a day behind its source, missing the two sections the
+      # SME hour is meant to spend itself on.
+      - name: The PDFs are current with their sources
+        run: python scripts/build_pdf.py --check
+
+  # ── 2. the contracts ─────────────────────────────────────────────────────────
+  # Everything that is a promise between two parts of the system. These fail loudly and
+  # cheaply, which is why they are separated from the test job: a layering violation and a
+  # failing assertion are different kinds of news.
+  contracts:
+    name: contracts — layering, source law, the stream
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      # D-012. The direction is api -> agents -> services -> analytics|retrieval ->
+      # llm|prompts -> db -> domain. The sibling accumulated fifteen back-edges against a
+      # rule its own docstrings stated, which is what an unenforced rule becomes.
+      - name: Import layering (D-012)
+        working-directory: backend
+        run: lint-imports --config importlinter.ini
+
+      # The naming law over source. Phrase rules only — the lowercase-synex rule and the
+      # feature-ID check are prose rules that fire on `graylinx_synex` and on `C1`.
+      - name: The naming law, the separation law, and the Ragas ban over source
+        run: python scripts/verify_code.py
+
+      # Kills the class of "the web renders a frame the API stopped sending".
+      - name: The streaming frame contract
+        run: python scripts/verify_sse_contract.py
+
+  # ── 3. the back end ──────────────────────────────────────────────────────────
+  backend:
+    name: backend — ruff and the offline suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Lint
+        working-directory: backend
+        run: ruff check .
+
+      # No flags. `pytest.ini` carries `-m "not requires_box"` in addopts precisely so the
+      # honest run is the one nobody has to remember to type.
+      - name: Test — no MySQL, no Postgres, no Redis, no Ollama
+        working-directory: backend
+        run: pytest
+
+  # ── 4. the front end ─────────────────────────────────────────────────────────
+  # apps/web arrives in M1.5. Until then this job reports that it is waiting rather than
+  # passing silently: a green tick against work that does not exist is how a missing gate
+  # gets mistaken for a passing one.
+  frontend:
+    name: frontend — typecheck, lint, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Is there a front end yet?
+        id: detect
+        run: |
+          if [ -f apps/web/package.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Front end pending::apps/web does not exist yet — it arrives in M1.5. This job is a placeholder, not a pass."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.exists == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install
+        if: steps.detect.outputs.exists == 'true'
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Typecheck
+        if: steps.detect.outputs.exists == 'true'
+        working-directory: apps/web
+        run: npm run typecheck --if-present
+
+      - name: Lint
+        if: steps.detect.outputs.exists == 'true'
+        working-directory: apps/web
+        run: npm run lint --if-present
+
+      - name: Unit tests
+        if: steps.detect.outputs.exists == 'true'
+        working-directory: apps/web
+        run: npm run test --if-present
+
+      - name: Build
+        if: steps.detect.outputs.exists == 'true'
+        working-directory: apps/web
+        run: npm run build
+
+  # ── 5. Synex's own state ─────────────────────────────────────────────────────
+  # Added 2026-08-17, and the gap it closes was real: 97 `requires_box` tests — persistence,
+  # the durable case graph, retrieval, and every provenance assertion — ran **only on one
+  # laptop**. A test nobody's CI runs is a test that stops being true quietly.
+  #
+  # It runs the subset that needs Postgres and nothing else. It deliberately does NOT run:
+  #
+  #   * anything needing MySQL — the plant snapshot is 3.9 GB and belongs to the existing
+  #     platform. Provisioning it here would make CI depend on a customer's data.
+  #   * anything needing Ollama — the retrieval tests pull a 274 MB model, which is cheap on
+  #     a laptop and wasteful on every push.
+  #
+  # So the split is honest rather than convenient: `-k` names what is covered, and what is
+  # not covered is named above rather than left as an absence somebody assumes is covered.
+  state:
+    name: state — Postgres, the case queue and the durable graph
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # Same image as infra/docker-compose.yml. pgvector is in it because the architecture
+        # needs both stores and one container is cheaper than two.
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: synex
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: synex
+        ports:
+          - 5443:5432
+        options: >-
+          --health-cmd "pg_isready -U synex -d synex"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: pgvector is present
+        run: |
+          PGPASSWORD=dev psql -h 127.0.0.1 -p 5443 -U synex -d synex \
+            -c "CREATE EXTENSION IF NOT EXISTS vector;" \
+            -c "SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';"
+
+      # RC8's idempotency is a unique index rather than a code path, and RC1's pause is a
+      # checkpoint row. Neither can be asserted against a fake, which is why these are not
+      # in the offline suite.
+      - name: Test — the case queue, the durable pause, the audit trail
+        working-directory: backend
+        run: pytest -m requires_box -k "case_store or case_graph_durable"

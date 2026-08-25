@@ -1,0 +1,32 @@
+{
+  "name": "@synex/web",
+  "version": "0.18.0",
+  "private": true,
+  "description": "Graylinx Synex \u2014 the Copilot shell. Port 3100, not 3000: 3000-3003 are occupied.",
+  "scripts": {
+    "dev": "next dev -p 3100",
+    "build": "next build",
+    "start": "next start -p 3100",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "e2e": "playwright test",
+    "e2e:phone": "playwright test --project=phone"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "gsap": "^3.15.0",
+    "next": "15.1.6",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "22.10.5",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.1.6",
+    "typescript": "5.7.3"
+  }
+}

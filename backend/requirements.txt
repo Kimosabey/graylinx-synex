@@ -1,0 +1,85 @@
+# Synex back end — runtime dependencies.
+#
+# Pinned exactly, not loosely. `docs/20-architecture/01-stack.md` records the reason:
+# the sibling removed Ragas after it hard-imported a class LangChain 1.x deleted, and a
+# floating upper bound is how that arrives. A version here is a reviewed decision.
+#
+# This file is deliberately short. Nothing is listed before the milestone that uses it —
+# FastAPI, SQLAlchemy, LangGraph and the Ollama client arrive with M1.3, M1.1 and M1.4
+# respectively. Declaring them now would mean CI installing, and a reader trusting, a
+# dependency no code imports.
+#
+# The versions are what M0 was verified against, on Python 3.12.3.
+
+pydantic==2.13.4
+pydantic-settings==2.5.2
+
+# The plant snapshot, read-only. `aiomysql` because the API is async and a synchronous
+# driver would block the event loop on every telemetry read; `PyMySQL` is its protocol
+# layer rather than a second choice.
+#
+# Only `app.db` may import either — contract 6 in `importlinter.ini`, enforced in CI. The
+# connection uses `synex_plant_ro`, which holds SELECT on `graylinx_synex` and nothing else,
+# so "Synex never writes to the plant" is a property of the database rather than of this
+# dependency. Q42.
+aiomysql==0.2.0
+PyMySQL==1.1.3
+
+# The HTTP surface. FastAPI because the OpenAPI schema it generates is what the `contracts`
+# CI job will diff the committed TypeScript types against — the check that kills the whole
+# class of "the web renders a field the API stopped sending".
+fastapi==0.115.0
+uvicorn==0.47.0
+
+# The transport to the model roster. `app/llm/client.py` imports this and has since M1.4 —
+# it was **missing from this file**, so a clean install passed every gate here and failed on
+# first import anywhere else. Found 2026-08-17 while auditing the stack against
+# `docs/20-architecture/01-stack.md`.
+#
+# httpx rather than the `ollama` package deliberately: contract 5 in `importlinter.ini` allows
+# exactly two modules to reach a model client, and the Ollama HTTP API is small enough that a
+# wrapper would add a dependency without removing a line. `langchain-ollama` arrives with the
+# graph, for per-task model routing, and is a different concern.
+httpx==0.27.2
+
+# ── Synex's own state: PostgreSQL ───────────────────────────────────────────────
+# A second store, and the split is load-bearing rather than tidy. `graylinx_synex` is the
+# plant snapshot and is routinely dropped and re-cloned — it happened on 2026-08-17. A case
+# queue living inside it would be destroyed by the next restore, so Synex writes here.
+#
+# Arrived 2026-08-17 with `app/db/state.py`, not before: a dependency listed ahead of the code
+# that imports it is one CI installs and a reader trusts for nothing.
+sqlalchemy[asyncio]==2.0.49
+asyncpg==0.31.0
+
+# ── the case graph, and the pause that survives a restart ───────────────────────
+# `RC1` is a graph because two thirds of detected cases **pause** — 26 of 43 stop at the
+# checks and wait for a person, sometimes for days. Until the checkpointer existed, that
+# pause survived exactly as long as the process did.
+#
+# `psycopg` rather than `asyncpg` here: the LangGraph saver is built on psycopg3. Same
+# database, two clients, deliberately — see `app/db/session.py:graph_checkpointer`.
+#
+# Note `app/runtime.py`: on Windows psycopg3 cannot run async on the default ProactorEventLoop,
+# so the selector policy is set before any loop is created.
+langgraph==1.2.4
+langchain-core==1.4.3
+langgraph-checkpoint-postgres==3.1.2
+psycopg[binary,pool]==3.3.4
+
+# ── the scheduler RC17 needs ────────────────────────────────────────────────────
+# Twenty-two detected episodes never reached the case queue, including the only two rated
+# critical, because the idempotent seed was never scheduled. RC8 made the seed safe to re-run;
+# it did not make it run. `arq` is imported lazily inside `WorkerSettings` so importing the
+# job module — which the offline tests do — never reaches Redis.
+arq==0.28.0
+redis==5.0.8
+
+# ── retrieval: K1, K5, S4 ───────────────────────────────────────────────────────
+# pgvector in the Postgres we already run, rather than a second engine. The corpus is 131
+# checklist items plus a handful of documents, so an exact scan is both faster and correct;
+# an approximate index would trade accuracy for a speedup nobody would measure (Q58).
+#
+# The embedder is `nomic-embed-text` at 274 MB on the host CPU — NOT on the rented card. That
+# is why K1 and S4 are not among the six features the Jarvis box gates.
+pgvector==0.4.2

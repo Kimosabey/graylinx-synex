@@ -1257,6 +1257,22 @@ details.case[open]>summary::before{transform:rotate(180deg)}
       <p>A demo that answers questions beautifully but cannot prove a repair worked has not
       demonstrated the product.</p>
     </div>
+
+    <div class="callout">
+      <span class="k">BUILD STATUS &mdash; AS OF 18 AUG 2026</span>
+      <p>This page describes the plan. The build itself has moved well past it: milestones
+      <strong>M0</strong> and <strong>M1</strong> are both complete, and the agentic layer the stages in
+      section 10 describe has since landed &mdash; the Control Plane (<code>G1</code>&ndash;<code>G6</code>),
+      the case-resolution graph (<code>RC1</code>&ndash;<code>RC19</code>), Work Orders, Verification, and a
+      critique gate where a second model audits the first's answer sentence by sentence.
+      <strong>3,534 offline tests pass</strong> with no GPU, database or model running.</p>
+      <p style="margin-bottom:0">What is still genuinely open: no SME has reviewed the 19 discriminating
+      questions or the checklist library's 12 corrective-action sets that direct physical work &mdash; so the
+      case-resolution engine runs, but cannot yet eliminate a cause on reviewed judgement. Verification's
+      <span class="state">PASS</span> state is deliberately unreachable pending question Q15. And two
+      decisions outrank all of it: naming question N1, and whether the 94-of-147 cut itself is agreed. Full
+      detail in <code>HANDOFF.md</code>.</p>
+    </div>
   </div>
 </section>
 
@@ -1977,34 +1993,33 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <section id="stages">
   <div class="wrap">
     <h2><span class="num">10</span>Sequencing</h2>
-    <p class="lede">Ten stages. Stages 1 and 2 are the critical path and are the ones blocked by SME
-    questions. Stages 3 and 8 have no SME dependency and can start immediately — the Control Plane
-    and the conversation shell are both plain software.</p>
+    <p class="lede">Ten stages, planned in this order. In practice the agentic build moved through
+    almost all of them before the SME review this table's own dependencies call for — see the build
+    status callout in section 1. What is actually still waiting is narrower than the plan below
+    predicted: content review, not code.</p>
     <div class="callout">
       <span class="k">THE LONG POLE NOBODY COSTS FOR</span>
-      <p>Stage 9's dependency is not a threshold. The checklist library is curated content and cannot
-      ship until an SME has reviewed it, because a plausible-but-wrong checklist item directs physical
-      work on pressurised equipment. Several MVP features are also named by no stage at all — the
-      Contents panel counts them, and two are safety features. That is question Q17.</p>
-      <p style="margin-bottom:0">Twelve features have no SME dependency and nothing upstream waiting
-      on them: the Control Plane <code>G1</code>–<code>G6</code> and the conversation shell
-      <code>C15</code>–<code>C20</code>. Contents &rarr; <strong>Can start today</strong> isolates
-      them.</p>
+      <p>Stage 9's dependency was never a threshold, and still is not. The checklist library is curated
+      content and cannot ship <em>reviewed</em> until an SME has checked it, because a plausible-but-wrong
+      checklist item directs physical work on pressurised equipment. The engine that will run it is built;
+      the 12 corrective-action sets and 19 discriminating questions behind it are not yet reviewed.</p>
+      <p style="margin-bottom:0">Every stage below reached at least a first build. What is genuinely
+      still open is section 15's question list, not an unbuilt stage.</p>
     </div>
     <div class="scroll">
       <table>
         <thead><tr><th class="nowrap">Stage</th><th>Build</th><th class="nowrap">Depends on</th><th class="nowrap">Status</th></tr></thead>
         <tbody>
-          <tr><td class="id">0</td><td>Data in, tags normalised, asset hierarchy</td><td class="dash">—</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">can start</span></td></tr>
-          <tr><td class="id">1</td><td>Six models, residuals, validity flags, model health</td><td>Stage 0, Q1, Q2, Q14</td><td><span class="badge" style="color:var(--stop);border-color:var(--stop)">critical path · blocked</span></td></tr>
-          <tr><td class="id">2</td><td>Gates, persistence, isolation path, <span class="state">NO_DIAGNOSIS</span></td><td>Stage 1, Q3–Q6, Q9</td><td><span class="badge" style="color:var(--stop);border-color:var(--stop)">critical path · blocked</span></td></tr>
-          <tr><td class="id">3</td><td>Control Plane: identity, scope, risk, tool gateway, audit</td><td>Stage 0</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">can start now</span></td></tr>
-          <tr><td class="id">4</td><td>Copilot read path: ask, context, route, evidence, explain</td><td>Stages 2 and 3</td><td><span class="badge">waiting</span></td></tr>
-          <tr><td class="id">5</td><td>Work orders: create, evidence, priority, findings</td><td>Stages 3 and 4</td><td><span class="badge">waiting</span></td></tr>
-          <tr><td class="id">6</td><td>Verification and the close gate</td><td>Stages 1, 2 and 5, plus Q15</td><td><span class="badge">waiting</span></td></tr>
-          <tr><td class="id">7</td><td>Reports and knowledge retrieval</td><td>Stage 4</td><td><span class="badge">waiting</span></td></tr>
-          <tr><td class="id">8</td><td>Conversation shell: threads, turn memory on every route, the conversational front door, read-only lookup</td><td>Stages 3 and 4</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">can start now</span></td></tr>
-          <tr><td class="id">9</td><td>Case resolution: state machine, curated checklists, capability routing, the blocking gate, escalation routes</td><td>Stages 2 and 5, plus SME review of the checklist library</td><td><span class="badge" style="color:var(--warn);border-color:var(--warn)">blocked on review</span></td></tr>
+          <tr><td class="id">0</td><td>Data in, tags normalised, asset hierarchy</td><td class="dash">—</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">done — D-017 re-clone</span></td></tr>
+          <tr><td class="id">1</td><td>Six models, residuals, validity flags, model health</td><td>Stage 0, Q1, Q2, Q14</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">done — consumed, D-014</span></td></tr>
+          <tr><td class="id">2</td><td>Gates, persistence, isolation path, <span class="state">NO_DIAGNOSIS</span></td><td>Stage 1, Q3–Q6, Q9</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">done — M1</span></td></tr>
+          <tr><td class="id">3</td><td>Control Plane: identity, scope, risk, tool gateway, audit</td><td>Stage 0</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">done — G1–G6</span></td></tr>
+          <tr><td class="id">4</td><td>Copilot read path: ask, context, route, evidence, explain</td><td>Stages 2 and 3</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">done — M1</span></td></tr>
+          <tr><td class="id">5</td><td>Work orders: create, evidence, priority, findings</td><td>Stages 3 and 4</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">done — v0.20.0</span></td></tr>
+          <tr><td class="id">6</td><td>Verification and the close gate</td><td>Stages 1, 2 and 5, plus Q15</td><td><span class="badge" style="color:var(--warn);border-color:var(--warn)">built — PASS unreachable pending Q15</span></td></tr>
+          <tr><td class="id">7</td><td>Reports and knowledge retrieval</td><td>Stage 4</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">done — R1, R3, R5, R10, K1, K5</span></td></tr>
+          <tr><td class="id">8</td><td>Conversation shell: threads, turn memory on every route, the conversational front door, read-only lookup</td><td>Stages 3 and 4</td><td><span class="badge" style="color:var(--ok);border-color:var(--ok)">done — M1</span></td></tr>
+          <tr><td class="id">9</td><td>Case resolution: state machine, curated checklists, capability routing, the blocking gate, escalation routes</td><td>Stages 2 and 5, plus SME review of the checklist library</td><td><span class="badge" style="color:var(--warn);border-color:var(--warn)">engine built — content unreviewed</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -2913,7 +2928,7 @@ details.case[open]>summary::before{transform:rotate(180deg)}
 <section id="questions">
   <div class="wrap">
     <h2><span class="num">15</span>Open questions</h2>
-    <p class="lede">Twenty-three open, none closed. Five of them block work right now.
+    <p class="lede">Eighty-six open, none closed yet. Five of them block work right now.
     <code>decisions/OPEN-QUESTIONS.md</code> is the live list.</p>
 
     <h3>15.1 Blocking now</h3>

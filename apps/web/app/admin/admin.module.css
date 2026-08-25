@@ -1,0 +1,504 @@
+/*
+ * The Administrator surface — `U8`, `G1`–`G3`.
+ *
+ * Every colour here is a token from `globals.css`. Nothing in this file introduces a value,
+ * because a governance screen that grew its own palette would be the first place the design
+ * system quietly forked — and the one screen where a reader most needs colour to mean exactly
+ * what it means everywhere else.
+ *
+ * **Three separations this sheet has to hold, and they are not interchangeable:**
+ *
+ *  - `--refusal` is what the platform has decided, deliberately, and stands behind. Equipment
+ *    control and the two risk levels no approval clears wear it. It is calm on purpose: a
+ *    permanent boundary is a product guarantee, never a missing feature and never an error.
+ *  - `--warn` belongs to a capability that has been *lost* — degraded mode — and to nothing
+ *    on this page. `Degraded` from `components/Surface` owns it.
+ *  - `--rule-strong` carries the caveats: the identity notice and the named gaps. They are
+ *    limits on what this screen can claim, which is a third kind of fact again.
+ *
+ * Mobile-first throughout. The one wide artefact — the trail — scrolls inside its own box or
+ * stacks into cards; the page body never scrolls sideways.
+ */
+
+/* ── the identity notice ──────────────────────────────────────────────────────
+ *
+ * First thing on the page, because everything under it describes rules applied to a selected
+ * demonstration persona rather than a record of who may act on a live plant. A caveat placed
+ * after the matrix it qualifies has already been read too late.
+ *
+ * Deliberately not the degraded treatment. Nothing is down.
+ */
+
+/* Styled in full here rather than composed onto the global `.card`. Two of its properties —
+   the left rule and the flat surface — would be fighting `.card`'s `border` shorthand at equal
+   specificity, and a rule that wins only because of import order is a rule that breaks the
+   first time the bundler reorders. */
+.notice {
+  background: var(--sunken);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.noticeTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.noticeTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.noticeKind {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--body);
+  background: var(--sunken);
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.noticeBody {
+  margin: 0;
+  max-width: 74ch;
+  color: var(--body);
+  font-size: 13.5px;
+}
+
+/* The boolean, printed as a sentence. `is_production_identity: false` rendered as a bare
+   `false` is a value a reader skims past; the words are the part that lands. */
+.noticeFlag {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font-size: 13.5px;
+  color: var(--ink);
+  font-weight: 550;
+}
+
+/* ── permanently refused ──────────────────────────────────────────────────────
+ *
+ * The section this surface exists to make unmissable. `.card.refusal` in `globals.css` gives
+ * it the accent wash; the left rule and the marks below are the rest of the treatment.
+ */
+
+/* Sized down to the card heading it sits in — `.card > h2` is 11px, and a 16px glyph beside
+   it reads as a button rather than as punctuation. Inherits `currentColor`. */
+.headIco {
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+  margin-right: 4px;
+  color: var(--refusal);
+}
+
+.refusedList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.refusedItem {
+  border-left: 3px solid var(--refusal);
+  padding: 2px 0 2px 14px;
+}
+
+.refusedName {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.refusedTag {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 650;
+  color: var(--refusal);
+  background: var(--refusal-bg);
+  border: 1px solid var(--refusal);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.refusedWhy {
+  margin: 8px 0 0;
+  max-width: 74ch;
+  color: var(--body);
+  font-size: 13.5px;
+}
+
+/* The guarantee that does not come off the wire. Marked as such rather than mixed in with
+   the rows that do, because a sentence sitting inside an API-derived list reads as API-derived
+   — and this one is a product guarantee that holds whether or not the back end answers. */
+.guarantee {
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ── the approval matrix ──────────────────────────────────────────────────────
+ *
+ * Not a table. Every row carries a paragraph, and a paragraph inside a stacked table cell at
+ * 360px is unreadable — so the label/detail grid `dl.kv` uses is built directly instead, and
+ * it collapses to one column at the same breakpoint the rest of the product does.
+ */
+
+.matrix {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.matrixRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.matrixRow:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+@media (min-width: 640px) {
+  .matrixRow {
+    grid-template-columns: minmax(10rem, 17ch) minmax(0, 1fr);
+  }
+}
+
+.riskName {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.matrixBody {
+  display: grid;
+  gap: 8px;
+}
+
+.reqLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.reqPill {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 650;
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: var(--thead);
+  color: var(--ink);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* The two levels nobody can sign off. A different kind, not a higher degree — so it takes the
+   refusal treatment rather than a darker shade of the others. */
+.reqPill[data-refused='true'] {
+  background: var(--refusal-bg);
+  color: var(--refusal);
+  border-color: var(--refusal);
+}
+
+/* The capability that clears the level. Mono, because it is an identifier the Control Plane
+   grants — not a job title, and the distinction is the whole of constraint 13. */
+.capChip {
+  font-family: var(--mono);
+  font-size: 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  padding: 3px 11px;
+  color: var(--ink);
+  background: var(--sunken);
+  white-space: nowrap;
+}
+
+.holder {
+  font-size: 12.5px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 3px 11px;
+  color: var(--body);
+  background: var(--card);
+  white-space: nowrap;
+}
+
+.chipLabel {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.who {
+  margin: 0;
+  max-width: 74ch;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ── capabilities, by persona ─────────────────────────────────────────────────
+ *
+ * A grid of persona cards rather than a persona × capability table, and the reason is the
+ * phone: eight columns at 360px is a sideways drag over the one artefact constraint 25 says
+ * must not be misread. Each card lists **every** capability, held and not held, because the
+ * evidence that these sets do not nest is only visible when the absences are visible too.
+ */
+
+/* Its own surface rather than the global `.card`, which carries a 16px bottom margin that
+   would sit on top of the grid gap and leave the rows unevenly spaced. */
+.personaCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--sunken);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 13px 15px;
+}
+
+.personaName {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--ink);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.personaKey {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.capList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.capRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+.capList li:last-child .capRow {
+  border-bottom: 0;
+}
+
+.capRow[data-held='true'] {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+/* Not held is a fact about this persona, not a fault. Muted and worded — never a blank, and
+   never a struck-out row, which reads as something taken away. */
+.capRow[data-held='false'] {
+  color: var(--muted);
+}
+
+.capMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.capRow[data-held='true'] .capMark {
+  color: var(--ok);
+}
+
+.capIco {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+/* ── the ordering evidence ────────────────────────────────────────────────── */
+
+.verdict {
+  margin: 0 0 10px;
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 650;
+  color: var(--ink);
+  max-width: 34ch;
+}
+
+.pairGroup {
+  margin-top: 14px;
+}
+
+.pairLabel {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.pairList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pair {
+  font-size: 12.5px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 3px 11px;
+  color: var(--body);
+  background: var(--sunken);
+}
+
+.pairJoin {
+  color: var(--muted);
+  padding: 0 4px;
+}
+
+/* ── the named gaps ───────────────────────────────────────────────────────────
+ *
+ * `G8`, `Q41` and `Q76`, each with the question it traces to. Named individually so a reader
+ * sees three distinct gaps rather than one vague disclaimer — and styled as a record rather
+ * than as a to-do list, because two of the three are open questions and not backlog.
+ */
+
+.gapCard {
+  border-left: 3px solid var(--rule-strong);
+  padding-left: 14px;
+}
+
+.gapTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
+.gapName {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.gapSource {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 1px 9px;
+  white-space: nowrap;
+}
+
+.gapWhy {
+  margin: 7px 0 0;
+  max-width: 74ch;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ── the trail ────────────────────────────────────────────────────────────── */
+
+.trailTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin-bottom: 10px;
+}
+
+.trailCount {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 650;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.trailCountLabel {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+/* Durability, in words. A trail that quietly forgets is worse than one that says it will. */
+.durability {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 74ch;
+}
+
+/* Deliberately uncoloured. A failed gate is not a fault and not a degradation — it is the
+   deterministic reason a turn ended in `NO_DIAGNOSIS`, which is a correct outcome and the most
+   common one on this data. Tinting it amber would report an ordinary refusal as a problem, and
+   tinting it with the refusal accent would claim a judgement the row does not make. It is a
+   list of gate names, so it is set as one. */
+.gates {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.trailState {
+  font-size: 11px;
+}
+
+/* ── the header meta ──────────────────────────────────────────────────────── */
+
+.metaSep {
+  color: var(--rule-strong);
+  padding: 0 6px;
+}

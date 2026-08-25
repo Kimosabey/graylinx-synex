@@ -156,9 +156,10 @@ exist and are used as they are:
 
 | Piece | What it means for the build |
 |---|---|
-| **`graylinx_synex` — our own database** | Cloned from `graylinx_v2` on 2026-08-11: 193 tables, 3,879 MB. Verified exhaustively rather than by sample — every row in every table of all three databases counted. `graylinx_v2` and `graylinx_synex` match on all 193 tables and 14,271,741 rows. Synex writes here and nowhere else. |
-| **What it was cloned from** | `shiva` is the customer's snapshot and is **read-only**. `graylinx_v2` is a writable working copy of it. `graylinx_synex` is a third generation, so staging demo data for a pitch cannot disturb the copy that is in active use. Same reasoning, applied once more. |
-| **156,129 slots in it are simulated** | The snapshot's real data ends 2026-06-23; a simulation extends it to 2026-08-05. `snapshot_simulated_slots` names every synthetic `(equipment, slot_time)` pair, so real and generated can always be told apart. Treat a simulated window exactly as `C23` treats an untrusted one — anything shown over it says so. |
+| **`graylinx_synex` — our own database** | **Re-cloned from the rebuilt `graylinx_v2` on 2026-08-17**: 194 tables. Originally cloned 2026-08-11 and verified exhaustively rather than by sample. Synex writes here and nowhere else. Decision D-017. |
+| **What it was cloned from** | `shiva` is the customer's snapshot and is **read-only**. `graylinx_v2` is a writable working copy of it. `graylinx_synex` is a third generation, so staging demo data for a pitch cannot disturb the copy that is in active use. Same reasoning, applied once more. `graylinx_v3` exists and is **not** a valid source — it starts 2026-06-18 and holds only the tail, so cloning from it would destroy the measured window. |
+| **Nothing in it is simulated any more** | The first clone carried 156,129 simulated slots extending the data to 2026-08-05. The rebuilt source carries **zero**. `snapshot_simulated_slots` survives as an empty table and the guard against it stays, because a future restore from a simulating source must fail a test rather than quietly put fabricated values into figures. |
+| **12,589 slots in it are derived** | `snapshot_derived_slots` names every computed `(equipment, slot_time)` pair, all carrying the method `derived:tr_from_load_v1`, and **7,670 of them fall inside the measured window** — unlike the simulation, which the clip kept out by construction. Derived is not simulated: a derivation is calibrated against readings the plant genuinely took, so the rule is *derived may be quoted, simulated may not*. It is nonetheless excluded from "has this signal ever been measured", because a computed number that reads as an instrument reading is the same defect `cond_flow` taught us, entering by a different door. |
 | **The Jarvis box** | A rented Jarvislabs.ai GPU, used exactly as it is for Thermynx: **RTX PRO 6000 Blackwell, 96 GB, India region**, on demand, about ₹179/hr plus ₹2.84/hr for 250 GB. Chosen because the four-model roster must fit on **one** card — Ollama does not pool GPUs cleanly — and the resident set is roughly 41 GB at Q4 and 53 GB at Q8. Worked in one contiguous burst per session and then terminated; a fresh box wipes `/home`, so the roster re-pulls in about ten minutes. Nothing touching a model ships without a green run on it, and the acceptance run is a box run. Source: `docs/operations/hardware/JARVISLABS_GPU_SELECTION.md` and `JARVIS_BOX_BURST.md` in the Thermynx repository. |
 | **The same stack** | **Python and FastAPI on the back end**, React and TypeScript on the front end, MySQL for the plant snapshot and PostgreSQL with pgvector for the platform's own state, Ollama for local inference, LangGraph for the agent loop. Chosen because it is proven here, not because it is novel — the leverage is in the Control Plane, the verification layer and the case lifecycle, none of which the stack gives us for free. |
 | **The stack, in detail** | `docs/20-architecture/01-stack.md` records every inherited dependency with the reasoning attached, including the two frameworks that are refused rather than merely unused. `02-deployment.md` records the deployment shape: infrastructure in Docker, application on the host, MySQL on port 3307, observability behind an opt-in profile. Decision D-010. |
@@ -263,27 +264,47 @@ branch this product leads with. That is an argument for `NO_DIAGNOSIS` being a
 first-class output rather than a fallback, and against any roadmap that assumes
 the FDD half is nearly done.
 
-### Our own database fabricates the signal that matters most
+### Our own database fabricated the signal that matters most — and no longer does
 
-Measured on `graylinx_synex`, 2026-08-11. Every numeric column on
+Measured on `graylinx_synex`, 2026-08-11, before the re-clone. Every numeric column on
 `chiller_1_normalized` was compared across the real and the simulated window. Of 32
-columns, exactly one differs in kind:
+columns, exactly one differed in kind:
 
 | Signal | Real window (31,884 slots) | Simulated window (12,529 slots) |
 |---|--:|--:|
 | `cond_flow` | **0 non-zero, max 0.0** | 3,354 non-zero, **max 893.7** |
 | `dpt` | 8,089 non-zero | **0** |
 
-`chiller_2_normalized` matches, with 3,592 synthetic values reaching 1,099.6.
+`chiller_2_normalized` matched, with 3,592 synthetic values reaching 1,099.6.
 
-This **confirms** the Thermynx finding above — condenser flow has never been
-measured on the reference plant — and adds a constraint of its own. The natural
-demonstration window is the most recent data, and it is entirely synthetic. Marking
-it *simulated* is not sufficient, because the problem is not that the numbers are
-generated: it is that they imply an **instrumentation capability the site does not
-have.** Every other synthetic signal continues something the plant genuinely
-measures. Full analysis in `docs/20-architecture/00-data-model.md`; the constraint is
-D-009 and the feature is `C26`.
+That confirmed the Thermynx finding above — condenser flow has never been measured on
+the reference plant — and added a constraint of its own: the natural demonstration
+window was the most recent data, and it was entirely synthetic. Marking it *simulated*
+was not sufficient, because the problem was never that the numbers were generated but
+that they implied an **instrumentation capability the site does not have.**
+
+**The 2026-08-17 re-clone removed the fabrication rather than labelling it.** The
+rebuilt source has no simulated rows, so `cond_flow` is now genuinely empty and the
+verdict is unqualified: *never measured — 0 non-zero in 37,430 measured slots.* Note
+what did **not** change: `cond_flow` is zero in all three databases. The plant does not
+meter it, and no restore was ever going to fix that — it is instrumentation, not a data
+defect. D-009 and `C26` stand; the mechanism they demanded is what made the replacement
+safe to verify. Full analysis in `docs/20-architecture/00-data-model.md`.
+
+### What replaced it — and why *derived* is a third state
+
+The rebuilt source substitutes 12,589 **derived** slots for the simulation, and 7,670 of
+them fall inside the measured window. The distinction is real and is inherited with the
+data: a derivation is calibrated against readings the plant genuinely took, so *derived
+may be quoted, simulated may not*.
+
+Our code had no concept of derived, which would have made those 7,670 slots read as
+measured. `SignalStatus.DERIVED` now sits between `MEASURED` and `NEVER_MEASURED`,
+excluded from availability but reported alongside it, and it is deliberately **not
+usable** — quoting a derived value requires a label, and no rendering path attaches one
+yet. Two verdicts got *more* honest as a result: `chiller_flow`'s last credible reading
+moved earlier, from 2026-04-22 17:35 to 2026-04-22 00:00, because the rest of that day
+was computed rather than read.
 
 ## 10b. The differential — how a cause is ruled out
 

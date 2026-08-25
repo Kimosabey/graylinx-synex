@@ -37,6 +37,25 @@ TEXT = "phi4"
 EMBED = "nomic-embed-text"
 
 # Aliases resolve before the lookup, so the table below has one row per real model.
+#
+# **`planner` points at `brain`, matching the v4 roster.** The division of labour Synex is
+# built around, and the one Thermynx settled on: **gemma plans, composes and reasons; devstral
+# executes and writes SQL; phi4 audits** — from a different family, so it never grades its own
+# output. Thermynx's roster says it in one line: *"the brain takes planning + composition +
+# reasoning (planner/composer→brain)"*.
+#
+# **This sat on `text` for a day, on a half-read finding.** The 26B model was recorded
+# degenerating into a repetition loop while emitting JSON — *"…pressure-driven work to
+# pressure-driven work conversion efficiency loss in pressure-driven work to pressure-"* — the
+# object never closing, and **every plan silently becoming empty**. Not a crash and not a
+# refusal: an empty result that reads as "nothing to plan". All true, and none of it an
+# argument for a different model. The same roster records the cause: the brain *"works in
+# JSON-mode (thinks AND emits JSON), goes BLANK in a tight plain-text cap"*.
+#
+# **So the fix is in the call, not the table.** Every caller that parses a reply as JSON sets
+# `json_only`, which constrains Ollama's decode so an unterminated object cannot be produced,
+# and takes the ~25s the roster budgets for a plan. Asking a thinking model for JSON in free
+# text with no room to think is the failure — the mode, not the model.
 _ALIASES: dict[str, str] = {
     "planner": "brain",
     "composer": "brain",

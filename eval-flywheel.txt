@@ -1,0 +1,3 @@
+signal/cond_flow	what is the condenser flow on chiller 1?	gave 'condenser flow' a value, and this plant never metered it
+signal/cond_flow	what is the condenser flow on chiller 1?	gave 'condenser flow' a value, and this plant never metered it
+signal/cond_flow	show me condenser flow	gave 'condenser flow' a value, and this plant never metered it

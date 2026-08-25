@@ -205,7 +205,7 @@ def sync_scope(rows: list[dict], check: bool) -> int:
     end = text.index(SCOPE_END) + len(SCOPE_END)
     block = render_scope(rows)
     if text[start:end] == block:
-        print(f"mvp/MVP-SCOPE.md is current.")
+        print("mvp/MVP-SCOPE.md is current.")
         return 0
     if check:
         print("FAILED — mvp/MVP-SCOPE.md's shape table is stale.")

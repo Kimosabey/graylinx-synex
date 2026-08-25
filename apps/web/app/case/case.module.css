@@ -1,0 +1,415 @@
+/**
+ * Case-surface styling — only what the shared classes in `globals.css` do not already cover.
+ *
+ * Five other surfaces are being built against the same stylesheet, so nothing here touches a
+ * global selector: every rule is a CSS-module class, scoped by the build. Where a shared class
+ * exists — `.card`, `.chip`, `.pri`, `.row-check`, `.state-pill`, `.figure`, `.gate`,
+ * `.audit`, `dl.kv`, `table.data.stackable` — it is used as it is rather than restyled.
+ *
+ * **Every colour is a token.** Not one literal value appears below. Light is the default and
+ * dark is reached entirely through the tokens `globals.css` swaps, so this file never needs a
+ * `prefers-color-scheme` block of its own — which is also why it cannot get the two out of
+ * step.
+ *
+ * Mobile first, and genuinely so: the layout starts as one column at 360px and widens at
+ * 640px. Nothing scrolls sideways, every target clears 44px, and the one table that could not
+ * stack is `.stackable` instead.
+ */
+
+/* ── the header's actions ──────────────────────────────────────────────────── */
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--accent);
+  font-size: 13.5px;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+/* The one primary action on the surface. An anchor, because on this build nothing here
+   writes — see the standing note on the page itself. */
+.primary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--dur) var(--ease);
+}
+
+.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* ── where the case stands ─────────────────────────────────────────────────── */
+
+/* The two pills that answer "what is this and where has it got to" before any prose. */
+.standRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.standLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The sentence under the pills. Set to a reading measure so the state and its meaning are
+   read together rather than the meaning being skipped. */
+.standNote {
+  margin: 0 0 14px;
+  max-width: 62ch;
+  color: var(--body);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* A fact the reader has to act on, held apart from the prose without being alarming: the
+   accent rule, never the stop colour. */
+.flag {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--rule-strong);
+  background: var(--sunken);
+  border-radius: 0 6px 6px 0;
+  color: var(--body);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.flagWarn {
+  border-left-color: var(--warn);
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+/* ── the gates ─────────────────────────────────────────────────────────────── */
+
+.gateList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gateName {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
+.gateBody {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* ── the checks ────────────────────────────────────────────────────────────── */
+
+.capRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+/* Who a check belongs to, on the row itself — a capability is not a rank, so it is set as a
+   quiet label rather than as a badge that could read as seniority. */
+.itemOwner {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* The checks that are not this reader's. Constraint 38: a check they cannot perform
+   collapses out of their list; it stays on the case, here, so nothing is hidden. */
+.othersList {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.othersItem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.othersItem:last-child {
+  border-bottom: 0;
+}
+
+/* ── the residual column, on a narrow screen ───────────────────────────────────
+ *
+ * `.figure` is `FigureView`'s own global class and it is left alone everywhere else. These
+ * two rules are nested inside a module class, so they reach exactly the figures this page
+ * renders and no other surface's — `globals.css` is untouched and no other route changes.
+ *
+ * The label track has a 11rem floor, which is most of a 360px screen once the card padding is
+ * taken out. Below 480px the pair stacks instead, because a residual whose name is clipped or
+ * whose value has been pushed off the right edge is a reading somebody dispatches a crew on.
+ */
+.figures :global(.figure) {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .figures :global(.figure) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
+
+/* ── disclosure blocks ─────────────────────────────────────────────────────── */
+
+/* Long, complete lists — the fourteen pieces of evidence on a work order, the six signal
+   provenance notes — are present and closed, never trimmed. A truncated list of evidence is
+   a different claim from a closed one. */
+.disclosure {
+  margin-top: 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--sunken);
+}
+
+.disclosure > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 550;
+  list-style: none;
+}
+
+.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure > summary::before {
+  content: '›';
+  display: inline-block;
+  margin-right: 9px;
+  color: var(--muted);
+  font-family: var(--mono);
+  transition: transform var(--dur) var(--ease);
+}
+
+.disclosure[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.disclosureBody {
+  padding: 0 14px 12px;
+}
+
+.evidenceList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.evidenceItem {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--body);
+  line-height: 1.55;
+}
+
+.evidenceItem:last-child {
+  border-bottom: 0;
+}
+
+.evidenceKind {
+  display: inline-block;
+  margin-right: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.evidenceSource {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  word-break: break-word;
+}
+
+/* Table and column names run long and have no spaces to break at. */
+.wrapAnywhere {
+  overflow-wrap: anywhere;
+}
+
+/* ── the index ─────────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  align-items: flex-end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.filterLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.select {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--body);
+  font: inherit;
+  font-size: 13.5px;
+}
+
+.select:hover {
+  border-color: var(--accent);
+}
+
+/* One equipment-day. Constraint 12 — grouping is **display-level only**: the per-label cases
+   below are the trained model's actual output and are never rewritten into one. */
+.dayGroup {
+  margin-bottom: 22px;
+}
+
+.dayHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 10px;
+}
+
+.dayTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 640;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+
+.dayCount {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.caseList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.caseRow {
+  display: grid;
+  gap: 4px 16px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: baseline;
+}
+
+.caseLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.caseMeta {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* The six answer states, set out as a key rather than asserted about any case. */
+.stateKey {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.stateKeyItem {
+  display: grid;
+  gap: 4px;
+}
+
+.stateKeyText {
+  margin: 0;
+  max-width: 66ch;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* ── wider than a phone ────────────────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+  .caseRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .caseMeta {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .stateKey {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px 22px;
+  }
+}

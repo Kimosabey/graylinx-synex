@@ -1,0 +1,3616 @@
+/*
+ * Synex — the token sheet, lifted from `mvp/mock.html`.
+ *
+ * These are not new values. The mock is the designed shell and its `:root` block is the
+ * source of truth; copying it exactly is what stops the product growing a second design
+ * language. Brand `#0020B0` is decision D-001, and `scripts/palette.py` derives and audits
+ * the whole system from it — 72 of 72 rendered pairs pass WCAG 2.2 AA in both themes, body
+ * text at AAA.
+ *
+ * **The one token the mock does not have is `--refusal`.** A `NO_DIAGNOSIS` is not a
+ * warning and not a failure: it is a correct result, and the most common one on this data —
+ * 5,309 slots against 674 faulted. So it must not borrow `--stop` (red) or `--warn`
+ * (amber). It gets the accent, a solid left rule and a calm surface: visually *deliberate*,
+ * which is the presentational half of D-015. Colouring a refusal like an error would soften
+ * it in the opposite direction — it would read as a bug rather than as an answer.
+ */
+
+:root {
+  --page: #ffffff;
+  --card: #ffffff;
+  --sunken: #f6f9ff;
+  --thead: #e7efff;
+  --rule: #ccd3e1;
+  --rule-strong: #848a95;
+  --ink: #001993;
+  --body: #2f333d;
+  --muted: #565b65;
+  --accent: #0020b0;
+  --accent-hover: #001993;
+  --on-accent: #ffffff;
+  --focus: #1145d9;
+  --ok: #005428;
+  --warn: #472d00;
+  --warn-bg: #fff6e5;
+  --stop: #87000e;
+
+  /* NO_DIAGNOSIS. Deliberate, never alarming. See the note above. */
+  --refusal: #0020b0;
+  --refusal-bg: #f6f9ff;
+
+  --shadow: var(--e2);
+  /* A card that is reachable, lifted under the pointer. Same construction as `--shadow`:
+     the brand's own rgb in light, plain black in dark, because a blue glow on a dark
+     surface reads as a colour rather than as depth. */
+  --lift: 0 2px 10px rgb(var(--shadow-rgb) / 0.13);
+  /* IBM Plex, loaded and self-hosted by `next/font` in `app/layout.tsx` — see the note there
+     for why this family and not Inter. The fallbacks are not decoration: if the font files
+     fail, the stack must still land on something with the same proportions rather than
+     dropping to Times, which would reflow every table on the screen. */
+  --font: var(--font-sans), "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: var(--font-mono), "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  /* ── the type scale ──────────────────────────────────────────────────────
+   *
+   * **Six steps, and they replace ten near-identical ones.** Before 2026-08-18 this stylesheet
+   * held forty `font-size` declarations across ten distinct values — 10.5, 11, 11.5, 12, 12.5,
+   * 13, 13.5, 14, 15, 15.5 — crammed into a five-pixel band with half-pixel steps. That is not
+   * a scale, it is accumulation: each value was chosen against whatever sat next to it, so
+   * nothing on the screen was ever quite the same size as anything else and no reader could say
+   * why the page felt unsettled.
+   *
+   * **Fluid, so the phone is not just the desktop shrunk.** Each step interpolates with the
+   * viewport via `clamp()`, which is what makes the layout respond to width rather than snap at
+   * a breakpoint. The floors matter more than the ceilings here: `--t-body` never drops below
+   * 16px, because a technician reads this one-handed in a plant room, and because iOS silently
+   * zooms the whole page when a focused input is under 16px.
+   *
+   * **Ratio ~1.2 (minor third)** — tight enough for a dense operational interface where six
+   * levels of hierarchy must coexist in one card, wide enough that adjacent steps are
+   * distinguishable rather than merely different.
+   */
+  /* **Small steps are fixed; only the large ones are fluid.** That is the correction, and it
+   * is the opposite of what a naive fluid scale does.
+   *
+   * A 12px label does not want to be 13px on a wide monitor — it wants to stay dense and
+   * legible. Viewport width tells you about *line length and impact*, which matter for a page
+   * title and not at all for a table cell, so scaling the small end with `vw` inflated every
+   * dense element by 1–2px and bought nothing. `--t-body` is capped at 16px for the same
+   * reason: it is the accessibility floor, not a starting point to grow from, and a 17px body
+   * in an operational table is simply large.
+   *
+   * **The ratios were also backwards.** The first version ran ×1.15, ×1.13, ×1.18 through the
+   * four smallest steps — three near-identical jumps where almost all the content lives, so
+   * nothing read as a level — then ×1.35 and ×1.45 at the top, where two steps are plenty.
+   * This runs a steady ~1.2 from micro to lead and opens up only for the display sizes, which
+   * is where a difference is actually seen.
+   *
+   * Every step stays in `rem`, so a raised browser default still scales the whole interface —
+   * that is the setting a `px` scale ignores and the most common way a "responsive" interface
+   * is still unusable for someone who needs larger type.
+   */
+  --t-micro: 0.75rem;
+  --t-small: 0.875rem;
+  --t-body: 1rem;
+  --t-lead: clamp(1.125rem, 1.09rem + 0.16vw, 1.25rem);
+  --t-title: clamp(1.375rem, 1.28rem + 0.42vw, 1.625rem);
+  --t-display: clamp(1.75rem, 1.55rem + 0.9vw, 2.125rem);
+
+  /* ── width ───────────────────────────────────────────────────────────────
+   *
+   * **Two numbers, and they answer different questions.**
+   *
+   * `--content-max` bounds the whole column. It is fluid rather than a set of breakpoint
+   * literals: `88vw` lets the column breathe on a laptop, the 76rem ceiling stops it running
+   * away on a two-monitor desk, and the 46rem floor keeps a tablet from being squeezed. This
+   * replaces three separate `max-width` declarations at three breakpoints — one of which
+   * (`70rem` above 1440px) was identical to the default it was meant to override and had
+   * therefore never done anything.
+   *
+   * `--measure` bounds *prose only*. Evidence tables and provenance lists are scanned in
+   * columns and want the full width; a sentence is read left to right and wants 60–75
+   * characters, or the eye loses the line on the return sweep. Applying one number to both is
+   * how a page ends up either with unreadable 140-character lines or with half-empty tables. */
+  --content-max: clamp(46rem, 88vw, 76rem);
+  --measure: 68ch;
+
+  /* ── the spacing scale ───────────────────────────────────────────────────
+   * A 4pt grid. It replaces fifteen ad-hoc values (2, 3, 5, 7, 9, 13, 22 among them) that
+   * were each picked in isolation, which is why nothing on the page aligned with anything
+   * that was not written in the same sitting. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  --dur: 170ms;
+  /* Exits run at ~70% of an entrance. Stated once so no component re-multiplies it. */
+  --dur-exit: 119ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  /* ── radius ──────────────────────────────────────────────────────────────
+   * Five steps, replacing seven ad-hoc values (4, 5, 6, 8, 10, 50%, 999px) that were each
+   * picked against whatever sat beside them. Radius is a family resemblance: when a chip, a
+   * card and an input round by three different amounts, nothing looks related to anything.
+   * The ratio is roughly 1.6 so adjacent steps are distinguishable rather than merely
+   * different, and `--r-full` is the pill used for chips and status dots. */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-full: 999px;
+
+  /* Kept as the name nine rules already use, now pointing at the scale. */
+  --radius: var(--r-md);
+
+  /* ── elevation ───────────────────────────────────────────────────────────
+   *
+   * **Height is a hierarchy, so it needs a scale rather than a value.** There was one
+   * `--shadow` token and twelve `box-shadow` declarations, six of which wrote their own
+   * `rgba(0, 32, 176, …)` inline — the brand colour, hardcoded, in the one file whose whole
+   * job is that colours come from tokens.
+   *
+   * **Tinted, not grey.** Every level is built from `--shadow-rgb`, the brand hue, so a card
+   * appears to sit on this page rather than to have been cut out of a different one. A neutral
+   * grey shadow under a blue-tinted surface is the single most common reason an interface
+   * reads as unfinished.
+   *
+   * **Two layers per level.** A tight, nearly opaque shadow gives the edge its definition; a
+   * wide, faint one gives the object its height. One layer can do either, never both.
+   *
+   * Dark mode swaps the hue to black and raises the alphas — a tinted shadow on a dark ground
+   * glows rather than lifts. */
+  /* ── derived surface tints ───────────────────────────────────────────────
+   *
+   * **Mixed, never invented.** D-001 fixes the brand at #0020B0 and `scripts/palette.py`
+   * audits 72 rendered pairs against WCAG AA from it; a tint written as a new hex would
+   * reopen that audit quietly and a reviewer would have no way to tell a derived value from
+   * a guessed one. `color-mix()` states the derivation in the value itself — this is 6% of
+   * the accent over the card, and anyone can check that.
+   *
+   * `in oklab` rather than `in srgb`: mixing in sRGB drags a saturated blue through grey and
+   * the result reads dirty at low percentages. Oklab is perceptually even, so 6% looks like
+   * 6% of the way there rather than like a different, muddier colour.
+   *
+   * These are **surfaces, not text**. Nothing here is ever a foreground colour, so none of
+   * them enters the contrast audit — which is exactly why they are safe to add and why they
+   * must stay backgrounds. */
+  --tint-accent: color-mix(in oklab, var(--accent) 6%, var(--card));
+  --tint-accent-strong: color-mix(in oklab, var(--accent) 12%, var(--card));
+  --tint-ok: color-mix(in oklab, var(--ok) 8%, var(--card));
+  --tint-warn: color-mix(in oklab, var(--warn) 8%, var(--card));
+  --tint-stop: color-mix(in oklab, var(--stop) 8%, var(--card));
+
+  /* A hairline that belongs to the accent rather than to the neutral ramp — for the edge of
+     something selected, where the grey rule would read as merely bordered. */
+  --rule-accent: color-mix(in oklab, var(--accent) 34%, var(--rule));
+
+  --shadow-rgb: 0 32 176;
+
+  --e0: none;
+  --e1: 0 1px 2px rgb(var(--shadow-rgb) / 0.05), 0 2px 6px rgb(var(--shadow-rgb) / 0.05);
+  --e2: 0 1px 2px rgb(var(--shadow-rgb) / 0.06), 0 6px 16px rgb(var(--shadow-rgb) / 0.08);
+  --e3: 0 2px 4px rgb(var(--shadow-rgb) / 0.07), 0 12px 28px rgb(var(--shadow-rgb) / 0.10);
+  --e4: 0 4px 8px rgb(var(--shadow-rgb) / 0.09), 0 24px 48px rgb(var(--shadow-rgb) / 0.14);
+
+  /* An inset hairline that reads as a lit top edge. Applied with an elevation, it is what
+     makes a surface look like a physical card rather than a rectangle with a drop shadow. */
+  --e-edge: inset 0 1px 0 rgb(255 255 255 / 0.6);
+
+  /* The Graylinx mark, lifted from the mock. One token, swapped per theme, so the
+     wordmark never sits at the wrong contrast against its own bar. */
+  --logo: url('/graylinx-light.png');
+
+  /* ── the persona switch, in the bar ───────────────────────────────────────
+ * A native `<select>` rather than a styled list: it is a demonstration control, it holds five
+ * mutually exclusive values, and the platform's own control already handles keyboard, screen
+ * reader and touch correctly on every device. Rebuilding that to match a design would cost
+ * accessibility and buy nothing. */
+.personaswitch {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+  min-width: 0;
+}
+
+.personaswitch-label {
+  font-size: var(--t-micro);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.personaswitch select {
+  font: inherit;
+  font-size: var(--t-small);
+  color: var(--body);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: var(--s-1) var(--s-2);
+  min-height: 32px;
+  max-width: 11rem;
+  cursor: pointer;
+}
+
+.personaswitch select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Below 1024px the words go and the control stays — a select without its label keeps its
+   accessible name from `aria-label`, so nothing is lost to a screen reader. */
+@media (max-width: 1023px) {
+  .personaswitch-label {
+    display: none;
+  }
+}
+
+/* ── the brand lockup ────────────────────────────────────────────────────────
+   * One dimension. Everything else in the lockup — the wordmark's size, the hairline's
+   * height, the mark's optical offset — is derived from it, so the lockup can be resized at
+   * a breakpoint by changing this and nothing else. */
+  --lockup-h: 34px;
+
+  /* ── gradients ───────────────────────────────────────────────────────────────
+   * **Derived, never new.** Every stop is a colour already declared above — `--ink`,
+   * `--accent`, `--focus`, `--rule`. D-001 fixes the brand at #0020B0 and `scripts/palette.py`
+   * audits 72 rendered pairs against WCAG AA from it; a gradient written in hex would reopen
+   * that quietly. Written in terms of the tokens, these need no dark-mode duplicate: the
+   * tokens under them swap and the gradients follow.
+   *
+   * **There are two, and that is the entire budget.** The boldness is spent on the Synex
+   * wordmark; the bar's rule is the one supporting surface. A gradient on every card is what
+   * makes a product read as a template, and this one is an instrument. */
+  --grad-brand: linear-gradient(100deg, var(--ink) 0%, var(--accent) 46%, var(--focus) 100%);
+  --grad-bar-rule: linear-gradient(
+    90deg,
+    var(--ink) 0%,
+    var(--accent) 16%,
+    var(--focus) 32%,
+    var(--rule) 58%,
+    var(--rule) 100%
+  );
+}
+
+[data-theme='dark'],
+:root:has(#theme-dark:checked) {
+  --page: #1c2029;
+  --card: #252a34;
+  --sunken: #303541;
+  --thead: #364157;
+  --rule: #49505f;
+  --rule-strong: #828c9e;
+  --ink: #cfdfff;
+  --body: #e9effb;
+  --muted: #a7adb8;
+  --accent: #83abff;
+  --accent-hover: #aec9ff;
+  --on-accent: #0d1528;
+  --focus: #83abff;
+  --ok: #74c18a;
+  --warn: #daa14a;
+  --warn-bg: #33280f;
+  --stop: #ee8f86;
+  --refusal: #83abff;
+  --refusal-bg: #303541;
+  --shadow-rgb: 0 0 0;
+  --e1: 0 1px 2px rgb(0 0 0 / 0.35), 0 2px 6px rgb(0 0 0 / 0.3);
+  --e2: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.38);
+  --e3: 0 2px 4px rgb(0 0 0 / 0.45), 0 12px 28px rgb(0 0 0 / 0.45);
+  --e4: 0 4px 8px rgb(0 0 0 / 0.5), 0 24px 48px rgb(0 0 0 / 0.55);
+  --e-edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --shadow: var(--e2);
+  --lift: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --logo: url('/graylinx-dark.png');
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --page: #1c2029;
+    --card: #252a34;
+    --sunken: #303541;
+    --thead: #364157;
+    --rule: #49505f;
+    --rule-strong: #828c9e;
+    --ink: #cfdfff;
+    --body: #e9effb;
+    --muted: #a7adb8;
+    --accent: #83abff;
+    --accent-hover: #aec9ff;
+    --on-accent: #0d1528;
+    --focus: #83abff;
+    --ok: #74c18a;
+    --warn: #daa14a;
+    --warn-bg: #33280f;
+    --stop: #ee8f86;
+    --refusal: #83abff;
+    --refusal-bg: #303541;
+    --shadow-rgb: 0 0 0;
+  --e1: 0 1px 2px rgb(0 0 0 / 0.35), 0 2px 6px rgb(0 0 0 / 0.3);
+  --e2: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.38);
+  --e3: 0 2px 4px rgb(0 0 0 / 0.45), 0 12px 28px rgb(0 0 0 / 0.45);
+  --e4: 0 4px 8px rgb(0 0 0 / 0.5), 0 24px 48px rgb(0 0 0 / 0.55);
+  --e-edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --shadow: var(--e2);
+    --lift: 0 2px 10px rgba(0, 0, 0, 0.45);
+    --logo: url('/graylinx-dark.png');
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ── one focus ring, everywhere ────────────────────────────────────────────
+ *
+ * There were two `:focus-visible` rules in two thousand lines, which meant most interactive
+ * elements fell back to whatever the browser drew — and in several places to nothing at all,
+ * because a reset had removed the outline without replacing it. This is an operational tool
+ * driven substantially by keyboard, so a person who cannot see where focus sits cannot use it.
+ *
+ * `:focus-visible` rather than `:focus`, so a mouse click does not leave a ring behind while
+ * a Tab press does. The offset keeps the ring clear of the element's own border instead of
+ * sitting on top of it. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* ── motion, held to one contract ──────────────────────────────────────────
+ *
+ * GSAP handles reduced motion per component through `matchMedia`. This covers everything GSAP
+ * does not touch — CSS transitions on hover, the rail's width, the chevron's rotation — so a
+ * person who has asked the operating system for less movement gets it from the whole page and
+ * not just the parts a component author remembered. Nothing is disabled outright: durations
+ * collapse, so state still changes and only the travel is removed. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Anchored navigation and in-page jumps glide rather than cut, except where the line above
+   has switched it off. */
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* The scrollbar is hidden, not the scrolling.
+ *
+ * Wheel, trackpad, keyboard (space, PageDown, arrows) and programmatic scrolling all still
+ * work — only the visual gutter is suppressed, so the page does not shift by ~15px when
+ * content grows past the fold and the layout stays put through a streaming answer.
+ *
+ * The trade-off, stated rather than hidden: a scrollbar is also an affordance that says
+ * "there is more below". The evidence and answer cards are tall enough that the content
+ * itself signals it, and the keyboard path is untouched, so nothing becomes unreachable. */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+body {
+  background: var(--page);
+  color: var(--body);
+  font-family: var(--font);
+  /* Was a flat 15px, which is under the 16px floor at which iOS zooms a focused input and
+     under the threshold most readability guidance sets for sustained reading on a phone. */
+  font-size: var(--t-body);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Focus is never removed, only restyled. Removing the ring is the single most common
+   accessibility regression, and keyboard users lose the interface entirely. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* ── .sr-only — visually hidden, still announced ────────────────────────────────
+ *
+ * The clip-rect pattern, and specifically **not** `display: none` or `visibility: hidden`,
+ * either of which would take the element out of the accessibility tree as well as off the
+ * screen — which is the whole thing this class exists not to do.
+ *
+ * Both `clip` and `clip-path` are declared: `clip` is deprecated but is what older assistive
+ * technology pairs still act on, and the cost of keeping it is one line.
+ *
+ * `white-space: nowrap` matters more than it looks. In a 1px box a long string wraps to one
+ * character per line, and at least one screen reader reads that out vertically.
+ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The skip link. Eight surfaces plus five personas is thirteen tab stops between the top of
+   the page and the content, on every navigation. Transform, not `top`, so it moves on the
+   compositor like everything else here. */
+.skip {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--dur) var(--ease);
+}
+
+.skip:focus {
+  transform: translateY(0);
+}
+
+/* ── the content column, and the scroll model ──────────────────────────────
+ *
+ * **`min-width: 0` is the load-bearing line and it looks like nothing.** A grid item defaults
+ * to `min-width: auto`, which means it refuses to shrink below its own content — so one wide
+ * table, one long unbroken token, one `<pre>` of JSON widens the column, widens the grid, and
+ * the whole page scrolls sideways. Every "why does the page scroll horizontally on a phone"
+ * bug in a layout like this is this line missing. The column track is already `minmax(0, 1fr)`;
+ * the item needs the same permission or the track's own minimum is overridden from inside.
+ *
+ * **The rail scrolls with the page rather than independently.** Two scrollbars in one viewport
+ * is the pattern that makes a person lose their place — the wheel does different things
+ * depending on where the pointer happens to sit. One page, one scroll, and the topbar stays
+ * because it carries the data window and the platform state, which must be true of whatever
+ * is currently on screen.
+ */
+.content {
+  /* `min-width: 0` is the load-bearing line and it looks like nothing — see the note below.
+     Padding, width and centring all live on `main.content`, which is more specific and would
+     win anyway; declaring them twice was how this block's padding silently never applied. */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/* Anything that cannot wrap scrolls inside its own box, never by widening the page. */
+.content table,
+.content pre {
+  max-width: 100%;
+}
+
+.content pre {
+  overflow-x: auto;
+}
+
+/* ── the Copilot transcript ────────────────────────────────────────────────
+ *
+ * Turns are separated by a rule rather than boxed: a chat bubble would make the Copilot's
+ * answer look like a message from a peer, and this one is accountable for evidence, gates and
+ * an honesty audit. The question is what gets the emphasis — it is the thing a reader scrolling
+ * back is looking for.
+ */
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--rule);
+  min-width: 0;
+}
+
+.turn:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.turn-question {
+  margin: 0;
+  font-size: var(--t-lead);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* A stage name is real work happening right now, not a fact — the same distinction that
+ * keeps `.skel-bar` sweeping over an empty placeholder rather than over a reading. So this
+ * shimmers *through* `--muted`, never past it: the gradient's darkest point matches today's
+ * flat colour exactly, and the animated highlight only ever brightens toward `--accent`. The
+ * text is never harder to read than it already was, in any frame.
+ */
+.turn-stage {
+  margin: 0;
+  font-size: var(--t-micro);
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--muted) 40%,
+    var(--accent) 50%,
+    var(--muted) 60%,
+    var(--muted) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: stageshimmer 1.6s linear infinite;
+}
+
+@keyframes stageshimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-stage {
+    animation: none;
+    background: none;
+    color: var(--muted);
+  }
+}
+
+/* **`--rail-w` is registered, and that is what makes the collapse animate at all.**
+ *
+ * An ordinary custom property is an untyped token: the browser cannot know that `232px` and
+ * `60px` are two points on a line, so it swaps one string for the other and the rail *snaps*.
+ * `@property` gives it a syntax and a type, and a typed custom property is animatable — so the
+ * width now genuinely interpolates. The stylesheet had a `transition` on
+ * `grid-template-columns` all along; it simply had nothing interpolatable to act on.
+ *
+ * `inherits: false` because only `.shell` sets it, and `initial-value` is required — a
+ * registration without one is dropped, taking the animation with it. */
+@property --rail-w {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 232px;
+}
+
+/* ── shell: topbar + rail + main, as the mock lays it out ─────────────────── */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  min-height: 100dvh;
+  /* The skip link is positioned against this. */
+  position: relative;
+}
+
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 56px;
+  background: var(--card);
+  /* The rule is drawn by `.topbar::after` — see the gradient note below. */
+  border-bottom: 0;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+/* **The one supporting surface the gradient budget is spent on.**
+ *
+ * A 2px band under the bar, brand-coloured where the brand is and `--rule` everywhere else,
+ * so it reads as the bar's own hairline tinted at the lockup end rather than as a stripe
+ * across the top of an instrument. It is drawn once, globally, in the one place a brand
+ * belongs — which is also why it cannot be over-applied the way a card modifier could. */
+.topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--grad-bar-rule);
+  pointer-events: none;
+}
+
+/* ── the persona switch, in the bar ───────────────────────────────────────
+ * A native `<select>` rather than a styled list: it is a demonstration control, it holds five
+ * mutually exclusive values, and the platform's own control already handles keyboard, screen
+ * reader and touch correctly on every device. Rebuilding that to match a design would cost
+ * accessibility and buy nothing. */
+.personaswitch {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+  min-width: 0;
+}
+
+.personaswitch-label {
+  font-size: var(--t-micro);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.personaswitch select {
+  font: inherit;
+  font-size: var(--t-small);
+  color: var(--body);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: var(--s-1) var(--s-2);
+  min-height: 32px;
+  max-width: 11rem;
+  cursor: pointer;
+}
+
+.personaswitch select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Below 1024px the words go and the control stays — a select without its label keeps its
+   accessible name from `aria-label`, so nothing is lost to a screen reader. */
+@media (max-width: 1023px) {
+  .personaswitch-label {
+    display: none;
+  }
+}
+
+/* ── the brand lockup ──────────────────────────────────────────────────────────
+ *
+ * Two brands in one object: **Graylinx** the company, drawn by its own mark, and **Synex**
+ * the product, set in type beside it with a hairline between. The logo already draws the
+ * word "Graylinx", so setting it again in type would say the company's name twice — but the
+ * `h1`'s accessible name is still exactly *Graylinx Synex*, carried by an `.sr-only` span,
+ * because the naming law governs what the page announces itself as and a screen reader must
+ * not hear a bare "Synex".
+ *
+ * **The bug this replaces.** `.brand` was a 132×30 box — 4.4:1 — with the mark painted into
+ * it at `background-size: contain`. `public/graylinx-light.png` is 460×172, a 2.674:1 mark,
+ * so `contain` fitted it to 30px tall and about 80px wide and left roughly 52px of dead
+ * heading to the right of the artwork: an invisible gap that pushed the tagline off its
+ * intended position and made the bar look badly balanced for a reason nobody could see.
+ * Sizing the box at the file's own aspect ratio means the box *is* the artwork and `contain`
+ * has nothing left to letterbox.
+ */
+.topbar .brand {
+  /* The browser default (2em, block, large margins) would prise a 56px bar apart. Reset
+     here rather than downgrading the element to a span — the heading level is a promise to
+     a screen reader, not a type choice. */
+  margin: 0;
+  flex: none;
+  font-size: inherit;
+  line-height: 1;
+  font-weight: inherit;
+}
+
+.lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lockup-mark {
+  display: block;
+  flex: none;
+  height: var(--lockup-h);
+  /* The asset's own dimensions. Change the file, change these two numbers, and nothing else
+     in the lockup moves. */
+  aspect-ratio: 460 / 172;
+  background: var(--logo) center / contain no-repeat;
+  /* **Cap bands aligned, not boxes.** Measured off the file: the "Graylinx" cap line sits at
+     y=38 and its baseline at y=116 of 172, so the reading line's centre is 0.448 of the box
+     height, not 0.5 — the wing arcs above it and the descender below are not part of the
+     word. Flexbox centres an item's *margin* box, so a top margin of 2 × (0.5 − 0.448) =
+     0.105 of the height drops the mark by exactly the difference and puts the two wordmarks
+     on one optical line. */
+  margin-top: calc(var(--lockup-h) * 0.105);
+}
+
+/* The hairline is what stops "Synex" reading as a word inside the Graylinx logo. */
+.lockup-rule {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: calc(var(--lockup-h) * 0.66);
+  background: var(--rule-strong);
+}
+
+/* **The wordmark — the one place the design spends any boldness.**
+ *
+ * - **Size is derived, not picked.** The mark's cap height is 79 of its 172px canvas =
+ *   0.459 of the box; Inter's cap height is 1490/2048 em = 0.727. So a wordmark at
+ *   0.459 ÷ 0.727 = 0.631 of the mark's height sets both at the same cap height, which is
+ *   what makes a lockup read as one object rather than as a logo with a caption.
+ * - **Weight 640** puts the product name a shade above the mark's own weight, so Synex leads
+ *   the lockup without the company mark having to shrink to let it.
+ * - **Tracking is negative.** A five-letter word at this size reads loose at 0; −0.012em
+ *   closes the counters enough for it to read as one mark.
+ * - **Optical sizing on**, so a variable Inter uses its display cut here and its text cut in
+ *   the body, which is the whole point of the axis.
+ */
+.lockup-word {
+  font-size: calc(var(--lockup-h) * 0.631);
+  font-weight: 640;
+  letter-spacing: -0.012em;
+  line-height: 1;
+  font-optical-sizing: auto;
+  white-space: nowrap;
+  /* The solid is declared first and unconditionally. If `background-clip: text` is not
+     supported, or a privacy extension strips the background, the wordmark stays legible
+     `--ink` — a brand name that disappears is a worse failure than a brand name that is
+     flat. */
+  color: var(--ink);
+}
+
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .lockup-word {
+    background: var(--grad-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+/* A reader who has asked for more contrast has asked for the flat colour. */
+@media (prefers-contrast: more) {
+  .lockup-word {
+    background: none;
+    -webkit-text-fill-color: var(--ink);
+    color: var(--ink);
+  }
+}
+
+/* Forced colours drop background images, which would leave the lockup reading "Synex" with
+   nothing in front of it. The `h1`'s accessible name is unaffected — it comes from the
+   `.sr-only` span — but a sighted reader in this mode should still see whose product it is,
+   so the mark falls back to its own name in type. */
+@media (forced-colors: active) {
+  .lockup-mark {
+    display: flex;
+    align-items: center;
+    background: none;
+    width: auto;
+    aspect-ratio: auto;
+    margin-top: 0;
+  }
+
+  .lockup-mark::before {
+    content: 'Graylinx';
+    font-size: calc(var(--lockup-h) * 0.631);
+    font-weight: 640;
+    letter-spacing: -0.012em;
+  }
+
+  .lockup-word {
+    background: none;
+    -webkit-text-fill-color: CanvasText;
+    color: CanvasText;
+  }
+}
+
+.topbar .tagline {
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+/* **The live platform state, beside the window it applies to.**
+ *
+ * Grouped because they are one fact in two halves: *what the platform can do* and *how far
+ * the data it can do it over reaches*. Reading either without the other is how a stubbed
+ * answer over a stale window gets taken for a current judgement.
+ *
+ * The dot never carries the meaning alone — there is always a word next to it. A reader who
+ * cannot separate the hues must still be able to tell a live model from a stubbed one, and
+ * that difference is the difference between an answer and a demonstration. */
+.topbar .healthgroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.topbar .health {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-micro);
+  color: var(--muted);
+  padding: 3px 10px 3px 8px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-full);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.topbar .health-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--rule-strong);
+}
+
+/* `live` is the only state that gets the affirmative token. `stub` is deliberate rather than
+   broken, so it takes the accent — the same colour a refusal takes, because both are the
+   platform working as designed rather than failing. `down` is the one real fault here. */
+.topbar .health[data-state='live'] .health-dot {
+  background: var(--ok);
+}
+
+.topbar .health[data-state='stub'] .health-dot {
+  background: var(--accent);
+}
+
+.topbar .health[data-state='down'] .health-dot {
+  background: var(--stop);
+}
+
+.topbar .health[data-state='down'] {
+  color: var(--stop);
+  border-color: var(--stop);
+}
+
+/* Constraint 15: every artefact states its data window. The topbar is the one place it is
+   true of the whole screen rather than of one card, and it also fills a bar that was
+   mostly empty — a real fact rather than decoration to balance the layout. */
+.topbar .window {
+  font-family: var(--mono);
+  font-size: var(--t-micro);
+  color: var(--muted);
+  padding: 3px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-full);
+  white-space: nowrap;
+}
+
+/* **What the bar shows on a small screen, and why.**
+ *
+ * The tagline goes and the data window stays. That is not a size judgement, it is constraint
+ * 15: every artefact states its data window, and the person most likely to read a figure as
+ * *now* is the technician standing at a machine on a phone — the one screen the old rule
+ * hid it on. The tagline is brand copy with no operational content, so it is the half that
+ * can leave.
+ *
+ * Below 1024px the tagline is dropped: at 640–1023 the rail is a top strip and the bar is
+ * competing with it for a single row.
+ */
+@media (max-width: 1023px) {
+  .topbar .tagline {
+    display: none;
+  }
+}
+
+/* One label per breakpoint, never both, and never neither. `.sr-only` carries the full wording
+   at every width, so shortening the visible half costs a sighted reader some words and costs a
+   screen-reader user nothing. */
+.topbar .health-word.short,
+.topbar .window .long {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .topbar .health-word.long {
+    display: none;
+  }
+
+  .topbar .health-word.short {
+    display: inline;
+  }
+
+  .topbar .healthgroup {
+    gap: 6px;
+  }
+
+  .topbar .health,
+  .topbar .window {
+    padding-inline: 7px;
+  }
+}
+
+@media (min-width: 640px) {
+  .topbar .window .long {
+    display: inline;
+  }
+}
+
+.topbar .spacer {
+  flex: 1;
+}
+
+.rail {
+  background: var(--sunken);
+  border-right: 1px solid var(--rule);
+  padding: var(--s-3);
+  /* A column, so the toggle can sit in its own row and the surfaces scroll beneath it. The
+     previous rule left this as a block, which is why `align-self` on the toggle did nothing
+     at all — `align-self` has no meaning outside a flex or grid parent. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  /* Sticky under the 56px topbar, with its own scroll when eight surfaces plus the persona
+     list outgrow the viewport. Without a height it could not scroll, and the persona switcher
+     at the bottom became unreachable on a short window. */
+  position: sticky;
+  top: 56px;
+  height: calc(100dvh - 56px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* The width is animating; without this the labels reflow visibly mid-transition. */
+  scrollbar-gutter: stable;
+}
+
+/* The rail's own scroll should not chain to the page when it hits its end. */
+.rail {
+  overscroll-behavior: contain;
+}
+
+/* ── the rail's scrollbar ──────────────────────────────────────────────────
+ *
+ * **Styled rather than hidden.** A hidden scrollbar in a region that genuinely overflows —
+ * eight surfaces plus five personas plus the credit, on a laptop viewport — removes the only
+ * signal that there is more below. The persona switcher living off the bottom of an
+ * apparently-complete list is exactly the kind of thing a person never finds.
+ *
+ * So it is present, thin, and drawn from the rule tokens so it recedes until the pointer is
+ * over the rail. `scrollbar-gutter: stable` above reserves the space permanently, which is
+ * what stops the labels shifting sideways by the scrollbar's width the moment the list grows
+ * past the fold. */
+.rail {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+.rail::-webkit-scrollbar {
+  width: 10px;
+}
+
+.rail::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rail::-webkit-scrollbar-thumb {
+  background-color: var(--rule);
+  border-radius: var(--r-full);
+  /* Drawn inside its own track with a transparent border, so the thumb reads as a slim pill
+     with breathing room rather than a bar wedged against the content. */
+  border: 3px solid transparent;
+  background-clip: content-box;
+  transition: background-color var(--dur) var(--ease);
+}
+
+.rail:hover::-webkit-scrollbar-thumb {
+  background-color: var(--rule-strong);
+}
+
+.rail::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent);
+}
+
+/* Collapsed, the rail is 60px wide and a 10px scrollbar would take a sixth of it. The
+   content fits at that width anyway — icons only, no labels — so the gutter is released. */
+.shell[data-rail='collapsed'] .rail {
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+}
+
+.shell[data-rail='collapsed'] .rail::-webkit-scrollbar {
+  width: 0;
+}
+
+
+/* Below 640px the rail is a fixed bottom bar of at most five items. A credit in a thumb-sized
+   navigation strip would take space from a surface a technician needs. */
+.railinner {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.railgroup {
+  margin-bottom: var(--s-5);
+}
+
+.railgroup h2 {
+  margin: 0 0 6px;
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.navitem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--body);
+  font: inherit;
+  font-size: var(--t-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.navitem:hover {
+  background: var(--thead);
+}
+
+.navitem[aria-current='page'] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.navitem .ico {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+main.content {
+  padding: var(--s-5) var(--s-6) var(--s-7);
+  max-width: var(--content-max);
+  /* Centred. Left-aligned, a 1120px column on a 2560px screen left roughly 1200px of empty
+     page to its right — which reads as a rendering fault rather than as a margin. */
+  margin-inline: auto;
+}
+
+/* Line length. The answer was running the full 1120px — about 140 characters a line,
+   against a 60-75 guideline. Nothing else in this pass changes readability as much: prose
+   is the one thing here a person reads left-to-right rather than scans. Evidence and
+   provenance stay wide, because they are scanned in columns. */
+/* Applied to the prose *card*, not just the text inside it. Constraining the text alone
+   left a full-width box half empty, which reads as a layout bug rather than as a decision.
+   A narrower card gives the prose a column of its own and sets up a deliberate rhythm
+   against the wide evidence and provenance tables, which are scanned rather than read. */
+.measure {
+  max-width: var(--measure);
+}
+
+/* ── the Copilot's context block ───────────────────────────────────────────
+ * What is loaded, stated once and prominently, with the picker folded behind it. The chip is
+ * the answer to "what am I asking about", which is the question a reader has when an answer
+ * names a machine they did not choose. */
+/* One line when an episode is loaded, and absent when none is. The block this replaces led
+   every visit with a heading and a sentence explaining that the selection was optional — which
+   teaches that it matters however the sentence is worded. */
+.context-current {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-small);
+  line-height: 1.5;
+  color: var(--body);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.context-label {
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.context-clear {
+  font: inherit;
+  font-size: var(--t-micro);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-full);
+  color: var(--muted);
+  padding: 2px var(--s-2);
+  min-height: 28px;
+  cursor: pointer;
+}
+
+.context-clear:hover {
+  color: var(--accent);
+  border-color: var(--rule-accent);
+}
+
+.context-picker {
+  margin-top: var(--s-2);
+}
+
+.context-picker > summary {
+  cursor: pointer;
+  font-size: var(--t-small);
+  color: var(--accent);
+  padding: var(--s-2) 0;
+  /* A summary is a real control, so it gets a real target and a real focus ring. */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.context-picker > summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.context-picker .row {
+  margin-top: var(--s-2);
+  /* The full list can be long, so it scrolls in its own box rather than pushing the composer
+     off the screen — the composer is the control a person is reaching for. */
+  max-height: 30vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ── the answer, and the structure it now keeps ────────────────────────────
+ * Prose at the reading measure; the residual list as a real list. Both answer paths emit
+ * structure and it used to be flattened into one paragraph — see `components/AnswerText.tsx`. */
+.answer {
+  max-width: var(--measure);
+}
+
+.answer > p {
+  margin: 0 0 var(--s-3);
+  line-height: 1.62;
+}
+
+.answer > p:last-child {
+  margin-bottom: 0;
+}
+
+.answer-list {
+  margin: 0 0 var(--s-3);
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.answer-list > li {
+  padding-left: var(--s-4);
+  position: relative;
+  line-height: 1.55;
+}
+
+/* A rule rather than a bullet glyph. Each line is a reading against its own band, and a marker
+   that reads as punctuation suits that better than a dot that reads as a list of options. */
+.answer-list > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: var(--s-2);
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+/* Signal names arrive in backticks from both paths. Tabular figures so a column of residuals
+   lines up on the decimal instead of drifting. */
+.answer code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  font-variant-numeric: tabular-nums;
+  background: var(--sunken);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-xs);
+  padding: 0.05em 0.35em;
+}
+
+/* ── the separation law, on screen ────────────────────────────────────────
+ * Each row is a refusal and the thing that does the job instead. The two halves are set
+ * differently on purpose: the refusal in the body colour because it is the claim, the
+ * substitute in muted because it is the explanation. */
+.neverdoes-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--s-2);
+}
+
+.neverdoes-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding-left: var(--s-4);
+  position: relative;
+}
+
+/* A rule, not a cross. A cross reads as an error and these are guarantees. */
+.neverdoes-list > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: var(--s-2);
+  height: 2px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+}
+
+.neverdoes-it {
+  color: var(--body);
+  font-weight: 500;
+}
+
+.neverdoes-instead {
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+/* ── starters, on an empty conversation ───────────────────────────────────
+ * A blank composer in front of an unfamiliar product gets one question typed into it, usually
+ * the one the product refuses. These show that plant-level questions work without an episode,
+ * which is the thing everyone assumes it cannot do. */
+.starters > h2 {
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--s-2);
+}
+
+.startergroup {
+  margin-bottom: var(--s-3);
+}
+
+.startergroup > h3 {
+  margin: 0 0 var(--s-1);
+  font-size: var(--t-micro);
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.chip.starter {
+  border-color: var(--rule-accent);
+  background: var(--tint-accent);
+  color: var(--ink);
+}
+
+/* ── whether a model wrote the answer ─────────────────────────────────────
+ * On the turn, not in the Inspector. Four of the five skills spend no model and that is the
+ * design — but a reader cannot tell a deliberate deterministic answer from a broken model
+ * without being told, and "is it using the models?" was asked three times before this existed. */
+.turn-kinds {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+/* Each kind is a chip rather than a sentence, because the point is the *split* — three
+   things did three jobs — and a sentence reads as one thing having happened. */
+.kind {
+  font-size: var(--t-micro);
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-full);
+  padding: 2px var(--s-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  cursor: default;
+}
+
+.kind::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--rule-strong);
+}
+
+/* The ML layer and the rules are always what they are. Only the language model varies per
+   turn, so only it changes colour — a badge that is always green teaches nothing. */
+.kind[data-kind='ml']::before {
+  background: var(--ok);
+}
+
+.kind[data-kind='rules']::before {
+  background: var(--accent);
+}
+
+.kind[data-kind='llm'][data-used='yes']::before {
+  background: var(--focus);
+}
+
+.kind[data-kind='llm'][data-used='yes'] {
+  color: var(--body);
+  border-color: var(--rule-accent);
+}
+
+.turn-model {
+  margin: 0;
+  font-size: var(--t-micro);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.turn-model::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--rule-strong);
+}
+
+.turn-model[data-used='yes']::before {
+  background: var(--accent);
+}
+
+/* ── follow-ups ────────────────────────────────────────────────────────────
+ * On the last answer only. Every turn carrying its own would turn a transcript into a wall
+ * of buttons, and the question a reader wants next is about the answer in front of them. */
+.followups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.followups-label {
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── the services panel ────────────────────────────────────────────────────
+ * Three states, not two. `unknown` gets its own treatment rather than borrowing the
+ * available one, because "nobody probed this" and "this works" are different facts and a
+ * panel that painted them alike would report a guess as a measurement. */
+.services {
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--s-2);
+}
+
+.services > li {
+  border-left: 3px solid var(--rule);
+  padding-left: var(--s-3);
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.services > li[data-state='available'] {
+  border-left-color: var(--ok);
+}
+
+.services > li[data-state='degraded'] {
+  border-left-color: var(--stop);
+}
+
+/* Unknown takes the accent, not the warn colour. It is not a fault — it is an absence of
+   measurement, and colouring it amber would tell somebody to go and fix something. */
+.services > li[data-state='unknown'] {
+  border-left-color: var(--accent);
+}
+
+.services-name {
+  font-weight: 500;
+  color: var(--body);
+}
+
+.services-state {
+  font-size: var(--t-micro);
+  color: var(--muted);
+  text-transform: none;
+}
+
+.services-reason {
+  font-size: var(--t-small);
+}
+
+/* ── who built it ──────────────────────────────────────────────────────────
+ * At the foot of the content column: present on every surface, in the way of none. */
+.builtby {
+  margin-top: auto;
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-micro);
+  color: var(--muted);
+}
+
+.builtby-mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--grad-brand);
+  flex: none;
+}
+
+.builtby-who {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.builtby-name {
+  color: var(--body);
+  font-weight: 500;
+}
+
+.builtby-what {
+  margin-left: auto;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 639px) {
+  .builtby-what {
+    display: none;
+  }
+}
+
+/* ── the inspector ─────────────────────────────────────────────────────────
+ * The working, under the answer it belongs to. Closed by default: a reader who has to fold
+ * away the evidence before reaching the next answer stops reading the evidence. The summary
+ * names the counts, so a closed panel still says how much there is to check. */
+.inspector {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  background: var(--sunken);
+}
+
+.inspector > summary {
+  cursor: pointer;
+  padding: var(--s-2) var(--s-3);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: var(--t-small);
+  color: var(--muted);
+  border-radius: var(--r-md);
+}
+
+.inspector > summary:hover {
+  color: var(--accent);
+}
+
+.inspector > summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.inspector[open] > summary {
+  border-bottom: 1px solid var(--rule);
+  border-radius: var(--r-md) var(--r-md) 0 0;
+}
+
+.inspector-block {
+  padding: var(--s-3);
+  border-bottom: 1px solid var(--rule);
+  min-width: 0;
+}
+
+.inspector-block:last-child {
+  border-bottom: 0;
+}
+
+.inspector-block > h3 {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── cards ─────────────────────────────────────────────────────────────────── */
+
+/* **The card is the product's one repeated object, so its surface is worth getting right.**
+ *
+ * Four things together, none of which reads as an effect on its own:
+ *   1. `--e1` — a low resting elevation. A card at rest should look *placed*, not floating;
+ *      the height is held in reserve for hover and for anything that genuinely sits above.
+ *   2. `--e-edge` — an inset hairline along the top, which is the lit edge of a physical
+ *      surface. This is the detail that separates a card from a bordered rectangle, and it is
+ *      why the dark theme redefines it rather than inheriting a white line onto a dark ground.
+ *   3. `--r-lg` — cards round more than the controls inside them. A container that rounds by
+ *      the same amount as its contents reads as flat, whatever its shadow says.
+ *   4. Padding on the 4pt grid.
+ *
+ * The gradient further down is deliberately kept: it is a 62%-to-100% fade to `--sunken`,
+ * which grounds the card's foot without becoming a visible band. */
+.card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e1), var(--e-edge);
+  padding: var(--s-4) var(--s-5);
+  margin-bottom: var(--s-4);
+}
+
+.card > h2 {
+  margin: 0 0 12px;
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.card.sunken {
+  background: var(--sunken);
+  box-shadow: none;
+}
+
+/* Supporting material: present, complete, and clearly subordinate to the evidence and the
+   answer. Denser type, flat surface, no shadow. */
+.card.supporting {
+  background: var(--sunken);
+  box-shadow: none;
+  padding: 13px 16px;
+  font-size: var(--t-small);
+}
+
+.card.supporting > h2 {
+  margin-bottom: 8px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ── chips ─────────────────────────────────────────────────────────────────── */
+
+.chip {
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--body);
+  border-radius: var(--r-full);
+  padding: 6px 13px;
+  font-size: var(--t-small);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  /* 44px minimum touch target without making the pill visually huge. */
+  min-height: 32px;
+  position: relative;
+}
+
+.chip::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
+.chip:hover {
+  border-color: var(--accent);
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 550;
+}
+
+/* ── composer ──────────────────────────────────────────────────────────────── */
+
+/* **Pinned to the foot of the content column.**
+ *
+ * The composer used to sit in the document flow *above* the transcript, so every answer
+ * arrived below the box you typed into and you scrolled down to read your own reply. Now the
+ * transcript flows and the composer stays where a hand expects it.
+ *
+ * `sticky` rather than `fixed`: fixed would take it out of the column and it would sit over
+ * the rail at narrow widths, and it would need the column's padding duplicated to line up.
+ * Sticky keeps it inside the layout that already positions everything else. */
+.composer {
+  display: flex;
+  gap: var(--s-2);
+  margin: var(--s-4) 0 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: var(--s-3) 0;
+  /* The column's own ground, so the transcript scrolls *under* the composer rather than
+     showing through it. A transparent sticky bar reads as a rendering fault. */
+  background: var(--page);
+  border-top: 1px solid var(--rule);
+}
+
+/* Clear of the phone's bottom navigation bar, which is fixed and would otherwise sit on top
+   of the one control a person is reaching for. */
+@media (max-width: 639px) {
+  .composer {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── the context strip ──────────────────────────────────────────────────────
+ * A strip, not a card. What is loaded is one line of orientation above a conversation —
+ * giving it a card's border, padding and elevation made it read as the first *result* on the
+ * page, which is the weight the answers should carry. */
+.context {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: var(--s-2);
+}
+
+.context > h2 {
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--s-1);
+}
+
+.composer input {
+  flex: 1;
+  padding: 12px 14px;
+  min-height: 44px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--body);
+  font: inherit;
+}
+
+.composer input::placeholder {
+  color: var(--muted);
+}
+
+.btn {
+  padding: 12px 22px;
+  min-height: 44px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* ── figures — the only place a number is rendered ─────────────────────────── */
+
+.figure {
+  /* A grid, not space-between. With space-between every value floats to a different
+     position and a column of six residuals cannot be compared down the page — which is
+     the one thing a reader does with them. */
+  display: grid;
+  grid-template-columns: minmax(11rem, 22ch) 1fr;
+  align-items: baseline;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rule);
+  /* Entering, ease-out, 170ms. One staggered reveal per view, which is the budget. */
+  animation: rise var(--dur) var(--ease) both;
+}
+
+.figure:last-child {
+  border-bottom: 0;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .figure {
+    animation: none;
+  }
+  * {
+    transition-duration: 1ms !important;
+  }
+}
+
+.figure .name {
+  font-family: var(--mono);
+  font-size: var(--t-small);
+  color: var(--muted);
+}
+
+.figure .readout {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.figure .value {
+  font-family: var(--mono);
+  /* Tabular figures so a column of residuals does not jitter as digits change. */
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-body);
+  color: var(--body);
+  min-width: 6ch;
+  text-align: right;
+}
+
+/* An absence is a statement, not missing data. Words, muted, italic — never 0, never —. */
+.figure[data-absent='true'] .value {
+  color: var(--muted);
+  font-style: italic;
+  font-family: var(--font);
+}
+
+.badge {
+  display: inline-block;
+  border-radius: var(--r-full);
+  padding: 2px 9px;
+  font-size: var(--t-micro);
+  font-weight: 650;
+  margin-left: 8px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge.verdict {
+  background: var(--thead);
+  color: var(--ink);
+}
+
+/* Colour is never the only signal — the badge carries the words "poor fit" and the
+   nRMSE, so a colourblind reader loses nothing. */
+.badge.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+/* ── the refusal — deliberate, not alarming ────────────────────────────────── */
+
+.refusal {
+  border: 1px solid var(--refusal);
+  border-left: 4px solid var(--refusal);
+  background: var(--refusal-bg);
+}
+
+.refusal > h2 {
+  color: var(--refusal);
+}
+
+.gate {
+  margin: 12px 0;
+  padding-left: 13px;
+  border-left: 2px solid var(--rule);
+}
+
+.gate strong {
+  font-family: var(--mono);
+  font-size: var(--t-small);
+  color: var(--ink);
+}
+
+.gate .what {
+  color: var(--muted);
+  font-size: var(--t-small);
+  margin-top: 2px;
+}
+
+/* ── audits ────────────────────────────────────────────────────────────────── */
+
+.audit {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 5px 0;
+  font-size: var(--t-small);
+}
+
+.audit .ico {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+}
+
+.audit[data-passed='true'] .ico {
+  color: var(--ok);
+}
+
+.audit[data-passed='false'] .ico {
+  color: var(--warn);
+}
+
+.audit code {
+  font-family: var(--mono);
+  font-size: var(--t-small);
+  color: var(--ink);
+}
+
+/* ── misc ──────────────────────────────────────────────────────────────────── */
+
+.answer {
+  white-space: pre-wrap;
+  font-size: var(--t-body);
+  line-height: 1.62;
+  color: var(--body);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: var(--t-small);
+  color: var(--muted);
+}
+
+.state-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-small);
+  color: var(--muted);
+}
+
+.state-pill {
+  font-family: var(--mono);
+  font-weight: 650;
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  background: var(--thead);
+  color: var(--ink);
+}
+
+.state-pill[data-state='NO_DIAGNOSIS'] {
+  background: var(--refusal-bg);
+  color: var(--refusal);
+  border: 1px solid var(--refusal);
+}
+
+.state-pill[data-state='BLOCKED'] {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+/* The remaining three of the six. `CONTEXT.md` §7 — every turn ends in exactly one of
+ * `ANSWERED` · `PARTIAL` · `NO_DIAGNOSIS` · `NEEDS_APPROVAL` · `BLOCKED` · `FAILED`, so all
+ * six are styled here and a surface never has to guess at a seventh.
+ *
+ * **Three separations the colours have to hold, and they are not interchangeable:**
+ *
+ *  - `NO_DIAGNOSIS` is the refusal accent. It is a correct outcome and the most common one
+ *    on this data. It is never red and never amber.
+ *  - `FAILED` is the only one that takes `--stop`. Something broke.
+ *  - `PARTIAL` and `BLOCKED` share the warning treatment because they are the same kind of
+ *    fact — an answer that is incomplete and knows it.
+ *
+ * Every chip prints its state word, so colour is never the only signal. */
+.state-pill[data-state='ANSWERED'] {
+  background: transparent;
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.state-pill[data-state='PARTIAL'] {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.state-pill[data-state='NEEDS_APPROVAL'] {
+  background: var(--thead);
+  color: var(--ink);
+  border-color: var(--rule-strong);
+}
+
+.state-pill[data-state='FAILED'] {
+  background: transparent;
+  color: var(--stop);
+  border-color: var(--stop);
+}
+
+ul.reasons {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+ul.reasons li {
+  margin-bottom: 5px;
+  font-size: var(--t-small);
+  color: var(--muted);
+}
+
+/* ── responsive: the rail folds away below 900px ───────────────────────────── */
+
+/* Two labels per nav item, one shown per breakpoint. Declared here at the base so each
+ * breakpoint only has to swap them — a label that only exists inside a media query is a
+ * label that vanishes in the un-matched state.
+ */
+.navitem .long {
+  display: inline;
+}
+.navitem .short {
+  display: none;
+}
+
+/* The persona switcher names itself a demonstration on the control, not in a footnote.
+ * `is_production_identity` is hard-wired False (Q41), and a switcher that looked like
+ * sign-in would be the most misleading control in the product. */
+.railgroup .demo-note {
+  display: block;
+  font-weight: 400;
+  font-size: var(--t-micro);
+  color: var(--muted);
+  letter-spacing: 0;
+  text-transform: none;
+  margin-top: 2px;
+}
+
+/* ── the collapsible rail ──────────────────────────────────────────────────────
+ *
+ * The width is a CSS transition and the labels are GSAP. That split is deliberate: GSAP's
+ * own performance guidance is to animate transform and opacity and avoid `width`, because
+ * layout properties reflow — but a rail collapse IS a layout change, and a transform cannot
+ * fake giving the content column 172 more pixels. So the browser does the layout and GSAP
+ * does the compositor work.
+ *
+ * `--rail-w` is the single source of the width. Two numbers in two places is how a rail and
+ * its content column drift apart by a pixel nobody can find.
+ */
+.shell {
+  --rail-w: 232px;
+  transition: none;
+}
+
+.shell[data-rail='collapsed'] {
+  --rail-w: 60px;
+}
+
+/* The transition is enabled only once the stored state has been read. Without this the rail
+   animates open on every page load, from a width it was never actually at. */
+.shell[data-ready='true'] {
+  transition: grid-template-columns var(--dur) var(--ease);
+}
+
+/* **44x44, and the reason is not a guideline it is a thumb.** This was 28x28 — under both
+   Apple's 44pt and Material's 48dp minimum, and the one control on the rail that a person
+   reaches for repeatedly. It also carried `align-self: flex-end` inside a block parent, where
+   that property does nothing, and `z-index: 2` while sticking to `top: 0` underneath a
+   `z-index: 40` topbar — so it slid *behind* the bar on scroll. All three are fixed here. */
+.railtoggle {
+  flex: none;
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--t-body);
+  line-height: 1;
+  transition:
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+/* Collapsed, the rail is 60px and a 44px control centred in it reads as deliberate rather
+   than as something that failed to move. */
+.shell[data-rail='collapsed'] .railtoggle {
+  align-self: center;
+}
+
+/* The chevron turns rather than being swapped for a different glyph — one element that
+   rotates says "this is the same control in the other state", which two glyphs cannot. */
+.railtoggle > span {
+  display: block;
+  transition: transform var(--dur) var(--ease);
+}
+
+.shell[data-rail='collapsed'] .railtoggle > span {
+  transform: rotate(180deg);
+}
+
+.railtoggle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.railtoggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Collapsed, the rail is icon-only. The item stays a full-height target and centres its
+   icon rather than left-aligning it against a label that is no longer there. */
+.shell[data-rail='collapsed'] .navitem {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* **The bug this fixes.** `autoAlpha` (GSAP, above) only sets opacity and visibility — it
+ * never claimed to touch layout, and nothing else was zeroing the label's width. So the
+ * flex row was still centring "icon + a full-width invisible label", which shoves the icon
+ * off-centre by half the label's width and, on the longer labels, off the 60px rail
+ * entirely. Fixed the same way `--rail-w` itself is: CSS owns layout, GSAP owns the fade —
+ * two different properties, so neither fights the other for one. */
+.shell[data-rail='collapsed'] .navitem .long {
+  width: 0;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* `autoAlpha` handles visibility, so nothing here needs to hide the labels — doing it in
+   CSS as well would fight GSAP for the same property and one of them would win at random. */
+.shell[data-rail='collapsed'] .railgroup h2 {
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* ── responsive · four breakpoints, small first ────────────────────────────────
+ *
+ * **The technician is on a phone, in a plant room, possibly in gloves.** That is not a
+ * hypothetical: the job pack, the checklist and *cannot check* are used standing at a
+ * machine. The reliability engineer and the analyst are at a desk with two monitors. Both
+ * are real, and one layout cannot serve both by scaling.
+ *
+ * This replaced a single fold at 900px — one breakpoint doing the work of three, which
+ * `mvp/DESIGN-HANDOFF.md` §9a had already flagged. The four here are that spec:
+ *
+ *   < 640px      technician at the machine   single column, rail becomes a BOTTOM BAR
+ *   640-1023px   supervisor on a tablet      single column, wider measure, rail on top
+ *   1024-1439px  reliability engineer        rail + content — the design's home
+ *   >= 1440px    two-monitor desk            content stops widening; width goes to margin
+ *
+ * Two rules the small screen must not break:
+ *   1. An evidence table becomes STACKED CARDS, never a sideways scroll. A number you have
+ *      to drag sideways to read is a number that gets misread, and every one of these is a
+ *      reading somebody dispatches a crew on.
+ *   2. Nothing important sits behind the fixed bottom bar. `main.content` reserves room for
+ *      it, and landscape phone is checked separately because that is where fixed bars go
+ *      wrong.
+ */
+
+/* ── small · the technician, and the screen designed first ─────────────────── */
+@media (max-width: 639px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  /* A bottom bar, because that is where a thumb is. Fixed, so it survives a long
+     checklist, and `env(safe-area-inset-bottom)` so it clears a home indicator. */
+  .rail {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    border-right: 0;
+    border-top: 1px solid var(--rule);
+    background: var(--card);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -1px 2px rgb(var(--shadow-rgb) / 0.06);
+  }
+  .railgroup {
+    margin: 0;
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+  .railgroup h2,
+  .railgroup .demo-note {
+    display: none;
+  }
+
+  /* The persona switcher leaves the bar. Five personas beside eight surfaces makes a
+     scroller nobody reaches the end of, and switching persona is not a thing a technician
+     does at a machine. */
+  .railgroup.personas {
+    display: none;
+  }
+
+  /* Bottom-nav limit: at most five destinations. Eight 60px items on a 320px screen is a
+     480px scroller, so half the surfaces would sit off-screen behind an undiscoverable
+     gesture. The rail returns in full at 640px — this narrows the bar, it removes nothing. */
+  .rail .navitem[data-phone='hide'] {
+    display: none;
+  }
+
+  /* An empty group would still draw its gap. */
+  .railgroup:not(:has(.navitem[data-phone='show'])) {
+    display: none;
+  }
+
+  /* 44px is the smallest reliable touch target, and a gloved thumb is not a precise one. */
+  .navitem {
+    flex-direction: column;
+    gap: 2px;
+    min-width: 60px;
+    min-height: 44px;
+    padding: 4px 6px;
+    font-size: var(--t-micro);
+    text-align: center;
+  }
+  .navitem .long {
+    display: none;
+  }
+  .navitem .short {
+    display: inline;
+  }
+
+  main.content {
+    /* Room for the bar, so the last checklist item is never underneath it. `env()` covers the
+       home-indicator strip on a gesture-navigation phone, which a flat number cannot. */
+    padding: var(--s-4) var(--s-3) calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* The bar keeps its identity and its data window and loses nothing else. A narrower
+     lockup, and every derived dimension inside it follows from this one line. */
+  .topbar {
+    height: auto;
+    min-height: 56px;
+    /* At about 320px the pill no longer fits beside the lockup. It takes a second row
+       rather than being dropped: two rows of bar costs 28px, and a screen that does not say
+       what period it covers lets the reader supply "now" out of their own head. */
+    flex-wrap: wrap;
+    row-gap: 2px;
+    padding: 6px 12px;
+    --lockup-h: 24px;
+  }
+
+  .topbar .window {
+    font-size: var(--t-micro);
+    padding: 2px 8px;
+  }
+
+  /* Rule 1. A table becomes cards; each cell keeps its own label. `display: block` on the
+     table and its body too, so a `<table>` whose rows are blocks does not fall back to
+     anonymous table boxes. */
+  .stackable,
+  .stackable tbody {
+    display: block;
+  }
+  .stackable thead {
+    display: none;
+  }
+  .stackable tr {
+    display: block;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    background: var(--card);
+  }
+  .stackable td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    padding: 3px 0;
+  }
+  .stackable td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: var(--t-small);
+  }
+}
+
+/* Landscape phone. A fixed bottom bar plus a 380px-tall viewport leaves almost nothing, so
+   the bar scrolls away with the page rather than eating a third of the screen. */
+@media (max-width: 926px) and (max-height: 460px) and (orientation: landscape) {
+  .rail {
+    position: static;
+    box-shadow: none;
+    border-top: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  main.content {
+    padding-bottom: 20px;
+  }
+}
+
+/* ── medium · the supervisor, approving on a tablet ────────────────────────── */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  /* **The bug this fixes.** The topbar's own wrap rule stops at 639px, on the assumption
+   * that 640px and up always has room — but the persona switcher plus `.healthgroup`'s two
+   * badges need about 490px together, and at 640-700px that plus the lockup does not fit.
+   * The result was the whole bar, not just this one row, forced wider than the viewport.
+   * Same fix as the phone tier, for the same reason: a second row costs 28px, and a bar cut
+   * off mid-badge is worse. */
+  .topbar {
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+    padding: 10px 14px;
+  }
+  .railgroup {
+    margin: 0;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  /* The heading stays at this width — it is the only thing that says a supervisor's
+     approvals and a technician's job are different kinds of work rather than a list. */
+  .railgroup h2 {
+    font-size: var(--t-micro);
+    margin: 0 4px 0 0;
+    white-space: nowrap;
+  }
+  .railgroup .demo-note {
+    display: none;
+  }
+  .navitem .short {
+    display: none;
+  }
+  main.content {
+    padding: var(--s-4) var(--s-4) var(--s-6);
+    /* Width is handled by `--content-max`'s own floor now; only the padding changes here. */
+  }
+}
+
+/* ── large · the reliability engineer. The design's home, and the default above. ── */
+
+/* ── xl · the two-monitor desk ─────────────────────────────────────────────── */
+@media (min-width: 1440px) {
+  /* Nothing to override: `--content-max`'s 76rem ceiling already stops the column widening,
+     and the extra width goes to the centring margin rather than to longer lines. The rule
+     that used to sit here set 70rem — the same 1120px as the default — so it had no effect. */
+}
+
+/* ── chart ─────────────────────────────────────────────────────────────────────
+ *
+ * Thin marks, hairline recessive chrome, and the band as a surface tint rather than a
+ * series colour. `--chart-out` is the reserved status step: it marks a reading outside
+ * this asset's own band, and it is never the only signal — those points are also larger,
+ * ringed against the surface, and the extreme one is directly labelled.
+ */
+
+:root {
+  --chart-line: #0020b0;
+  --chart-out: #87000e;
+  --chart-band: #e7efff;
+  --chart-grid: #ccd3e1;
+}
+
+[data-theme='dark'] {
+  --chart-line: #83abff;
+  --chart-out: #ee8f86;
+  --chart-band: #364157;
+  --chart-grid: #49505f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --chart-line: #83abff;
+    --chart-out: #ee8f86;
+    --chart-band: #364157;
+    --chart-grid: #49505f;
+  }
+}
+
+figure.chart {
+  margin: 0;
+}
+
+figure.chart figcaption {
+  font-size: var(--t-small);
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.chart-band {
+  fill: var(--chart-band);
+}
+
+.chart-median {
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+}
+
+.chart-axis {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--chart-line);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-dot {
+  fill: var(--chart-line);
+}
+
+.chart-dot.out {
+  fill: var(--chart-out);
+}
+
+/* A 2px surface ring rather than a border drawn around the mark — spent on the one point
+   that is directly labelled, not on every out-of-band reading. */
+.chart-dot.extreme {
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.chart-crosshair {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+
+.chart-tick,
+.chart-annot {
+  font-family: var(--mono);
+  font-size: var(--t-micro);
+  /* Text wears text tokens, never the series colour. */
+  fill: var(--muted);
+}
+
+.chart-annot.out {
+  fill: var(--chart-out);
+  font-weight: 650;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * Depth and feedback
+ *
+ * **Gradients here are depth, never decoration.** Every one is a 2-4% lightness shift
+ * between two steps already in the palette — enough to give a surface a top edge and stop
+ * the page reading as flat card-on-card, not enough to become a colour in its own right. A
+ * saturated wash would fight the one thing on screen that is allowed to be loud, which is a
+ * residual sitting outside its band.
+ *
+ * **Motion stays inside the budget.** 170ms on the mock's own easing, one or two elements
+ * per interaction, and `prefers-reduced-motion` already collapses every transition to 1ms
+ * further up this file.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.topbar {
+  /* A top-lit bar. The gradient is what separates it from the page without a heavier rule. */
+  background: linear-gradient(180deg, var(--card) 0%, var(--sunken) 100%);
+  backdrop-filter: saturate(1.4) blur(6px);
+}
+
+.rail {
+  background: linear-gradient(180deg, var(--sunken) 0%, var(--page) 70%);
+}
+
+.card {
+  background: linear-gradient(180deg, var(--card) 0%, var(--card) 62%, var(--sunken) 100%);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+
+/* Interactive cards only. A card that lifts under the pointer when nothing happens on click
+   is a promise the interface does not keep — so the lift is scoped to the ones wrapped in
+   `Pressable`, which is the component that makes them activatable in the first place. */
+.pressable.card:hover {
+  box-shadow: var(--e3), var(--e-edge);
+  border-color: var(--rule-accent);
+}
+
+/* Selected states take the tint rather than a heavier border. A thicker rule shifts layout by
+   a pixel and makes the whole row jump; a background does not move anything. */
+.chip[aria-pressed='true'] {
+  background: var(--tint-accent-strong);
+  border-color: var(--rule-accent);
+}
+
+.navitem[aria-current='page'] {
+  background: var(--tint-accent);
+}
+
+/* A refusal is a correct outcome, and it gets presence rather than alarm: one step of
+   elevation above a plain card and the accent's own left rule, never the stop colour. */
+.card.refusal {
+  box-shadow: var(--e2), var(--e-edge);
+}
+
+.card.supporting,
+.card.sunken {
+  background: linear-gradient(180deg, var(--sunken) 0%, var(--page) 100%);
+}
+
+.card.refusal {
+  background: linear-gradient(180deg, var(--refusal-bg) 0%, var(--card) 100%);
+}
+
+/* ── press and hover feedback ─────────────────────────────────────────────── */
+
+.chip,
+.navitem,
+.btn {
+  /* Feedback must land inside ~100ms; the transform restores on release. Transform and
+     opacity only — animating width or height would reflow the whole episode row. */
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    transform 90ms var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.chip:active,
+.navitem:active,
+.btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.chip:hover {
+  border-color: var(--accent);
+  box-shadow: var(--e1);
+}
+
+.chip[aria-pressed='true'] {
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hover) 100%);
+  box-shadow: var(--e2);
+}
+
+.btn {
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hover) 100%);
+  box-shadow: var(--e1);
+}
+
+.btn:hover:not(:disabled) {
+  box-shadow: var(--e3);
+}
+
+.navitem[aria-current='page'] {
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hover) 100%);
+  box-shadow: var(--e2);
+}
+
+.navitem:disabled {
+  /* Reduced emphasis plus no pointer, so a surface that arrives in M2 reads as "not yet"
+     rather than as broken. The title attribute says which milestone. */
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── the figure row ───────────────────────────────────────────────────────── */
+
+.figure {
+  transition: background var(--dur) var(--ease);
+  border-radius: var(--r-sm);
+  padding-inline: 8px;
+  margin-inline: -8px;
+}
+
+.figure:hover {
+  background: var(--thead);
+}
+
+/* ── the state pill ───────────────────────────────────────────────────────── */
+
+.state-pill {
+  background: linear-gradient(180deg, var(--thead) 0%, var(--sunken) 100%);
+  border: 1px solid var(--rule);
+}
+
+/* ── the answer arrives, rather than appearing ────────────────────────────── */
+
+.card.measure,
+.card.refusal {
+  animation: settle 220ms var(--ease) both;
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.measure,
+  .card.refusal {
+    animation: none;
+  }
+  .chip:active,
+  .navitem:active,
+  .btn:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ── the reconciliation table (R10) ────────────────────────────────────────── */
+
+table.recon {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-small);
+}
+
+table.recon th {
+  text-align: left;
+  font-size: var(--t-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+  padding: 6px 10px;
+  background: var(--thead);
+  border-bottom: 1px solid var(--rule);
+}
+
+table.recon th:first-child { border-radius: var(--r-sm) 0 0 0; }
+table.recon th:last-child  { border-radius: 0 var(--r-sm) 0 0; }
+
+table.recon td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+table.recon .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.recon-row[data-agrees='false'][data-checkable='true'] {
+  background: var(--warn-bg);
+}
+
+/* Not recomputed is a stated absence, in the same muted italic a Figure uses — never a
+   blank cell, which would read as agreement. */
+.recon-row[data-checkable='false'] .absent {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.recon-row .ico {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  margin-right: 7px;
+}
+
+.recon-row[data-agrees='true'] .ico { color: var(--ok); }
+.recon-row[data-checkable='false'] .ico { color: var(--muted); }
+.recon-row[data-agrees='false'][data-checkable='true'] .ico { color: var(--warn); }
+
+.recon .src {
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+.linklike {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.linklike:hover { text-decoration: underline; }
+
+.recon-detail td {
+  background: var(--sunken);
+  padding: 10px 14px 12px;
+}
+
+ul.sample {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+ul.sample li { margin-bottom: 2px; }
+
+/* The rail items are links now, so they need the anchor reset the buttons had. */
+a.navitem {
+  text-decoration: none;
+}
+
+/* ── priority band ─────────────────────────────────────────────────────────── */
+
+.pri {
+  font-family: var(--mono);
+  font-size: var(--t-micro);
+  font-weight: 650;
+  padding: 2px 9px;
+  border-radius: var(--r-full);
+  margin-left: 8px;
+  border: 1px solid var(--rule);
+  background: var(--thead);
+  color: var(--ink);
+}
+
+/* P0 is the only band this data can currently reach, and only for the one class with a
+   sourced severity. It is marked, not shouted — the warning colour, not the stop colour,
+   because a high priority is a scheduling fact rather than an alarm. */
+.pri[data-band='P0'] {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+/* An unrated priority renders like every other stated absence in this product. */
+.pri[data-band='unrated'] {
+  background: transparent;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Verification outcomes reuse the priority pill. UNKNOWN is styled like every other stated
+   absence in this product — muted italic, never a warning — because it is the correct
+   answer when the data cannot decide, not a failure of the check. FAIL takes the warning
+   treatment; PASS the ok colour. */
+.pri[data-band='UNKNOWN'] {
+  background: transparent;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.pri[data-band='FAIL'] {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.pri[data-band='PASS'] {
+  background: transparent;
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+/* ── checklist rows — done / open / cannot check ────────────────────────────
+ *
+ * The mock's `row done / row open / row cant` vocabulary. The third state is the one that
+ * matters: *cannot check* is not *not applicable*, and six "N/A" presses once opened a
+ * blocking gate with zero evidence behind it. It is marked with a dash rather than a cross
+ * — the person could not do it, which is not the same as the check failing.
+ */
+
+ul.checks {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+}
+
+.row-check {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--t-body);
+}
+
+.row-check:last-child {
+  border-bottom: 0;
+}
+
+.row-check .mark {
+  font-family: var(--mono);
+  flex: none;
+  width: 14px;
+  color: var(--muted);
+}
+
+.row-check.measured .mark {
+  color: var(--ok);
+}
+
+.row-check.cannot_check .mark {
+  color: var(--warn);
+}
+
+.row-check[data-blocking='true'] {
+  background: var(--sunken);
+  border-radius: var(--r-sm);
+}
+
+.stored {
+  display: block;
+  color: var(--muted);
+  font-size: var(--t-small);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* ── RC12–RC14 · the differential ──────────────────────────────────────────────
+ *
+ * The screen `mvp/DESIGN-HANDOFF.md` calls the product's potential signature: candidate
+ * causes visibly narrowing, eliminated ones struck out with *why* attached.
+ *
+ * Three rules are carried by the styling rather than by the copy, because a reader takes
+ * meaning from appearance before they read a word:
+ *
+ *  - An eliminated cause is struck through and MUTED, never hidden. Constraint 31 — the
+ *    audit travels with the elimination, and a list that silently shrinks is one nobody can
+ *    check. It keeps its full opacity in high-contrast mode for the same reason.
+ *  - `settled` and `exhausted` are visually DIFFERENT (constraint 32). Exhausted is not a
+ *    lesser settled: it is the honest "we cannot separate these with the checks we have",
+ *    so it takes the refusal accent rather than a warning colour — a refusal is not an error.
+ *  - "changes nothing" is a visible badge on the can't-tell answer (constraint 30). The
+ *    interface proves the answer is inert rather than claiming it.
+ */
+
+.differential .differential-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.differential .outcome-text {
+  color: var(--muted);
+  margin: 0.35rem 0 0.9rem;
+}
+
+.differential .badge.outcome[data-settled='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Exhausted takes the refusal treatment: deliberate, calm, never red. A differential that
+   ran out of questions has established a finding, not failed. */
+.differential .badge.outcome[data-exhausted='true'] {
+  background: var(--refusal-bg);
+  color: var(--refusal);
+  border: 1px solid var(--refusal);
+}
+
+.differential .causes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.differential .cause {
+  border-left: 3px solid var(--accent);
+  padding: 0.5rem 0 0.5rem 0.75rem;
+}
+
+/* `--border`, `--surface` and `--fg` were used in this block and have never existed in the
+   token sheet, so three declarations resolved to nothing: an eliminated cause kept the live
+   accent rule, the can't-tell badge had no surface, and the high-contrast override that
+   keeps a struck-through cause legible did not apply. Mapped onto the tokens that do exist. */
+.differential .cause[data-eliminated='true'] {
+  border-left-color: var(--rule);
+}
+
+.differential .cause[data-eliminated='true'] .cause-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* The reason an elimination happened, never optional. */
+.differential .elimination {
+  margin: 0.3rem 0 0;
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+.differential .badge.confirmed {
+  margin-left: 0.5rem;
+  background: var(--refusal-bg);
+  color: var(--refusal);
+}
+
+.differential .next-question h4 {
+  margin: 1rem 0 0.4rem;
+}
+
+.differential .answers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.differential .badge.no-effect {
+  margin-left: 0.5rem;
+  background: var(--sunken);
+  color: var(--muted);
+  border: 1px dashed var(--rule-strong);
+}
+
+.differential .review-gate {
+  margin-top: 0.9rem;
+}
+
+/* A struck-through cause must stay legible: it is evidence of a decision somebody may need
+   to challenge, and challenging it starts with reading it. */
+@media (prefers-contrast: more) {
+  .differential .cause[data-eliminated='true'] .cause-text {
+    color: var(--body);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * Shared surface furniture
+ *
+ * Eight surfaces, built by different hands. These are the parts all of them need, so none of
+ * them invents its own: a page header, a data table that stacks on a phone, an empty state,
+ * a degraded state, a loading skeleton, a pressable row.
+ *
+ * Nothing here introduces a colour. Every rule is composed from tokens already audited by
+ * `scripts/palette.py`, which is what lets a new surface inherit the 72-pair contrast pass
+ * instead of being re-checked from scratch.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── the page header ───────────────────────────────────────────────────────────
+ *
+ * `Shell` owns the page's single `h1` — the product name, which the naming law governs. A
+ * surface's own title is the `h2` here, and card headings are its peers, so a page can be
+ * read top to bottom without a level being skipped.
+ */
+
+.pagehead {
+  margin: 2px 0 18px;
+}
+
+.pagehead-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pagehead .pagetitle {
+  margin: 0;
+  font-size: var(--t-title);
+  font-weight: 640;
+  letter-spacing: -0.011em;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.pagehead-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pagehead .lede {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: var(--t-body);
+}
+
+/* Where a surface states its scope: the data window, the persona, the record count.
+   Constraint 15 lives here on every page that is not the Copilot. */
+.pagehead .headmeta {
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: var(--t-micro);
+  color: var(--muted);
+}
+
+.pagehead::after {
+  content: '';
+  display: block;
+  height: 1px;
+  margin-top: 14px;
+  background: var(--rule);
+}
+
+/* ── layout utilities ──────────────────────────────────────────────────────── */
+
+/* Mobile first: one column, two at tablet, then as many as fit. `minmax(0, …)` on every
+   track, because a `1fr` track will not shrink below its content and one long word inside a
+   card is all it takes to push the page into a horizontal scroll. */
+.grid-cards {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 640px) {
+  .grid-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-cards {
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  }
+}
+
+/* Vertical rhythm without a margin on every child. Override per instance with
+   `style={{ '--stack-gap': '20px' }}` where a section needs more air. */
+.stack > * + * {
+  margin-top: var(--stack-gap, 12px);
+}
+
+/* Label/value pairs — the shape a case header, an asset summary and a work-order detail all
+   want. Collapses to stacked pairs on a phone rather than squeezing a 9rem label column. */
+dl.kv {
+  display: grid;
+  grid-template-columns: minmax(9rem, 18ch) minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 0;
+}
+
+dl.kv dt {
+  font-family: var(--mono);
+  font-size: var(--t-small);
+  color: var(--muted);
+}
+
+dl.kv dd {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--body);
+}
+
+@media (max-width: 639px) {
+  dl.kv {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  dl.kv dd {
+    margin-bottom: 8px;
+  }
+}
+
+/* ── the shared data table ─────────────────────────────────────────────────────
+ *
+ * Add `stackable` and it becomes one card per row below 640px — never a sideways scroll. A
+ * number a reader has to drag sideways to see is a number that gets misread, and every one
+ * of these is a reading somebody dispatches a crew on. Each `td` needs `data-label` for the
+ * stacked view to keep its column name.
+ *
+ * Where a table genuinely cannot stack — a wide matrix, a chart's tick row — wrap it in
+ * `.table-scroll` so it scrolls **inside its own box** and the page body never does.
+ */
+
+.table-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-small);
+}
+
+table.data caption {
+  caption-side: top;
+  text-align: left;
+  padding-bottom: 8px;
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+table.data th {
+  text-align: left;
+  font-size: var(--t-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+  padding: 6px 10px;
+  background: var(--thead);
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+table.data th:first-child {
+  border-radius: var(--r-sm) 0 0 0;
+}
+
+table.data th:last-child {
+  border-radius: 0 var(--r-sm) 0 0;
+}
+
+table.data td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+table.data tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+table.data tbody tr:hover {
+  background: var(--sunken);
+}
+
+/* Tabular numerals in any column of figures, so a stack of residuals can be compared down
+   the page rather than across it. */
+table.data .num {
+  text-align: right;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A stated absence is words, never a blank cell — a blank reads as agreement. */
+table.data .absent {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ── an empty result ───────────────────────────────────────────────────────────
+ *
+ * Dashed, not solid: the border says *this is the shape of something that is not here*,
+ * which is a different statement from a card with nothing in it.
+ *
+ * The `because` line is not optional in the component that renders this. Constraint 7 —
+ * `NULL` means not diagnosed, never healthy — and an empty queue with no sentence under it
+ * reads as a clean plant. That has already happened once, on a window that was blind.
+ */
+.empty-state {
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  padding: 18px 20px;
+}
+
+.empty-state .empty-title {
+  margin: 0;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.empty-state .empty-because {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+/* ── degraded mode ─────────────────────────────────────────────────────────────
+ *
+ * **Deliberately not the refusal treatment.** A refusal is a judgement the platform made and
+ * stands behind; a degradation is a capability it has lost. Known constraint 13 requires the
+ * platform to say which, so the two must not share a colour: this takes the warning pair,
+ * the refusal keeps the accent.
+ *
+ * Not red either. `--stop` belongs to `FAILED`, and a back end that is not running is not the
+ * same event as a job that failed.
+ */
+.card.degraded {
+  background: linear-gradient(180deg, var(--warn-bg) 0%, var(--card) 100%);
+  border-color: var(--warn);
+  border-left: 4px solid var(--warn);
+}
+
+.card.degraded .degraded-title {
+  margin: 0 0 6px;
+  font-weight: 650;
+  color: var(--warn);
+}
+
+.card.degraded .degraded-detail {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+.card.degraded .mono {
+  display: block;
+  margin-top: 6px;
+  word-break: break-word;
+}
+
+/* ── the loading skeleton ──────────────────────────────────────────────────────
+ *
+ * It holds the space the content will take, so an answer arriving does not shove the
+ * evidence above it down the page.
+ *
+ * The sweep is a `translateX` of an overlay — compositor work, no layout, no repaint of the
+ * bar itself. It is a *loop* rather than a state change, so it sits outside the 170ms budget
+ * that governs transitions; under reduced motion it stops entirely and the bars simply hold
+ * their place, which is the part that was actually load-bearing.
+ */
+.skel {
+  display: grid;
+  gap: 8px;
+}
+
+.skel-bar {
+  display: block;
+  position: relative;
+  height: 11px;
+  border-radius: var(--r-xs);
+  background: var(--sunken);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+.skel-bar:nth-child(3n + 2) {
+  width: 88%;
+}
+
+.skel-bar:nth-child(3n) {
+  width: 72%;
+}
+
+.skel-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, var(--thead) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: skelsweep 1.1s var(--ease) infinite;
+}
+
+@keyframes skelsweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel-bar::after {
+    animation: none;
+  }
+}
+
+/* ── a pressable card or row ───────────────────────────────────────────────────
+ *
+ * The resting and hover styling for `components/motion/Pressable`. It is always a real
+ * `<button>` or a real `<a>`, so it keeps the shared focus ring and the tab order; this only
+ * strips the browser chrome and guarantees the 44px target a gloved thumb needs.
+ *
+ * The lift and the press scale are GSAP — transform only. The border and the shadow are CSS,
+ * because they are not transforms and animating them on the main thread is what the split in
+ * `useRailCollapse` already established.
+ */
+.pressable {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+.pressable:hover {
+  border-color: var(--accent);
+  box-shadow: var(--lift);
+}
+
+/* `.pressable.card` keeps the card's own surface, shadow and padding and only adds the
+   affordance — so a clickable card and a static one are the same object with one difference,
+   which is the point. */
+.pressable.card {
+  padding: 16px 18px;
+  margin-bottom: 0;
+}
+
+.pressable:disabled,
+.pressable[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  border-color: var(--rule);
+}
+
+/* ── the value transition ──────────────────────────────────────────────────────
+ *
+ * `inline-block` so a transform applies at all — an inline box ignores `translate`. Nothing
+ * else: the span holds exactly the display string the back end produced, and this class must
+ * never acquire a property that could obscure it mid-transition.
+ */
+.value-swap {
+  display: inline-block;
+}
+
+/* The confirm control. **Deliberately the only primary button in a turn** — a NEEDS_APPROVAL
+   answer has exactly one act available, and giving it a second would make the reader choose
+   between them rather than decide the one thing they were asked to decide. */
+/* **The bug this fixes.** Every one of `--sp-3`, `--sp-4`, `--sp-5`, `--fs-sm`, `--radius-md`,
+ * `--surface-2` and `--muted-fg` below was a name that sounds right and was never once defined
+ * in this file — this codebase's actual tokens are `--s-*` for spacing, `--t-*` for type size,
+ * `--r-*`/`--radius` for radius, `--sunken` for a recessed surface, `--muted` for the dim
+ * foreground. An undefined custom property makes the whole declaration invalid, so every gap,
+ * margin, padding and font-size here was silently collapsing to the browser default — which is
+ * exactly why the button and its caption were crowding with no space between them. */
+.confirmwork {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+}
+
+.confirmwork .muted {
+  font-size: var(--t-small);
+  max-width: 44ch;
+}
+
+/* The outcome replaces the button rather than sitting beside it: a control that has already
+   acted, still offering to act, invites the second press that G5 exists to make harmless. */
+.confirmwork-result {
+  margin-top: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--accent);
+  background: var(--sunken);
+  font-size: var(--t-small);
+  max-width: 62ch;
+}
+
+.confirmwork-result[data-tone='refused'] {
+  border-left-color: var(--muted);
+}
+
+/* Starting again. **Below the transcript and above the composer**, which is where somebody
+   who has read to the end and wants a clean subject is already looking. Ghost weight, not
+   primary: clearing is a retreat from work already done, and a button that competes with
+   Ask invites the accidental press that loses it. */
+.transcript-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-5) 0 var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--rule);
+}
+
+.transcript-actions .muted {
+  font-size: var(--t-small);
+  max-width: 52ch;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--rule);
+}
+
+.btn.ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* The conversation list. **Above the composer and below the transcript**, where somebody who
+   has finished one thread is already looking, and quiet enough that it never competes with the
+   answer above it. */
+.conversations {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--rule);
+}
+
+.conversations-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.conversations h2 {
+  font-size: var(--fs-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-fg);
+  margin: 0;
+}
+
+.conversations-empty {
+  font-size: var(--fs-sm);
+  max-width: 60ch;
+  margin-top: var(--sp-3);
+}
+
+.conversations-list {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.conversations-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border-radius: var(--radius-sm);
+}
+
+.conversations-list li:hover {
+  background: var(--surface-2);
+}
+
+/* The current thread is marked by an accent rail rather than a fill: a filled row reads as
+   selected-for-an-action, and this one is simply where you are. */
+.conversations-list li[data-current='true'] {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.conversations-open {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: var(--sp-2) var(--sp-3);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  min-width: 0;
+}
+
+/* One line, ellipsised. A wrapped question turns a scannable list into a wall of paragraphs. */
+.conversations-title {
+  font-size: var(--fs-sm);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversations-meta {
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Visible on hover and on keyboard focus alike — a control reachable only by pointer is a
+   control a keyboard user does not have. */
+.conversations-forget {
+  opacity: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: var(--sp-2);
+  color: var(--muted-fg);
+  border-radius: var(--radius-sm);
+}
+
+.conversations-list li:hover .conversations-forget,
+.conversations-forget:focus-visible {
+  opacity: 1;
+}
+
+.btn.ghost.small {
+  padding: 2px var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+/* Work-order counts. **Two rows of the same tile — state and kind — rather than a dashboard
+   of metrics.** MTTR and a repeat-issue rate are the usual leads on a maintenance screen and
+   neither can be computed here: both need closed jobs with timestamps and every job is open.
+   A tile reading "—" makes a screen look broken; a tile filled with a guess is worse. */
+.wo-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 var(--sp-5);
+}
+
+.wo-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  min-width: 7rem;
+}
+
+.wo-tile dt {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-fg);
+}
+
+.wo-tile dd {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-variant-numeric: tabular-nums;
+}
+
+/* An authorisation job is the one that lands unassigned and waits for a decision, so it is the
+   one worth catching an eye. The others stay neutral — colouring every kind is colouring none. */
+.wo-tile[data-kind='authorisation'] {
+  border-color: var(--accent);
+}
+
+/* The boundary, folded. **Available, not announced.** An empty chat was leading with six things
+   the product refuses to do, in front of somebody who had not asked anything yet — a wall of
+   limitations read as a wall of limitations. It stays one click away, which is where a reader
+   looks when a refusal has just surprised them. */
+.boundary-fold {
+  margin-top: var(--sp-5);
+}
+
+.boundary-fold > summary {
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--muted-fg);
+  padding: var(--sp-2) 0;
+}
+
+.boundary-fold > summary:hover {
+  color: var(--accent);
+}
+
+.boundary-fold[open] > summary {
+  margin-bottom: var(--sp-3);
+}
+
+/* The hand-off into the Copilot. **A link, not a button** — it goes somewhere, and dressing a
+   navigation as an action makes a reader expect something to happen in place. The question it
+   will ask is shown rather than hidden behind the label, so somebody can tell at a glance
+   whether it is the question they actually have. */
+.askcopilot-row {
+  margin-top: var(--sp-3);
+}
+
+.askcopilot {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.askcopilot:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* The question itself is quiet: it is there to be checked, not read every time. */
+.askcopilot-q {
+  color: var(--muted-fg);
+  font-size: var(--fs-xs);
+}
+
+/* Machine-days that carry a detection. **One row is a visit somebody would make**, rather than
+   a label somebody would read — thirty-nine labels group into far fewer of these. */
+.events {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.events li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3);
+  border-left: 2px solid var(--rule);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--surface-2);
+}
+
+/* A determinate lead takes the accent rail; an undecidable one does not. That is the only
+   visual weight on this list — it is not a severity, it is whether the class names a
+   mechanism at all, which is a fact rather than a judgement. */
+.events li:has(.events-lead[data-undecidable='false']) {
+  border-left-color: var(--accent);
+}
+
+.events-lead {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+
+.events-where {
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-fg);
+}
+
+.events-also {
+  flex-basis: 100%;
+  font-size: var(--fs-xs);
+}

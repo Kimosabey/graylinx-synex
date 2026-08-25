@@ -29,9 +29,12 @@ def test_no_module_but_the_role_table_names_a_model() -> None:
             continue
         text = path.read_text(encoding="utf-8")
         for literal in ast.walk(ast.parse(text)):
-            if isinstance(literal, ast.Constant) and isinstance(literal.value, str):
-                if literal.value in names:
-                    offenders.append(f"{path.relative_to(APP.parent)}:{literal.lineno}")
+            if (
+                isinstance(literal, ast.Constant)
+                and isinstance(literal.value, str)
+                and literal.value in names
+            ):
+                offenders.append(f"{path.relative_to(APP.parent)}:{literal.lineno}")
     assert not offenders, (
         "a model name appears outside the role table:\n  "
         + "\n  ".join(offenders)
@@ -40,10 +43,29 @@ def test_no_module_but_the_role_table_names_a_model() -> None:
 
 
 def test_aliases_resolve_to_a_real_model() -> None:
-    """`planner` and `composer` are the brain; `sql` is the tool model."""
-    assert role_table.model_for("planner") == role_table.model_for("brain")
+    """Every alias points at a model the roster actually holds.
+
+    **`planner` points at the brain, restored on 2026-08-19 to match the v4 roster.** It sat on
+    `text` for a day on the strength of a half-read finding: the Thermynx implementation
+    recorded the 26B model degenerating into a repetition loop while emitting JSON, the object
+    never closing, and *every plan silently becoming empty*. That is real and it is not an
+    argument for a different model. The same roster says why it happens — the brain *"works in
+    JSON-mode (thinks AND emits JSON), goes BLANK in a tight plain-text cap"* — so the failure
+    is asking a thinking model for JSON in free text with no room to think.
+
+    The fix is therefore in the call, not the table: every JSON-parsing caller sets
+    `json_only`, which constrains Ollama's decode so the loop cannot happen, and takes the
+    generous budget the roster names. `test_arbiter.py` asserts both on the routing path.
+
+    So the division this asserts is the one Synex is built around: gemma plans, composes and
+    reasons; devstral executes and writes SQL; phi4 audits, from a different family so it never
+    grades its own output.
+    """
     assert role_table.model_for("composer") == role_table.model_for("brain")
     assert role_table.model_for("sql") == role_table.model_for("tool")
+    assert role_table.model_for("planner") == role_table.model_for("brain"), (
+        "planning is the brain's job — the v4 roster reads planner/composer→brain"
+    )
 
 
 def test_the_auditor_is_not_the_brain() -> None:
