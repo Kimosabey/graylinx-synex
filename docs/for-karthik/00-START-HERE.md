@@ -36,7 +36,7 @@ assistant sitting alongside two other surfaces (Reports, Work Orders) as a third
 underlying capability.
 
 Two governing rules carry over from — and sharpen — lessons THERMYNX already learned the hard way
-(see [THERMYNX's own landmines doc](../../../thermynx/docs/kt-karthik/08-known-issues-and-landmines.md)
+(see [THERMYNX's own landmines doc](../../../../thermynx/docs/kt-karthik/08-known-issues-and-landmines.md)
 for the concrete incidents that motivated rules like these):
 - **"The language model never diagnoses."** Deterministic FDD rules decide the fault; a
   deterministic Control Plane decides whether an action is permitted; the model's only job is
@@ -63,7 +63,7 @@ decision `D-006` already state Synex is "an AI layer on the existing platform, n
 — and `decisions/OPEN-QUESTIONS.md` still marks N1 **Open**. The documents disagree with
 themselves on whether this is decided. Don't silently pick a side — flag it if it matters for
 whatever you're working on, the same way THERMYNX's docs try to be honest about "no answer" rather
-than guessing (see [THERMYNX's conventions doc](../../../thermynx/docs/kt-karthik/11-conventions-and-constraints.md)
+than guessing (see [THERMYNX's conventions doc](../../../../thermynx/docs/kt-karthik/11-conventions-and-constraints.md)
 for that as a cross-project house value).
 
 **The MVP scope is proposed, not agreed** (`mvp/MVP-SCOPE.md`, blocked on decision **S1**) — 94 of
