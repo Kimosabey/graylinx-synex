@@ -1,6 +1,26 @@
-# Synex — Orientation for Karthik
+# Synex — Knowledge Transfer for Karthik
 
-This is a short bridge document, not a replacement for this repo's own docs. Synex already has
+This folder is everything you need to pick up Synex and keep building on it. It has two halves,
+and reading them in the wrong order will cost you a day.
+
+**The six numbered files here are the working half** — how to run it, what happens inside the
+Copilot, what has already gone wrong, how it is tested, a five-day plan, and the handover
+checklist. Read those in order, starting with `01-running-synex.md` **today**, before any of the
+reference material below. Reading about a system you cannot see running is far harder than
+reading about one you can click through.
+
+| File | Roughly | What it is for |
+|---|---|---|
+| **[01-running-synex.md](01-running-synex.md)** | 30 min, hands on | Get it on screen. Do this first. |
+| **[02-the-copilot-end-to-end.md](02-the-copilot-end-to-end.md)** | 45 min | **The most important one if you own the AI side.** One question, all the way through, and what each model is forbidden from doing. |
+| **[03-known-issues-and-landmines.md](03-known-issues-and-landmines.md)** | 30 min | **Read before changing anything in the AI code.** Real defects that reached a running system, and the shape they share. |
+| **[04-testing-and-evaluation.md](04-testing-and-evaluation.md)** | 20 min | Four offline gates, two live suites, and which green tick means what. |
+| **[05-one-week-plan.md](05-one-week-plan.md)** | 10 min | Day by day, ending with a change shipped under your name. |
+| **[06-handoff-checklist.md](06-handoff-checklist.md)** | 15 min | Access, verification, and the gaps stated plainly. |
+
+**The rest of this file is the second half: the reading order for the repo's own documentation.**
+Synex already has excellent, thorough docs — this maps them and connects them to what you know
+from THERMYNX. It is not a replacement for them. Synex already has
 excellent, thorough documentation — this file exists only to tell you what order to read it in,
 and to connect it to what you already know from THERMYNX. Written 2026-08-24, based on this
 repo's own `CONTEXT.md`, `HANDOFF.md`, `mvp/MVP-SCOPE.md`, `mvp/INHERITANCE-STATUS.md`, and
