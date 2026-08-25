@@ -15,7 +15,7 @@ reading about one you can click through.
 | **[02-the-copilot-end-to-end.md](02-the-copilot-end-to-end.md)** | 45 min | **The most important one if you own the AI side.** One question, all the way through, and what each model is forbidden from doing. |
 | **[03-known-issues-and-landmines.md](03-known-issues-and-landmines.md)** | 30 min | **Read before changing anything in the AI code.** Real defects that reached a running system, and the shape they share. |
 | **[04-testing-and-evaluation.md](04-testing-and-evaluation.md)** | 20 min | Four offline gates, two live suites, and which green tick means what. |
-| **[05-one-week-plan.md](05-one-week-plan.md)** | 10 min | Day by day, ending with a change shipped under your name. |
+| **[05-one-week-plan.md](05-one-week-plan.md)** | 15 min | **The scope boundary, and the week.** Build what `mvp/MVP-SCOPE.md` says, in the order it gives, and nothing else. Includes what is already built, what is blocked, and what is deliberately out. |
 | **[06-handoff-checklist.md](06-handoff-checklist.md)** | 15 min | Access, verification, and the gaps stated plainly. |
 
 **The rest of this file is the second half: the reading order for the repo's own documentation.**
