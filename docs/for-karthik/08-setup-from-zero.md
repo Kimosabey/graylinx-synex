@@ -13,11 +13,15 @@ Roughly 90 minutes, most of it waiting for installs and a 91 MB restore.
 
 Three things. Not in the repository, not in the same message.
 
-| | Size |
-|---|---|
-| `synex-plant-2026-08-25.sql` | **91 MB** — 13 tables of plant telemetry |
-| `synex-state-2026-08-25.sql` | **3.5 MB** — cases, jobs, and the document library |
-| The `.env` values | a few lines — MySQL credentials and the box address |
+| | Size | |
+|---|---|---|
+| `synex-dumps-2026-08-25.zip` | **7.7 MB** | **use this one** — the 14 tables Synex reads, plus the state database |
+| `graylinx_synex-full-2026-08-25.zip` | 126 MB | the whole 194-table database, if you ever need a table Synex does not read |
+| The `.env` values | a few lines | MySQL credentials and the box address — **sent separately** |
+
+**Start with the small one.** It restores in a couple of minutes and contains everything the
+product actually reads. The full dump is 1.96 GB unzipped and takes far longer; keep it, but do
+not restore it to get started.
 
 ---
 
@@ -86,12 +90,14 @@ Expect `synex-postgres` on 5443 and `synex-redis` on 6381.
 
 ### 5b · The plant — MySQL on 3307
 
+Unzip first, then:
+
 ```powershell
 mysql -h 127.0.0.1 -P 3307 -u root -p -e "CREATE DATABASE IF NOT EXISTS graylinx_synex;"
 mysql -h 127.0.0.1 -P 3307 -u root -p graylinx_synex < synex-plant-2026-08-25.sql
 ```
 
-A few minutes for 91 MB. Then the read-only user:
+A couple of minutes for 91 MB. Then the read-only user:
 
 ```sql
 CREATE USER 'synex_plant_ro'@'%' IDENTIFIED BY '<pick one>';
@@ -102,7 +108,7 @@ FLUSH PRIVILEGES;
 **`SELECT` and nothing else.** That grant is the second lock behind `sql_guard`. Widening it to
 make something work removes a defence rather than fixing a bug.
 
-Verify 13 tables:
+Verify 14 tables:
 
 ```powershell
 mysql -h 127.0.0.1 -P 3307 -u root -p -e "USE graylinx_synex; SHOW TABLES;"
@@ -123,6 +129,59 @@ docker exec synex-postgres psql -U synex -d synex -tAc `
 
 **Expect 269.** `pg_stat_user_tables` reports 0 on a fresh restore until autovacuum runs — that
 reading has already caused one wrong conclusion that the store was empty.
+
+### 5d · DBeaver, so you can look at it
+
+Not required to run Synex, and you will want it within a day. Two connections.
+
+**MySQL — the plant**
+
+| | |
+|---|---|
+| Host / Port | `127.0.0.1` / **3307** |
+| Database | `graylinx_synex` |
+| User | `synex_plant_ro` — **connect as this, not as root** |
+| Driver | MySQL 8 |
+
+Use the read-only user in DBeaver deliberately. It is the same grant the application holds, so
+a query you write in a GUI cannot do something the product could not — and an accidental
+`UPDATE` in a scratch tab fails instead of quietly changing the plant.
+
+Two queries worth running the moment it connects, because they orient you faster than the
+schema does:
+
+```sql
+-- the measured window, and what sits past it
+SELECT MIN(slot_time), MAX(slot_time),
+       SUM(slot_time <= '2026-06-23 11:50:00') AS measured,
+       SUM(slot_time >  '2026-06-23 11:50:00') AS past_window
+FROM chiller_1_normalized;
+
+-- what the trained model actually found, which is the whole product
+SELECT fault_label, COUNT(*) AS slots
+FROM gla_model_residuals_wc
+WHERE fault_label IS NOT NULL
+GROUP BY fault_label ORDER BY slots DESC;
+```
+
+**PostgreSQL — the state**
+
+| | |
+|---|---|
+| Host / Port | `127.0.0.1` / **5443** |
+| Database | `synex` |
+| User / Password | `synex` / `dev` |
+| Driver | PostgreSQL |
+
+```sql
+-- the library the Copilot cites; expect 269
+SELECT count(*) FILTER (WHERE is_approved) AS approved, count(*) AS total
+FROM synex_document_chunk;
+```
+
+> **Watch the port.** Thermynx is on 3306/5442 and Synex on **3307/5443**. Two connections a
+> digit apart is exactly the mistake that produces five confusing minutes — name them
+> `SYNEX-mysql` and `SYNEX-postgres` in DBeaver rather than leaving the defaults.
 
 ---
 

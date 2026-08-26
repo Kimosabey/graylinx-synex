@@ -11,8 +11,8 @@ Sizes below were measured on 2026-08-25, not estimated.
 
 | # | What | Size | Without it |
 |---|---|---|---|
-| 1 | **Plant MySQL** — 13 tables | **107 MB** | nothing works; every answer refuses |
-| 2 | **Postgres state** — cases, jobs, the document library | **11 MB** | no cases, no work orders, and retrieval cites nothing |
+| 1 | **Plant MySQL** — 14 tables | **91 MB** (7.7 MB zipped) | nothing works; every answer refuses |
+| 2 | **Postgres state** — cases, jobs, the document library | **3.5 MB** | no cases, no work orders, and retrieval cites nothing |
 | 3 | **`backend/.env`** | a few lines | the backend cannot reach either database |
 
 Redis holds nothing durable — it is a cache and an idempotency ledger, and it rebuilds itself.
