@@ -20,6 +20,73 @@ Do not dump it.
 
 ---
 
+## 0 · What `graylinx_synex` is — and what nobody has confirmed
+
+`graylinx_synex` is **Synex's own clone of `graylinx_v2`**, sitting on the same MySQL server as
+`graylinx`, `graylinx_v3`, `shiva` and the rest. Synex never reads those directly; it reads its
+copy, so a change on either side cannot surprise the other.
+
+**It is not a current copy of `graylinx_v2`, and that is the good news.** The original clone
+carried **156,129 simulated slots** spanning 23-Jun to 05-Aug 2026, recorded in
+`docs/DATA-ISSUE-2026-08-14-simulated-rows.md` and marked in a table called
+`snapshot_simulated_slots`. A re-clone on 17 August replaced them.
+
+`tests/integration/test_provenance.py::test_no_simulated_row_reaches_the_measured_window` states
+the outcome plainly: *"The rebuilt source carries **no simulated rows at all**, so the guard
+becomes trivially satisfied — and is kept, because a future restore from a simulating source must
+fail here rather than quietly put fabricated values into figures."*
+
+**So the dump you are being handed is the rebuilt one.** Re-cloning from today's `graylinx_v2`
+would reintroduce the defect.
+
+### What was verified here, on 2026-08-25
+
+| Checked | Result |
+|---|---|
+| `snapshot_simulated_slots` exists | yes |
+| rows in it | **0 — nothing is currently flagged as simulated** |
+| rows after the measured window | 12,448 on chiller 1, 12,449 on chiller 2, 4,281 residuals |
+| full span of the data | 2026-03-04 → 2026-08-05 |
+| measured window ends | **2026-06-23 11:50** |
+
+The counts line up with the 12,589 derived figure rather than the 156,129 simulated one, and the
+empty marker table is the *expected* state after the re-clone rather than a gap.
+
+**`snapshot_simulated_slots` is in the dump even though it holds nothing.** That test reads it,
+and a restore without the table would error rather than pass — the guard would be gone and its
+absence would look like success.
+
+### Why this matters more than it looks
+
+**Derived and simulated are not the same thing**, and the inherited rule is explicit: *derived
+may be quoted, simulated may not* — a derivation is calibrated against real readings, a
+simulation is invented to fill a gap. So which of the two is sitting past the window changes
+what may honestly be shown.
+
+**Simulated is a date here, not a column.** Everything after the window end is excluded by
+default, and `_window_clause` in `app/db/plant.py` is the single place that clip is applied. A
+test asserts no repository method can return a past-window slot unless `include_simulated=True`
+is passed explicitly.
+
+**Do not strip those rows from the dump.** The clip lives in code, so the data must carry the
+full range for the application to make the decision. Removing them would break every
+`include_simulated=True` path and the reconciliation report, and would turn an *excluded* range
+into a *missing* one — two different facts, and the product's whole argument rests on telling
+them apart.
+
+**The rule stands regardless:** never quote a figure dated after **2026-06-23 11:50** as a plant
+reading. The rows there are derived rather than simulated — *derived may be quoted, simulated may
+not*, because a derivation is calibrated against real readings — but Synex has no rendering path
+that attaches the label a derived figure needs, so it is excluded by default and treated as
+unusable. `D-009` records what the old simulated span did: condenser flow fabricated to a maximum
+of 893.7, on a plant that has never metered it.
+
+**If you re-clone**, `scripts/reclone_plant_db.py --check` inspects the source before anything is
+dropped. `graylinx_v3` was loaded from real readings covering the same window and may be the
+better source — that is a question for Harshan, not a judgement to make alone.
+
+---
+
 ## 1 · The plant database — 13 tables of 194
 
 **Dump the subset, not the schema.** `graylinx_synex` is 3.9 GB across 194 tables; Synex reads
