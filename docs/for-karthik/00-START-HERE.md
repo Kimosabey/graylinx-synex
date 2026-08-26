@@ -3,15 +3,16 @@
 This folder is everything you need to pick up Synex and keep building on it. It has two halves,
 and reading them in the wrong order will cost you a day.
 
-**The six numbered files here are the working half** — how to run it, what happens inside the
+**The eight numbered files here are the working half** — how to run it, what happens inside the
 Copilot, what has already gone wrong, how it is tested, a five-day plan, and the handover
-checklist. Read those in order, starting with `01-running-synex.md` **today**, before any of the
-reference material below. Reading about a system you cannot see running is far harder than
+checklist. On a new machine start with `08-setup-from-zero.md`; otherwise start with
+`01-running-synex.md` **today**, before any of the reference material below. Reading about a system you cannot see running is far harder than
 reading about one you can click through.
 
 | File | Roughly | What it is for |
 |---|---|---|
-| **[01-running-synex.md](01-running-synex.md)** | 30 min, hands on | Get it on screen. Do this first. |
+| **[08-setup-from-zero.md](08-setup-from-zero.md)** | ~90 min, hands on | **Start here on a new machine.** Clone to a working Copilot in nine steps, with the four checks that catch a half-finished setup. |
+| **[01-running-synex.md](01-running-synex.md)** | 30 min | Day-to-day running once it is set up, and what breaks when each piece is missing. |
 | **[02-the-copilot-end-to-end.md](02-the-copilot-end-to-end.md)** | 45 min | **The most important one if you own the AI side.** One question, all the way through, and what each model is forbidden from doing. |
 | **[03-known-issues-and-landmines.md](03-known-issues-and-landmines.md)** | 30 min | **Read before changing anything in the AI code.** Real defects that reached a running system, and the shape they share. |
 | **[04-testing-and-evaluation.md](04-testing-and-evaluation.md)** | 20 min | Four offline gates, two live suites, and which green tick means what. |
