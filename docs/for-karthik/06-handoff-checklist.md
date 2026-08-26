@@ -11,9 +11,13 @@ the request — "access requested" is not access.
 Harshan's access. Nothing is migrated yet. The point of this phase is that he is productive on
 day one rather than blocked on provisioning.
 
-**Phase 2, later: everything moves to his own accounts.** Repository, GPU box, databases,
-cloud — all of it transfers to Karthik's own credentials once he is running. Plan for this from
-the start, because two things break at the moment of transfer and both are quiet.
+**Phase 2, later: everything moves to his own accounts.** Repository, GPU box, databases — all
+of it transfers to Karthik's own credentials once he is running. Plan for this from the start,
+because two things break at the moment of transfer and both are quiet.
+
+**The runbook is [10-moving-to-your-own-accounts.md](10-moving-to-your-own-accounts.md)** —
+ordered, with a verification after each step and the two that lock you out if reversed marked as
+such. The table below is the summary; that file is what to actually follow.
 
 | What | Phase 1 | Verified by | What Phase 2 needs |
 |---|---|---|---|
