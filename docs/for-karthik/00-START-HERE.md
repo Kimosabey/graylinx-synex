@@ -3,20 +3,23 @@
 This folder is everything you need to pick up Synex and keep building on it. It has two halves,
 and reading them in the wrong order will cost you a day.
 
-**The six numbered files here are the working half** — how to run it, what happens inside the
+**The eight numbered files here are the working half** — how to run it, what happens inside the
 Copilot, what has already gone wrong, how it is tested, a five-day plan, and the handover
-checklist. Read those in order, starting with `01-running-synex.md` **today**, before any of the
-reference material below. Reading about a system you cannot see running is far harder than
+checklist. On a new machine start with `08-setup-from-zero.md`; otherwise start with
+`01-running-synex.md` **today**, before any of the reference material below. Reading about a system you cannot see running is far harder than
 reading about one you can click through.
 
 | File | Roughly | What it is for |
 |---|---|---|
-| **[01-running-synex.md](01-running-synex.md)** | 30 min, hands on | Get it on screen. Do this first. |
+| **[08-setup-from-zero.md](08-setup-from-zero.md)** | ~90 min, hands on | **Start here on a new machine.** Clone to a working Copilot in nine steps, with the four checks that catch a half-finished setup. |
+| **[01-running-synex.md](01-running-synex.md)** | 30 min | Day-to-day running once it is set up, and what breaks when each piece is missing. |
 | **[02-the-copilot-end-to-end.md](02-the-copilot-end-to-end.md)** | 45 min | **The most important one if you own the AI side.** One question, all the way through, and what each model is forbidden from doing. |
 | **[03-known-issues-and-landmines.md](03-known-issues-and-landmines.md)** | 30 min | **Read before changing anything in the AI code.** Real defects that reached a running system, and the shape they share. |
 | **[04-testing-and-evaluation.md](04-testing-and-evaluation.md)** | 20 min | Four offline gates, two live suites, and which green tick means what. |
 | **[05-one-week-plan.md](05-one-week-plan.md)** | 15 min | **The scope boundary, and the week.** Build what `mvp/MVP-SCOPE.md` says, in the order it gives, and nothing else. Includes what is already built, what is blocked, and what is deliberately out. |
 | **[06-handoff-checklist.md](06-handoff-checklist.md)** | 15 min | Access, verification, and the gaps stated plainly. |
+| **[07-data-dumps.md](07-data-dumps.md)** | 10 min | **A clone gives you no data.** The two dumps you need, how to restore them, and how to tell a half-finished restore from a working one. |
+| **[09-thermynx-and-synex.md](09-thermynx-and-synex.md)** | 15 min | **You are the one person holding both products.** What is shared, what is separate, what `N1` actually leaves open, and the colliding ports. |
 
 **The rest of this file is the second half: the reading order for the repo's own documentation.**
 Synex already has excellent, thorough docs — this maps them and connects them to what you know
@@ -57,12 +60,15 @@ as THERMYNX running a 4-model Ollama roster.
 
 ## What's actually settled vs. still open — read this before assuming anything is decided
 
-**A live inconsistency worth knowing about, not resolving yourself:** `CLAUDE.md` lists question
-**N1** ("how do Synex and THERMYNX relate?") as open and blocking. But `CONTEXT.md` §9a and
-decision `D-006` already state Synex is "an AI layer on the existing platform, not a replacement"
-— and `decisions/OPEN-QUESTIONS.md` still marks N1 **Open**. The documents disagree with
-themselves on whether this is decided. Don't silently pick a side — flag it if it matters for
-whatever you're working on, the same way THERMYNX's docs try to be honest about "no answer" rather
+**`N1` is open, and the documents do not contradict each other** — this file previously said they
+did. `D-006` settles that Synex is an AI layer on the **Graylinx platform** rather than a
+replacement for it, and states in its own text: *"Closes: nothing. N1 remains open — this is
+about the Graylinx platform, not about Thermynx."* It anticipated exactly that misreading. So
+`CLAUDE.md` listing N1 open and `CONTEXT.md` §9a describing a layer are both correct and are
+about different questions. `09-thermynx-and-synex.md` has the three questions kept apart. What it
+means in practice: build freely — nothing is blocked — but do not write a sentence positioning
+one product as replacing, containing or superseding the other, the same way THERMYNX's docs try
+to be honest about "no answer" rather
 than guessing (see [THERMYNX's conventions doc](../../../../thermynx/docs/kt-karthik/11-conventions-and-constraints.md)
 for that as a cross-project house value).
 
