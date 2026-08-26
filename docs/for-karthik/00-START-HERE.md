@@ -19,6 +19,7 @@ reading about one you can click through.
 | **[05-one-week-plan.md](05-one-week-plan.md)** | 15 min | **The scope boundary, and the week.** Build what `mvp/MVP-SCOPE.md` says, in the order it gives, and nothing else. Includes what is already built, what is blocked, and what is deliberately out. |
 | **[06-handoff-checklist.md](06-handoff-checklist.md)** | 15 min | Access, verification, and the gaps stated plainly. |
 | **[07-data-dumps.md](07-data-dumps.md)** | 10 min | **A clone gives you no data.** The two dumps you need, how to restore them, and how to tell a half-finished restore from a working one. |
+| **[09-thermynx-and-synex.md](09-thermynx-and-synex.md)** | 15 min | **You are the one person holding both products.** What is shared, what is separate, what `N1` actually leaves open, and the colliding ports. |
 
 **The rest of this file is the second half: the reading order for the repo's own documentation.**
 Synex already has excellent, thorough docs — this maps them and connects them to what you know
@@ -59,12 +60,15 @@ as THERMYNX running a 4-model Ollama roster.
 
 ## What's actually settled vs. still open — read this before assuming anything is decided
 
-**A live inconsistency worth knowing about, not resolving yourself:** `CLAUDE.md` lists question
-**N1** ("how do Synex and THERMYNX relate?") as open and blocking. But `CONTEXT.md` §9a and
-decision `D-006` already state Synex is "an AI layer on the existing platform, not a replacement"
-— and `decisions/OPEN-QUESTIONS.md` still marks N1 **Open**. The documents disagree with
-themselves on whether this is decided. Don't silently pick a side — flag it if it matters for
-whatever you're working on, the same way THERMYNX's docs try to be honest about "no answer" rather
+**`N1` is open, and the documents do not contradict each other** — this file previously said they
+did. `D-006` settles that Synex is an AI layer on the **Graylinx platform** rather than a
+replacement for it, and states in its own text: *"Closes: nothing. N1 remains open — this is
+about the Graylinx platform, not about Thermynx."* It anticipated exactly that misreading. So
+`CLAUDE.md` listing N1 open and `CONTEXT.md` §9a describing a layer are both correct and are
+about different questions. `09-thermynx-and-synex.md` has the three questions kept apart. What it
+means in practice: build freely — nothing is blocked — but do not write a sentence positioning
+one product as replacing, containing or superseding the other, the same way THERMYNX's docs try
+to be honest about "no answer" rather
 than guessing (see [THERMYNX's conventions doc](../../../../thermynx/docs/kt-karthik/11-conventions-and-constraints.md)
 for that as a cross-project house value).
 
