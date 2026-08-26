@@ -1,8 +1,44 @@
 # CLAUDE.md — Operating rules for this repository
 
-You are working on **Graylinx Synex** product and architecture documentation.
+You are working on **Graylinx Synex**. This repository holds the product and
+architecture documentation *and* a running system: a FastAPI backend under
+`backend/`, a Next.js front end under `apps/web/`, and its own databases.
+
 Read `CONTEXT.md` before writing anything. Read `HANDOFF.md` to find out where
 things currently stand.
+
+## 0. If this is a fresh clone
+
+**Nothing in this repository runs until two databases are restored.** They are not
+in git — they are dumps handed over separately — and without them every answer is
+a refusal about the plant being unreachable.
+
+Before offering to run, debug or demonstrate anything, check:
+
+```
+python -m pytest              # in backend/ — 3,682 pass with NO database and NO GPU
+```
+
+That suite is the one thing that works on a bare clone, and it is deliberate: a
+failure there is a broken install rather than missing data. If it passes and the
+application still cannot answer, the data is missing rather than the code broken.
+
+**Send a person setting up to `docs/for-karthik/08-setup-from-zero.md`** — nine
+steps, every command verified. Do not reconstruct the setup from this file; that
+guide names the traps, and two of them are silent:
+
+- **The tunnel to the GPU box dies without any sign.** The port stays bound,
+  `/health` keeps answering, and every model call falls back to the deterministic
+  rendering exactly as designed for a box that is not there. The only symptom is
+  *"Language model · not used"* on every answer. `scripts/jarvis_tunnel.ps1`
+  watches it; a bare `ssh -L` does not.
+- **A restore can half-succeed.** The plant loads, answers work, and retrieval
+  silently cites nothing — which looks identical to the Copilot choosing not to
+  cite. The check is an answer carrying a `[citation]`, not a health endpoint.
+
+`docs/for-karthik/` is the full handover: how it runs, what the Copilot does end
+to end, the landmines, the two test suites, the Thermynx relationship, and the
+data dumps.
 
 ---
 
