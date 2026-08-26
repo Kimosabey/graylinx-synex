@@ -22,6 +22,8 @@ the start, because two things break at the moment of transfer and both are quiet
 | SSH key on the Jarvis box | Harshan's key | `ssh -o BatchMode=yes root@<box> "ollama --version"` answers with no password | **his own key added to `authorized_keys` before Harshan's is removed** |
 | Plant MySQL | Harshan's credentials | `/api/v1/health` → `plant_database.connected: true` | his own `synex_plant_ro` grant — **read-only, and it stays read-only** |
 | Postgres + Redis | local Docker | `docker ps --filter "name=synex"` | nothing; they are local containers |
+| **Plant MySQL dump** — 13 tables, 107 MB | Harshan sends it | `/api/v1/health` → `plant_database.connected: true` | he restores it himself; see `07-data-dumps.md` |
+| **Postgres state dump** — 11 MB, 269 approved passages | Harshan sends it | `SELECT count(*) FROM synex_document_chunk WHERE is_approved` → 269 | same |
 | `backend/.env` | **not in git** — copy `.env.example`, values from Harshan | `SYNEX_MODEL_MODE=live` and the MySQL block present | rewritten with his own credentials, never copied |
 
 ### The two quiet failures at transfer
@@ -134,6 +136,8 @@ all or a dead transmitter and a constant.
 
 ## Before Harshan is unavailable
 
+- [ ] Both dumps restored, and a Copilot answer comes back **with a citation** — see
+      `07-data-dumps.md`; the first three checks pass with an empty document library
 - [ ] Karthik has started every service himself, from cold, without help
 - [ ] Karthik has run all four offline gates
 - [ ] Karthik has run one live sweep and read the output

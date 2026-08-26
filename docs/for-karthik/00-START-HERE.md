@@ -17,6 +17,7 @@ reading about one you can click through.
 | **[04-testing-and-evaluation.md](04-testing-and-evaluation.md)** | 20 min | Four offline gates, two live suites, and which green tick means what. |
 | **[05-one-week-plan.md](05-one-week-plan.md)** | 15 min | **The scope boundary, and the week.** Build what `mvp/MVP-SCOPE.md` says, in the order it gives, and nothing else. Includes what is already built, what is blocked, and what is deliberately out. |
 | **[06-handoff-checklist.md](06-handoff-checklist.md)** | 15 min | Access, verification, and the gaps stated plainly. |
+| **[07-data-dumps.md](07-data-dumps.md)** | 10 min | **A clone gives you no data.** The two dumps you need, how to restore them, and how to tell a half-finished restore from a working one. |
 
 **The rest of this file is the second half: the reading order for the repo's own documentation.**
 Synex already has excellent, thorough docs — this maps them and connects them to what you know
