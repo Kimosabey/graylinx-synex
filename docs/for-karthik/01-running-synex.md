@@ -22,11 +22,24 @@ Five things. Only two of them are yours to start each morning.
 | **The backend** | `127.0.0.1:8001` | **you** | The web app shows a degraded banner on every page. |
 | **The frontend** | `127.0.0.1:3000` | **you** | No UI. The API still answers `curl`. |
 
-Check the containers with:
+**Starting the containers on a fresh clone.** They are not running until you start them:
 
 ```powershell
+docker compose -f infra\docker-compose.yml up -d
 docker ps --filter "name=synex" --format "{{.Names}} → {{.Ports}}"
 ```
+
+**And the one file a clone does not give you.** `backend/.env` is gitignored because it carries
+the plant credentials. `backend/.env.example` is tracked and is the template — copy it and get
+the real values from Harshan:
+
+```powershell
+cd backend
+copy .env.example .env
+```
+
+Everything else a clone needs is tracked: `requirements.txt`, `package-lock.json`,
+`importlinter.ini`, `pytest.ini`, the compose file and the tunnel keeper.
 
 ---
 
